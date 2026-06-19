@@ -29,7 +29,24 @@ data class HandState(private val cards: Set<CardId> = emptySet()) {
                 .joinToString(separator = "") { it.rank.symbol.toString() }
         }
 
+    internal fun cardsBySuitInBridgeOrder(): List<SuitCards> =
+        Suit.entries.map { suit ->
+            SuitCards(
+                suit = suit,
+                cards = cards
+                    .asSequence()
+                    .filter { it.suit == suit }
+                    .sortedBy { it.rank.pbnOrder }
+                    .toList(),
+            )
+        }
+
     companion object {
         const val FULL_HAND_SIZE: Int = 13
     }
 }
+
+data class SuitCards(
+    val suit: Suit,
+    val cards: List<CardId>,
+)
