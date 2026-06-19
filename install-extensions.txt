@@ -1,0 +1,47 @@
+*smiles* OK, Selyn. Here's a log of `--install-extension` commands: 
+```
+miron@MIRONYCH:~/proj/ITROBOC$ code --install-extension ms-vscode-remote.remote-wsl
+Updating VS Code Server to version 6928394f91b684055b873eecb8bc281365131f1c
+Removing previous installation...
+Installing VS Code Server for Linux x64 (6928394f91b684055b873eecb8bc281365131f1c)
+Downloading: 100%
+Unpacking: 100%
+Unpacked 3503 files and folders to /home/miron/.vscode-server/bin/6928394f91b684055b873eecb8bc281365131f1c.
+Looking for compatibility check script at /home/miron/.vscode-server/bin/6928394f91b684055b873eecb8bc281365131f1c/bin/helpers/check-requirements.sh
+Running compatibility check script
+Compatibility check successful (0)
+Installing extensions...
+(node:420397) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Installing extension 'ms-vscode-remote.remote-wsl'...
+Extension 'ms-vscode-remote.remote-wsl' v0.104.3 was successfully installed.
+miron@MIRONYCH:~/proj/ITROBOC$ code --install-extension vscjava.vscode-java-pack
+Installing extensions...
+(node:420622) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Installing extension 'vscjava.vscode-java-pack'...
+Extension 'vscjava.vscode-java-pack' v0.31.1 was successfully installed.
+Extension 'vscjava.vscode-java-dependency' v0.27.5 was successfully installed.
+Extension 'vscjava.vscode-java-test' v0.45.0 was successfully installed.
+Extension 'vscjava.vscode-java-debug' v0.59.0 was successfully installed.
+Extension 'vscjava.vscode-maven' v0.45.3 was successfully installed.
+Extension 'vscjava.vscode-gradle' v3.17.3 was successfully installed.
+Extension 'redhat.java' v1.54.0 was successfully installed.
+miron@MIRONYCH:~/proj/ITROBOC$ code --install-extension vscjava.vscode-gradle
+Installing extensions...
+Extension 'vscjava.vscode-gradle' v3.17.3 is already installed. Use '--force' option to update to latest version or provide '@<version>' to install a specific version, for example: 'vscjava.vscode-gradle@1.2.3'.
+miron@MIRONYCH:~/proj/ITROBOC$ code --install-extension fwcd.kotlin
+Installing extensions...
+(node:420981) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Installing extension 'fwcd.kotlin'...
+Extension 'fwcd.kotlin' v0.2.36 was successfully installed.
+miron@MIRONYCH:~/proj/ITROBOC$ code --install-extension github.vscode-pull-request-github
+Installing extensions...
+(node:421204) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Installing extension 'github.vscode-pull-request-github'...
+Extension 'github.vscode-pull-request-github' v0.150.0 was successfully installed.
+miron@MIRONYCH:~/proj/ITROBOC$ code
+miron@MIRONYCH:~/proj/ITROBOC$
+``` 
