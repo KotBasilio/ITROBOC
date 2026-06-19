@@ -13,13 +13,13 @@ data class TdScanAccumulator(
             return TdScanReport(this, TdScanResult.AlreadyInThisHand(card))
         }
 
-        if (hand.isComplete()) {
-            return TdScanReport(this, TdScanResult.HandAlreadyComplete(seat))
-        }
-
         val existingSeat = boardState.seatContaining(card)
         if (existingSeat != null) {
             return TdScanReport(this, TdScanResult.AlreadyOnBoard(card, existingSeat))
+        }
+
+        if (hand.isComplete()) {
+            return TdScanReport(this, TdScanResult.HandAlreadyComplete(seat))
         }
 
         val nextAccumulator = copy(boardState = boardState.addCard(seat, card))
@@ -85,9 +85,31 @@ data class TdBatchScanSummary(
 }
 
 sealed interface TdScanResult {
-    data class Added(val card: CardId) : TdScanResult
-    data class AlreadyInThisHand(val card: CardId) : TdScanResult
-    data class AlreadyOnBoard(val card: CardId, val existingSeat: Seat) : TdScanResult
-    data class UnknownSignature(val signature: String) : TdScanResult
-    data class HandAlreadyComplete(val seat: Seat) : TdScanResult
+    val severity: TdScanSeverity
+
+    data class Added(val card: CardId) : TdScanResult {
+        override val severity: TdScanSeverity = TdScanSeverity.INFO
+    }
+
+    data class AlreadyInThisHand(val card: CardId) : TdScanResult {
+        override val severity: TdScanSeverity = TdScanSeverity.INFO
+    }
+
+    data class AlreadyOnBoard(val card: CardId, val existingSeat: Seat) : TdScanResult {
+        override val severity: TdScanSeverity = TdScanSeverity.CONFLICT
+    }
+
+    data class UnknownSignature(val signature: String) : TdScanResult {
+        override val severity: TdScanSeverity = TdScanSeverity.WARNING
+    }
+
+    data class HandAlreadyComplete(val seat: Seat) : TdScanResult {
+        override val severity: TdScanSeverity = TdScanSeverity.INFO
+    }
+}
+
+enum class TdScanSeverity {
+    INFO,
+    WARNING,
+    CONFLICT,
 }

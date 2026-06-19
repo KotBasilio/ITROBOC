@@ -83,10 +83,52 @@ class TdScanAccumulatorTest {
     }
 
     @Test
+    fun `reports cross hand duplicate before hand already complete`() {
+        val completeNorthHand = listOf(
+            "SA", "SK", "SQ", "SJ", "ST",
+            "H9", "H8", "H7",
+            "D6", "D5",
+            "C4", "C3", "C2",
+        ).fold(HandState()) { hand, card -> hand.addCard(CardId.parse(card)) }
+
+        val accumulator = TdScanAccumulator(
+            deckProfile = DeckProfile(mapOf("sig-ha" to CardId.parse("HA"))),
+            boardState = BoardState(
+                mapOf(
+                    Seat.NORTH to completeNorthHand,
+                    Seat.EAST to HandState().addCard(CardId.parse("HA")),
+                    Seat.SOUTH to HandState(),
+                    Seat.WEST to HandState(),
+                ),
+            ),
+        )
+
+        val report = accumulator.scan(Seat.NORTH, "sig-ha")
+
+        assertEquals(TdScanResult.AlreadyOnBoard(CardId.parse("HA"), Seat.EAST), report.result)
+        assertEquals(accumulator, report.accumulator)
+    }
+
+    @Test
     fun `returns strongly typed results`() {
         val report = TdScanAccumulator(profile).scan(Seat.NORTH, "sig-sa")
 
         assertIs<TdScanResult.Added>(report.result)
+    }
+
+    @Test
+    fun `classifies scan result severities for future ui`() {
+        val results = listOf(
+            TdScanResult.Added(CardId.parse("SA")) to TdScanSeverity.INFO,
+            TdScanResult.AlreadyInThisHand(CardId.parse("SA")) to TdScanSeverity.INFO,
+            TdScanResult.UnknownSignature("sig-missing") to TdScanSeverity.WARNING,
+            TdScanResult.AlreadyOnBoard(CardId.parse("SA"), Seat.EAST) to TdScanSeverity.CONFLICT,
+            TdScanResult.HandAlreadyComplete(Seat.NORTH) to TdScanSeverity.INFO,
+        )
+
+        results.forEach { (result, expectedSeverity) ->
+            assertEquals(expectedSeverity, result.severity)
+        }
     }
 
     @Test
