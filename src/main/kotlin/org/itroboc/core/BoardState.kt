@@ -18,6 +18,9 @@ data class BoardState(
 
     fun totalCardCount(): Int = allCards().size
 
+    fun seatContaining(card: CardId): Seat? =
+        Seat.entries.firstOrNull { seat -> handOf(seat).contains(card) }
+
     fun validateComplete() {
         Seat.entries.forEach { seat ->
             handOf(seat).validateComplete()

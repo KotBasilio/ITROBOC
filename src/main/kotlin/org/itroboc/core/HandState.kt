@@ -10,10 +10,12 @@ data class HandState(private val cards: Set<CardId> = emptySet()) {
 
     fun count(): Int = cards.size
 
+    fun isComplete(): Boolean = cards.size == FULL_HAND_SIZE
+
     fun cards(): Set<CardId> = cards
 
     fun validateComplete() {
-        require(cards.size == FULL_HAND_SIZE) {
+        require(isComplete()) {
             "A bridge hand must contain $FULL_HAND_SIZE cards, found ${cards.size}"
         }
     }
