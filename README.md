@@ -12,8 +12,11 @@ The repository currently contains a pure Kotlin/JVM core scaffold with:
 - canonical card ID parsing and formatting
 - hand and board validation logic
 - deck-profile signature mapping
+- single-scan and batch-scan accumulator logic for TD workflow
 - basic PBN export
 - unit tests runnable from WSL
+
+Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
 
 ## Running tests
 

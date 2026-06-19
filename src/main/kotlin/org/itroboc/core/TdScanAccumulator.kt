@@ -25,12 +25,64 @@ data class TdScanAccumulator(
         val nextAccumulator = copy(boardState = boardState.addCard(seat, card))
         return TdScanReport(nextAccumulator, TdScanResult.Added(card))
     }
+
+    fun scanMany(seat: Seat, signatures: List<String>): TdBatchScanReport {
+        val reports = mutableListOf<TdScanReport>()
+        var currentAccumulator = this
+
+        signatures.forEach { signature ->
+            val report = currentAccumulator.scan(seat, signature)
+            reports += report
+            currentAccumulator = report.accumulator
+        }
+
+        val currentHand = currentAccumulator.boardState.handOf(seat)
+        return TdBatchScanReport(
+            accumulator = currentAccumulator,
+            reports = reports,
+            summary = TdBatchScanSummary.from(reports),
+            handCount = currentHand.count(),
+            handComplete = currentHand.isComplete(),
+        )
+    }
 }
 
 data class TdScanReport(
     val accumulator: TdScanAccumulator,
     val result: TdScanResult,
 )
+
+data class TdBatchScanReport(
+    val accumulator: TdScanAccumulator,
+    val reports: List<TdScanReport>,
+    val summary: TdBatchScanSummary,
+    val handCount: Int,
+    val handComplete: Boolean,
+)
+
+data class TdBatchScanSummary(
+    val added: Int = 0,
+    val unknown: Int = 0,
+    val alreadyInThisHand: Int = 0,
+    val alreadyOnBoard: Int = 0,
+    val handAlreadyComplete: Int = 0,
+) {
+    companion object {
+        fun from(reports: List<TdScanReport>): TdBatchScanSummary =
+            reports.fold(TdBatchScanSummary()) { summary, report ->
+                when (report.result) {
+                    is TdScanResult.Added -> summary.copy(added = summary.added + 1)
+                    is TdScanResult.UnknownSignature -> summary.copy(unknown = summary.unknown + 1)
+                    is TdScanResult.AlreadyInThisHand ->
+                        summary.copy(alreadyInThisHand = summary.alreadyInThisHand + 1)
+                    is TdScanResult.AlreadyOnBoard ->
+                        summary.copy(alreadyOnBoard = summary.alreadyOnBoard + 1)
+                    is TdScanResult.HandAlreadyComplete ->
+                        summary.copy(handAlreadyComplete = summary.handAlreadyComplete + 1)
+                }
+            }
+    }
+}
 
 sealed interface TdScanResult {
     data class Added(val card: CardId) : TdScanResult

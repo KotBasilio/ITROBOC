@@ -2,7 +2,7 @@
 
 ## Scope of the current milestone
 
-The current milestone builds a pure Kotlin/JVM core that models bridge cards, hand and board state, deck-profile lookup, and basic PBN export. It intentionally excludes Android UI, camera capture, barcode image processing, and device-specific integration.
+The current milestone builds a pure Kotlin/JVM core that models bridge cards, hand and board state, deck-profile lookup, TD scan accumulation, batch scan summaries, and basic PBN export. It intentionally excludes Android UI, camera capture, barcode image processing, and device-specific integration.
 
 ## Admin side
 
@@ -14,8 +14,10 @@ The tournament-director workflow will guide a user through building hands from c
 
 - translate raw signatures through the active deck profile
 - accumulate cards into hand and board state
+- process batches of observed signatures from one scan action
 - reject duplicates and incomplete states
 - surface validation issues clearly
+- provide summary counts and hand progress for future UI
 - export a complete board as PBN when all 52 cards are known
 
 ## Future pipeline
@@ -24,4 +26,4 @@ The planned end-to-end pipeline is:
 
 `camera frame -> barcode ROI -> raw signature -> deck profile lookup -> card ID -> hand/board state -> PBN`
 
-The current core project starts at the `raw signature -> card ID` stage and carries the domain model through `PBN`.
+The current core project starts at the `raw signature -> card ID` stage, supports ordered batch accumulation for one scan action, and carries the domain model through `PBN`.
