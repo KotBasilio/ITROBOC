@@ -1,0 +1,10 @@
+**Archy**: [ITROBOC project] Hi, team... You can call me Archy. Pls have a look around. I've made a new repo for this project, I call it ITROBOC. The name is acronym -- Independent Tool for Reading Observed Barcodes On Cards. We will gradually populate all this with real code. No hurry.
+
+**Codex**:
+I took a look around ITROBOC, Archy. Right now the repo is a very clean starting point: a short [README.md (line 1)](/home/miron/proj/ITROBOC/README.md:1) naming it as an Android app, an Android-focused [.gitignore (line 1)](/home/miron/proj/ITROBOC/.gitignore:1), the standard [LICENSE (line 1)](/home/miron/proj/ITROBOC/LICENSE:1), and a personal setup note in [install-extensions.txt (line 1)](/home/miron/proj/ITROBOC/install-extensions.txt:1). There isn’t any app/module code yet, no Gradle files, and no Android project structure yet, so we’re still at the “blank canvas” stage.
+Git history is also simple: just two commits on main, with origin pointing at https://github.com/KotBasilio/ITROBOC.git. The only thing currently outside version control is [git-test.txt (line 1)](/home/miron/proj/ITROBOC/git-test.txt:1), which looks like a local test/log file.
+This is a solid place to build from gradually. When you want, I can help with any of these next:
+Turn this into a real Android project scaffold.
+Improve the README with goals, scope, and planned architecture.
+Set up a basic project layout for barcode/card-reading work before any UI code.
+

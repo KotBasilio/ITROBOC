@@ -1,0 +1,46 @@
+Preparing "Install Android Emulator hypervisor driver (installer) v.2.2.0".
+Downloading https://dl.google.com/android/repository/aehd-windows_v2.2.zip
+"Install Android Emulator hypervisor driver (installer) v.2.2.0" ready.
+Installing Android Emulator hypervisor driver (installer) in C:\Users\miron\AppData\Local\Android\Sdk\extras\google\Android_Emulator_Hypervisor_Driver
+"Install Android Emulator hypervisor driver (installer) v.2.2.0" complete.
+"Install Android Emulator hypervisor driver (installer) v.2.2.0" finished.
+Preparing "Install Sources for Android 36.1 (revision 1)".
+Downloading https://dl.google.com/android/repository/source-36.1_r01.zip
+"Install Sources for Android 36.1 (revision 1)" ready.
+Installing Sources for Android 36.1 in C:\Users\miron\AppData\Local\Android\Sdk\sources\android-36.1
+"Install Sources for Android 36.1 (revision 1)" complete.
+"Install Sources for Android 36.1 (revision 1)" finished.
+Preparing "Install Android SDK Build-Tools 36.1 v.36.1.0".
+Downloading https://dl.google.com/android/repository/build-tools_r36.1_windows.zip
+"Install Android SDK Build-Tools 36.1 v.36.1.0" ready.
+Installing Android SDK Build-Tools 36.1 in C:\Users\miron\AppData\Local\Android\Sdk\build-tools\36.1.0
+"Install Android SDK Build-Tools 36.1 v.36.1.0" complete.
+"Install Android SDK Build-Tools 36.1 v.36.1.0" finished.
+Preparing "Install Android SDK Platform 36.1 (revision 1)".
+Downloading https://dl.google.com/android/repository/platform-36.1_r01.zip
+"Install Android SDK Platform 36.1 (revision 1)" ready.
+Installing Android SDK Platform 36.1 in C:\Users\miron\AppData\Local\Android\Sdk\platforms\android-36.1
+"Install Android SDK Platform 36.1 (revision 1)" complete.
+"Install Android SDK Platform 36.1 (revision 1)" finished.
+Preparing "Install Android SDK Build-Tools 37 v.37.0.0".
+Downloading https://dl.google.com/android/repository/build-tools_r37_windows.zip
+"Install Android SDK Build-Tools 37 v.37.0.0" ready.
+Installing Android SDK Build-Tools 37 in C:\Users\miron\AppData\Local\Android\Sdk\build-tools\37.0.0
+"Install Android SDK Build-Tools 37 v.37.0.0" complete.
+"Install Android SDK Build-Tools 37 v.37.0.0" finished.
+Preparing "Install Android SDK Platform-Tools v.37.0.0".
+Downloading https://dl.google.com/android/repository/platform-tools_r37.0.0-win.zip
+"Install Android SDK Platform-Tools v.37.0.0" ready.
+Installing Android SDK Platform-Tools in C:\Users\miron\AppData\Local\Android\Sdk\platform-tools
+"Install Android SDK Platform-Tools v.37.0.0" complete.
+"Install Android SDK Platform-Tools v.37.0.0" finished.
+Preparing "Install Android Emulator v.36.6.11".
+Downloading https://dl.google.com/android/repository/emulator-windows_x64-15507667.zip
+"Install Android Emulator v.36.6.11" ready.
+Installing Android Emulator in C:\Users\miron\AppData\Local\Android\Sdk\emulator
+"Install Android Emulator v.36.6.11" complete.
+"Install Android Emulator v.36.6.11" finished.
+SDK Manager found the following installed packages: build-tools;36.1.0 build-tools;37.0.0 emulator extras;google;Android_Emulator_Hypervisor_Driver platform-tools platforms;android-36.1 sources;android-36.1
+Android SDK is up to date.
+Running Android Emulator hypervisor driver installer
+[SC] StartService FAILED with error 4294967201.
