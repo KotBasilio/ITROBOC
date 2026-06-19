@@ -30,8 +30,12 @@ data class BoardState(
         }
     }
 
-    internal fun handsInPbnOrder(): List<HandState> =
-        listOf(handOf(Seat.NORTH), handOf(Seat.EAST), handOf(Seat.SOUTH), handOf(Seat.WEST))
+    internal fun handsInPbnOrder(startSeat: Seat = Seat.NORTH): List<HandState> {
+        val orderedSeats = generateSequence(startSeat) { seat -> seat.next() }
+            .take(Seat.entries.size)
+            .toList()
+        return orderedSeats.map(::handOf)
+    }
 
     private fun allCards(): Set<CardId> = hands.values.flatMap { it.cards() }.toSet()
 

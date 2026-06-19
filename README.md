@@ -13,6 +13,8 @@ The repository currently contains a pure Kotlin/JVM core scaffold with:
 - hand and board validation logic
 - deck-profile signature mapping
 - single-scan and batch-scan accumulator logic for TD workflow
+- scan severity classification for future UI messaging
+- hand and board progress summaries for future TD display
 - basic PBN export
 - unit tests runnable from WSL
 
