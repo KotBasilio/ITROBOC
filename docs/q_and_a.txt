@@ -1,0 +1,86 @@
+ITROBOC Q&A Notes
+=================
+
+Topic: Batch scan behavior and TD-facing severity
+
+Decision 1: Preserve every raw occurrence in the core batch report
+------------------------------------------------------------------
+
+If one scan frame yields repeated signatures for the same card, the core should
+preserve one ordered result per observed raw signature.
+
+Example:
+
+    sig-sa, sig-sa, sig-dq
+
+The repeated `sig-sa` is still useful diagnostic information. It may indicate:
+
+- duplicate ROI detection
+- two barcode edges seen on one physical card
+- repeated detection of the same visible card
+- decoder behavior worth debugging later
+
+Core rule:
+
+- do not collapse repeated observations at the low-level batch report layer
+- preserve input order
+- return one result per observed raw signature
+
+UI rule:
+
+- present calm collapsed feedback when appropriate
+- example: "Added SA, DQ. Skipped 1 repeated detection."
+
+Implementation preference:
+
+- raw/per-signature report preserves truth
+- summary/UI layer may collapse, count, or soften repeated outcomes
+
+Decision 2: Severity classification for batch outcomes
+------------------------------------------------------
+
+`AlreadyInThisHand`
+
+- non-fatal informational outcome
+- expected during iterative rescanning
+- should not be alarming
+- should not require user correction
+
+`AlreadyOnBoard`
+
+- prominent warning/error-class outcome
+- decoded card is already assigned to another seat
+- may indicate wrong physical pile, wrong selected seat, deck-profile issue,
+  or scanner/decoder error
+- should not necessarily stop the batch
+- should remain visible until acknowledged or corrected
+
+`UnknownSignature`
+
+- non-mutating outcome
+- should remain visible as warning/notice
+- may indicate missing deck-profile mapping or failed signature extraction
+
+Implementation preferences
+--------------------------
+
+- keep one ordered per-signature result per input raw signature
+- keep failed or ignored outcomes non-mutating
+- update accumulator only for `Added`
+- provide batch summary fields for future UI
+- keep tests verifying ordered per-signature reporting and safe duplicate behavior
+
+Suggested summary fields
+------------------------
+
+- added count
+- unknown count
+- already-in-this-hand count
+- already-on-board count
+- hand-already-complete count
+- optionally repeated-detection count if it naturally falls out of the model
+
+Key architecture sentence
+-------------------------
+
+Core preserves truth; UI decides calmness.
