@@ -1,0 +1,144 @@
+miron@MIRONYCH:~/proj/ITROBOC$ sudo apt update
+sudo apt install -y unzip wget
+Hit:1 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease
+Hit:3 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:4 http://archive.ubuntu.com/ubuntu noble-backports InRelease
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+23 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+wget is already the newest version (1.21.4-1ubuntu4.1).
+Suggested packages:
+  zip
+The following NEW packages will be installed:
+  unzip
+0 upgraded, 1 newly installed, 0 to remove and 23 not upgraded.
+Need to get 174 kB of archives.
+After this operation, 384 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 unzip amd64 6.0-28ubuntu4.1 [174 kB]
+Fetched 174 kB in 0s (4732 kB/s)
+Selecting previously unselected package unzip.
+(Reading database ... 50860 files and directories currently installed.)
+Preparing to unpack .../unzip_6.0-28ubuntu4.1_amd64.deb ...
+Unpacking unzip (6.0-28ubuntu4.1) ...
+Setting up unzip (6.0-28ubuntu4.1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+miron@MIRONYCH:~/proj/ITROBOC$ mkdir -p "$HOME/android-sdk/cmdline-tools"
+cd /tmp
+miron@MIRONYCH:/tmp$ wget -O commandlinetools-linux_latest.zip \
+  https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+
+Resolving dl.google.com (dl.google.com)... 172.217.17.78, 2a00:1450:400d:80f::200e
+Connecting to dl.google.com (dl.google.com)|172.217.17.78|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 172789259 (165M) [application/zip]
+Saving to: ‘commandlinetools-linux_latest.zip’
+
+commandlinetools-linux_latest 100%[=================================================>] 164.78M  8.50MB/s    in 20s
+
+2026-06-20 10:16:32 (8.19 MB/s) - ‘commandlinetools-linux_latest.zip’ saved [172789259/172789259]
+
+miron@MIRONYCH:/tmp$ rm -rf /tmp/cmdline-tools
+unzip -q commandlinetools-linux_latest.zip -d /tmp
+
+mkdir -p "$HOME/android-sdk/cmdline-tools/latest"
+mv /tmp/cmdline-tools/* "$HOME/android-sdk/cmdline-tools/latest/"
+miron@MIRONYCH:/tmp$ ls "$HOME/android-sdk/cmdline-tools/latest"
+NOTICE.txt  bin  lib  source.properties
+
+miron@MIRONYCH:/tmp$ cat >> ~/.bashrc <<'EOF'
+
+# Android SDK for WSL builds
+export ANDROID_SDK_ROOT="$HOME/android-sdk"
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
+export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+EOF
+
+source ~/.bashrc
+miron@MIRONYCH:/tmp$ which sdkmanager
+sdkmanager --version
+/home/miron/android-sdk/cmdline-tools/latest/bin/sdkmanager
+20.0
+
+miron@MIRONYCH:/tmp$ yes | sdkmanager --licenses
+[=======================================] 100% Computing updates...
+7 of 7 SDK package licenses not accepted.
+Review licenses that have not been accepted (y/N)?
+1/7: License android-googletv-license:
+---------------------------------------
+Terms and Conditions ...
+<<< OMG. A lot of legal text; I redacted it. I hope I won't regret this later; crossing fingers. >>>
+---------------------------------------
+All SDK package licenses accepted
+
+miron@MIRONYCH:/tmp$ sdkmanager \
+  "platform-tools" \
+  "platforms;android-35" \
+  "platforms;android-36" \
+  "build-tools;35.0.0" \
+  "build-tools;36.0.0"
+[=======================================] 100% Unzipping... platform-tools/sqlit
+
+miron@MIRONYCH:/tmp$ cd ~/proj/ITROBOC
+
+cat > local.properties <<EOF
+sdk.dir=$HOME/android-sdk
+EOF
+miron@MIRONYCH:~/proj/ITROBOC$ cat local.properties
+sdk.dir=/home/miron/android-sdk
+
+miron@MIRONYCH:~/proj/ITROBOC$ ./gradlew :core:test
+Calculating task graph as configuration cache cannot be reused because file 'gradle.properties' has changed.
+
+BUILD SUCCESSFUL in 3s
+4 actionable tasks: 4 up-to-date
+Configuration cache entry stored.
+miron@MIRONYCH:~/proj/ITROBOC$ ./gradlew :app:assembleDebug
+Calculating task graph as no cached configuration is available for tasks: :app:assembleDebug
+Checking the license for package Android SDK Build-Tools 34 in /home/miron/android-sdk/licenses
+License for package Android SDK Build-Tools 34 accepted.
+Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
+"Install Android SDK Build-Tools 34 v.34.0.0" ready.
+Installing Android SDK Build-Tools 34 in /home/miron/android-sdk/build-tools/34.0.0
+"Install Android SDK Build-Tools 34 v.34.0.0" complete.
+"Install Android SDK Build-Tools 34 v.34.0.0" finished.
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
+
+> Task :app:processDebugResources FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:processDebugResources'.
+> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
+   > Android resource linking failed
+     ERROR: AAPT: error: resource style/Theme.Material3.DayNight.NoActionBar (aka org.itroboc.app:style/Theme.Material3.DayNight.NoActionBar) not found.
+     error: failed linking references.
+
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 52s
+29 actionable tasks: 27 executed, 2 up-to-date
+Configuration cache entry stored.
+
+<<< AFTER A FIX IN proj\ITROBOC\app\src\main\res\values\themes.xml >>
+
+miron@MIRONYCH:~/proj/ITROBOC$ ./gradlew :app:assembleDebug
+Calculating task graph as configuration cache cannot be reused because environment variable 'ANDROID_HOME' has changed.
+
+BUILD SUCCESSFUL in 1s
+37 actionable tasks: 37 up-to-date
+Configuration cache entry stored.
+
