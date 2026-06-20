@@ -19,7 +19,8 @@ data class BoardProgressSummary(
                 handCounts = handCounts,
                 totalCards = boardState.totalCardCount(),
                 completeSeats = completeSeats,
-                boardComplete = boardState.totalCardCount() == BoardState.FULL_BOARD_SIZE,
+                boardComplete = completeSeats.size == Seat.entries.size &&
+                    boardState.totalCardCount() == BoardState.FULL_BOARD_SIZE,
                 duplicateConflictCount = recentReports.count { it.result is TdScanResult.AlreadyOnBoard },
             )
         }
