@@ -142,3 +142,5 @@ BUILD SUCCESSFUL in 1s
 37 actionable tasks: 37 up-to-date
 Configuration cache entry stored.
 
+miron@MIRONYCH:~/proj/ITROBOC$ ls app/build/outputs/apk/debug/
+app-debug.apk  output-metadata.json
