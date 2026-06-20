@@ -5,17 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class TdScanAccumulatorTest {
-    private val profile = DeckProfile(
-        mapOf(
-            "sig-sa" to CardId.parse("SA"),
-            "sig-sk" to CardId.parse("SK"),
-            "sig-ha" to CardId.parse("HA"),
-        ),
-    )
+    private val profile = BuiltInDeckProfiles.demoBridge52()
 
     @Test
     fun `adds a looked-up card to the requested seat`() {
-        val report = TdScanAccumulator(profile).scan(Seat.NORTH, "sig-sa")
+        val report = TdScanAccumulator(profile).scan(Seat.NORTH, "0x1001")
 
         assertEquals(TdScanResult.Added(CardId.parse("SA")), report.result)
         assertEquals(true, report.accumulator.boardState.handOf(Seat.NORTH).contains(CardId.parse("SA")))
@@ -34,10 +28,10 @@ class TdScanAccumulatorTest {
     @Test
     fun `reports duplicates already in the same hand`() {
         val afterFirstScan = TdScanAccumulator(profile)
-            .scan(Seat.NORTH, "sig-sa")
+            .scan(Seat.NORTH, "0x1001")
             .accumulator
 
-        val report = afterFirstScan.scan(Seat.NORTH, "sig-sa")
+        val report = afterFirstScan.scan(Seat.NORTH, "0x1001")
 
         assertEquals(TdScanResult.AlreadyInThisHand(CardId.parse("SA")), report.result)
         assertEquals(afterFirstScan, report.accumulator)
@@ -46,10 +40,10 @@ class TdScanAccumulatorTest {
     @Test
     fun `reports duplicates already on another seat`() {
         val afterFirstScan = TdScanAccumulator(profile)
-            .scan(Seat.EAST, "sig-sa")
+            .scan(Seat.EAST, "0x1001")
             .accumulator
 
-        val report = afterFirstScan.scan(Seat.WEST, "sig-sa")
+        val report = afterFirstScan.scan(Seat.WEST, "0x1001")
 
         assertEquals(TdScanResult.AlreadyOnBoard(CardId.parse("SA"), Seat.EAST), report.result)
         assertEquals(afterFirstScan, report.accumulator)
@@ -76,7 +70,7 @@ class TdScanAccumulatorTest {
             ),
         )
 
-        val report = accumulator.scan(Seat.NORTH, "sig-ha")
+        val report = accumulator.scan(Seat.NORTH, "0x100E")
 
         assertEquals(TdScanResult.HandAlreadyComplete(Seat.NORTH), report.result)
         assertEquals(accumulator, report.accumulator)
@@ -111,7 +105,7 @@ class TdScanAccumulatorTest {
 
     @Test
     fun `returns strongly typed results`() {
-        val report = TdScanAccumulator(profile).scan(Seat.NORTH, "sig-sa")
+        val report = TdScanAccumulator(profile).scan(Seat.NORTH, "0x1001")
 
         assertIs<TdScanResult.Added>(report.result)
     }
@@ -135,7 +129,7 @@ class TdScanAccumulatorTest {
     fun `batch adds several new cards`() {
         val report = TdScanAccumulator(profile).scanMany(
             seat = Seat.NORTH,
-            signatures = listOf("sig-sa", "sig-sk", "sig-ha"),
+            signatures = listOf("0x1001", "0x1002", "0x100E"),
         )
 
         assertEquals(
@@ -154,12 +148,12 @@ class TdScanAccumulatorTest {
     @Test
     fun `batch ignores duplicates safely`() {
         val seededAccumulator = TdScanAccumulator(profile)
-            .scan(Seat.NORTH, "sig-sa")
+            .scan(Seat.NORTH, "0x1001")
             .accumulator
 
         val report = seededAccumulator.scanMany(
             seat = Seat.NORTH,
-            signatures = listOf("sig-sa", "sig-sk", "sig-sa"),
+            signatures = listOf("0x1001", "0x1002", "0x1001"),
         )
 
         assertEquals(
@@ -181,14 +175,14 @@ class TdScanAccumulatorTest {
     fun `batch handles unknown signatures without changing state for those entries`() {
         val report = TdScanAccumulator(profile).scanMany(
             seat = Seat.NORTH,
-            signatures = listOf("sig-missing", "sig-sa", "sig-void"),
+            signatures = listOf("0xDEAD", "0x1001", "0xBEEF"),
         )
 
         assertEquals(
             listOf(
-                TdScanResult.UnknownSignature("sig-missing"),
+                TdScanResult.UnknownSignature("0xDEAD"),
                 TdScanResult.Added(CardId.parse("SA")),
-                TdScanResult.UnknownSignature("sig-void"),
+                TdScanResult.UnknownSignature("0xBEEF"),
             ),
             report.reports.map { it.result },
         )
@@ -209,8 +203,8 @@ class TdScanAccumulatorTest {
         val accumulator = TdScanAccumulator(
             deckProfile = DeckProfile(
                 mapOf(
-                    "sig-c2" to CardId.parse("C2"),
-                    "sig-ha" to CardId.parse("HA"),
+                    "0x1034" to CardId.parse("C2"),
+                    "0x100E" to CardId.parse("HA"),
                 ),
             ),
             boardState = BoardState(
@@ -223,7 +217,7 @@ class TdScanAccumulatorTest {
             ),
         )
 
-        val report = accumulator.scanMany(Seat.NORTH, listOf("sig-c2", "sig-ha"))
+        val report = accumulator.scanMany(Seat.NORTH, listOf("0x1034", "0x100E"))
 
         assertEquals(
             listOf(
@@ -243,17 +237,17 @@ class TdScanAccumulatorTest {
     @Test
     fun `batch preserves order of per signature results`() {
         val seededAccumulator = TdScanAccumulator(profile)
-            .scan(Seat.EAST, "sig-sk")
+            .scan(Seat.EAST, "0x1002")
             .accumulator
 
         val report = seededAccumulator.scanMany(
             seat = Seat.NORTH,
-            signatures = listOf("sig-missing", "sig-sa", "sig-sk", "sig-sa", "sig-ha"),
+            signatures = listOf("0xDEAD", "0x1001", "0x1002", "0x1001", "0x100E"),
         )
 
         assertEquals(
             listOf(
-                TdScanResult.UnknownSignature("sig-missing"),
+                TdScanResult.UnknownSignature("0xDEAD"),
                 TdScanResult.Added(CardId.parse("SA")),
                 TdScanResult.AlreadyOnBoard(CardId.parse("SK"), Seat.EAST),
                 TdScanResult.AlreadyInThisHand(CardId.parse("SA")),
@@ -271,5 +265,12 @@ class TdScanAccumulatorTest {
             report.summary,
         )
         assertEquals(2, report.handCount)
+    }
+
+    @Test
+    fun `built in demo profile still reports unknown signatures through scan flow`() {
+        val report = TdScanAccumulator(BuiltInDeckProfiles.demoBridge52()).scan(Seat.NORTH, "0xFFFF")
+
+        assertEquals(TdScanResult.UnknownSignature("0xFFFF"), report.result)
     }
 }

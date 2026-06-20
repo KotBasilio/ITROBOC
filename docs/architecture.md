@@ -8,6 +8,8 @@ The current milestone builds a pure Kotlin/JVM core that models bridge cards, ha
 
 The administrative workflow will define and maintain deck profiles. A deck profile maps an observed raw barcode signature to a canonical bridge card identifier such as `SA` or `D8`. In the future, calibration tools will let an operator scan a known physical deck, inspect the raw signatures, resolve ambiguous observations, and save the signature-to-card mapping used by tournament decks.
 
+For now, the project includes a built-in demo/reference deck profile with opaque synthetic signatures. That profile is intentionally fake and exists only to support tests and the Android shell without pretending to know any real WinDup/Jannersten barcode mapping.
+
 ## TD side
 
 The tournament-director workflow will guide a user through building hands from cumulative scans. As card observations arrive, the system will:
@@ -20,7 +22,7 @@ The tournament-director workflow will guide a user through building hands from c
 - provide summary counts and hand progress for future UI
 - export a complete board as PBN when all 52 cards are known
 
-The current Android shell already exercises this flow with fake-signature input, seat selection, TD-friendly summaries, grouped hand display, board progress, and gated PBN preview. That shell is intentionally a thin adapter over the core, not a second implementation of scan logic.
+The current Android shell already exercises this flow with fake-signature input, seat selection, TD-friendly summaries, grouped hand display, board progress, and gated PBN preview. That shell is intentionally a thin adapter over the core, not a second implementation of scan logic. Its default profile comes from the core built-in demo/reference mapping.
 
 ## Future pipeline
 

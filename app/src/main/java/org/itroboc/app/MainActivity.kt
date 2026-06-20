@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.itroboc.core.BoardProgressSummary
+import org.itroboc.core.BuiltInDeckProfiles
 import org.itroboc.core.CardId
 import org.itroboc.core.PbnExporter
 import org.itroboc.core.Seat
@@ -60,29 +61,29 @@ class MainActivity : ComponentActivity() {
 
 private val presetBatches = listOf(
     FakeBatchPreset(
-        label = "North Demo",
-        signatures = "sig-sa,sig-sk,sig-sq,sig-sj,sig-st,sig-h9,sig-h8,sig-h7,sig-d6,sig-d5,sig-c4,sig-c3,sig-c2",
+        label = "North sample batch",
+        signatures = "0x1001,0x1002,0x1003,0x1004,0x1005,0x1012,0x1013,0x1014,0x1021,0x1022,0x1031,0x1032,0x1033",
     ),
     FakeBatchPreset(
-        label = "East Demo",
-        signatures = "sig-s9,sig-s8,sig-s7,sig-s6,sig-s5,sig-ha,sig-hk,sig-hq,sig-hj,sig-ht,sig-d4,sig-d3,sig-ca",
+        label = "Add two random cards",
+        signatures = "0x1009,0x102F",
     ),
     FakeBatchPreset(
-        label = "South Demo",
-        signatures = "sig-s4,sig-s3,sig-s2,sig-h6,sig-h5,sig-h4,sig-h3,sig-h2,sig-da,sig-dk,sig-dq,sig-dj,sig-ct",
+        label = "Unknown signature",
+        signatures = "0x10FF",
     ),
     FakeBatchPreset(
-        label = "West Demo",
-        signatures = "sig-dt,sig-d9,sig-d8,sig-d7,sig-d2,sig-ck,sig-cq,sig-cj,sig-c9,sig-c8,sig-c7,sig-c6,sig-c5",
+        label = "Duplicate test",
+        signatures = "0x1001,0x1001,0x1002",
     ),
-    FakeBatchPreset(label = "Small Retry", signatures = "sig-sa,sig-sa,sig-missing,sig-sk"),
+    FakeBatchPreset(label = "Conflict test", signatures = "0x1002"),
 )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FakeTdScreen() {
     var selectedSeat by rememberSaveable { mutableStateOf(Seat.NORTH) }
-    var inputText by rememberSaveable { mutableStateOf("sig-sa,sig-sk") }
+    var inputText by rememberSaveable { mutableStateOf("0x1001,0x1002") }
     var accumulator by remember {
         mutableStateOf(TdUiState.initial())
     }
@@ -255,7 +256,7 @@ private data class TdUiState(
 
     companion object {
         fun initial(): TdUiState {
-            val accumulator = TdScanAccumulator(defaultDeckProfile())
+            val accumulator = TdScanAccumulator(BuiltInDeckProfiles.demoBridge52())
             return TdUiState(
                 accumulator = accumulator,
                 latestPresentation = TdScanSessionPresentation.from(
@@ -276,13 +277,3 @@ private val Suit.prettySymbol: String
         Suit.DIAMONDS -> "♦"
         Suit.CLUBS -> "♣"
     }
-
-private fun defaultDeckProfile() = org.itroboc.core.DeckProfile(
-    buildMap {
-        listOf("S", "H", "D", "C").forEach { suit ->
-            listOf("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2").forEach { rank ->
-                put("sig-${suit.lowercase()}${rank.lowercase()}", CardId.parse("$suit$rank"))
-            }
-        }
-    },
-)

@@ -13,6 +13,7 @@ The repository currently contains:
   - canonical card ID parsing and formatting
   - hand and board validation logic
   - deck-profile signature mapping
+  - a built-in 52-card demo/reference deck profile with opaque synthetic signatures
   - single-scan and batch-scan accumulator logic for TD workflow
   - scan severity classification for future UI messaging
   - hand and board progress summaries for future TD display
@@ -26,6 +27,12 @@ The repository currently contains:
   - hand status, latest batch messages, grouped hand cards, board progress, and gated PBN preview
 
 Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
+
+## Demo deck profile
+
+The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA` and exists to support tests plus the fake Android TD shell.
+
+It is not a claim about real WinDup, Jannersten, or any other physical barcode mapping. Real deck profiles are expected to come later from admin-side calibration and observation.
 
 ## Running tests
 
