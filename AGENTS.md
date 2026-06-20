@@ -1,6 +1,7 @@
 # AGENTS
 
 - Read docs/product_context.md before making architectural changes.
+- Read md-files/field.md before changing collaboration-facing structure, workflow assumptions, or long-running field conventions.
 - Keep core logic pure and testable.
 - Do not add Android camera, UI, CameraX, OpenCV, or device integration code unless the task explicitly asks for it.
 - Prefer small, readable Kotlin files.
