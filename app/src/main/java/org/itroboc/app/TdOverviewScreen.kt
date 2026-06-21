@@ -85,11 +85,6 @@ fun TdOverviewScreen(
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
-//        Text(
-//            text = "Profile ID: ${activeProfile.id}",
-//            style = MaterialTheme.typography.bodyMedium,
-//            color = MaterialTheme.colorScheme.onSurfaceVariant,
-//        )
 
         Spacer(modifier = Modifier.height(24.dp))
 

@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.*
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AdminEditScreen(
     editor: DeckProfileEditor,
@@ -30,6 +33,7 @@ fun AdminEditScreen(
     
     var autoAdvance by remember { mutableStateOf(true) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
+    var aliasPendingRemoval by remember { mutableStateOf<String?>(null) }
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
@@ -112,13 +116,31 @@ fun AdminEditScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            
             val aliases = editor.getAliases(selectedCard)
             Text(
-                text = if (aliases.isEmpty()) "Unmapped" else "Aliases: ${aliases.joinToString(", ")}",
+                text = if (aliases.isEmpty()) "Unmapped" else "Mapped",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (aliases.isEmpty()) Color.Red else Color.Unspecified
             )
+            if (aliases.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Aliases",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    aliases.forEach { alias ->
+                        SuggestionChip(
+                            onClick = { aliasPendingRemoval = alias },
+                            label = { Text(alias) }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -169,6 +191,29 @@ fun AdminEditScreen(
                 }
             }
         }
+    }
+
+    aliasPendingRemoval?.let { alias ->
+        AlertDialog(
+            onDismissRequest = { aliasPendingRemoval = null },
+            title = { Text("Remove alias") },
+            text = { Text("Remove alias $alias from ${selectedCard.prettyString}?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    editor.remove(alias)
+                    lastResultMessage = "Removed alias $alias"
+                    aliasPendingRemoval = null
+                    updateTrigger++
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { aliasPendingRemoval = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

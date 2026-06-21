@@ -186,7 +186,7 @@ fun ProfileRow(
                 )
                 if (profile.isBuiltIn) {
                     Text(
-                        text = "Built-in",
+                        text = if (profile.isDemo) "Built-in demo" else "Built-in",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -210,6 +210,14 @@ fun AddProfileDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    val trimmedName = name.trim()
+    val nameAlreadyExists = existingNames.any { it.trim().equals(trimmedName, ignoreCase = true) }
+    val nameError = when {
+        trimmedName.isEmpty() -> "Profile name is required."
+        nameAlreadyExists -> "A profile with this name already exists."
+        else -> null
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add new profile") },
@@ -219,11 +227,20 @@ fun AddProfileDialog(
                 onValueChange = { name = it },
                 label = { Text("Profile Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = nameError != null,
+                supportingText = {
+                    if (nameError != null) {
+                        Text(nameError)
+                    }
+                },
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }) {
+            TextButton(
+                onClick = { onConfirm(name) },
+                enabled = nameError == null,
+            ) {
                 Text("OK")
             }
         },
