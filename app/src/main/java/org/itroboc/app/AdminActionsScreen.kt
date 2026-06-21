@@ -102,11 +102,12 @@ fun AdminActionsScreen(
 
     if (showAddDialog) {
         AddProfileDialog(
+            existingNames = uiState.profiles.map { it.displayName },
             onConfirm = { name ->
                 val trimmed = name.trim()
-                if (trimmed.isNotEmpty()) {
+                if (trimmed.isNotEmpty() && !uiState.hasProfileNamed(trimmed)) {
                     val newProfile = ProfileListItem(
-                        id = "custom-profile-${uiState.profiles.size}",
+                        id = uiState.nextCustomProfileId(),
                         displayName = trimmed,
                         isBuiltIn = false,
                         isDemo = false
@@ -217,10 +218,19 @@ fun ProfileRow(
 
 @Composable
 fun AddProfileDialog(
+    existingNames: List<String>,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    val trimmedName = name.trim()
+    val nameAlreadyExists = existingNames.any { it.trim().equals(trimmedName, ignoreCase = true) }
+    val nameError = when {
+        trimmedName.isEmpty() -> "Profile name is required."
+        nameAlreadyExists -> "A profile with this name already exists."
+        else -> null
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add new profile") },
@@ -230,11 +240,20 @@ fun AddProfileDialog(
                 onValueChange = { name = it },
                 label = { Text("Profile Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = nameError != null,
+                supportingText = {
+                    if (nameError != null) {
+                        Text(nameError)
+                    }
+                },
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }) {
+            TextButton(
+                onClick = { onConfirm(name) },
+                enabled = nameError == null,
+            ) {
                 Text("OK")
             }
         },
