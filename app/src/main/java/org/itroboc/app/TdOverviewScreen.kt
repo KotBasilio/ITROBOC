@@ -74,29 +74,38 @@ fun TdOverviewScreen(
         // Mock status text area
         Text(
             text = "Filled: 3/30",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Session Import/Export buttons
+        // Session buttons row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
                 onClick = { /* TODO: Import */ },
-                modifier = Modifier.weight(1f).height(56.dp)
+                modifier = Modifier.weight(1f).height(56.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Import Session")
+                Text("Import")
             }
             Button(
                 onClick = { /* TODO: Export */ },
-                modifier = Modifier.weight(1f).height(56.dp)
+                modifier = Modifier.weight(1f).height(56.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Export Session")
+                Text("Export")
+            }
+            Button(
+                onClick = { /* TODO: Settings */ },
+                modifier = Modifier.weight(1f).height(56.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text("Settings")
             }
         }
     }
@@ -122,7 +131,7 @@ fun BoardButton(
         Text(
             text = "$number",
             color = Color.Black,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
     }
