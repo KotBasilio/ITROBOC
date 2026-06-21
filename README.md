@@ -21,7 +21,12 @@ The repository currently contains:
   - basic PBN export
 - a minimal Android `:app` shell with:
   - a main menu as the entry point
-  - stub screens for TD and Admin actions
+  - stub screens for Admin actions
+  - a TD actions screen featuring a 30-board session overview:
+    - 3x10 grid of boards 1..30
+    - color-coding by board status (green for complete, yellow for empty/partial)
+    - mock board scan screen per board
+    - placeholders for session import/export
   - a "Mock actions" screen featuring the fake TD workflow:
     - seat selection
     - free-text fake signature batch input

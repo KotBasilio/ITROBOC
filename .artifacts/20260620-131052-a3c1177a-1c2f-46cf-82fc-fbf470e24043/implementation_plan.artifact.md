@@ -1,43 +1,51 @@
-# Add Main Menu and Navigation
+# Implement TD Overview and Board Scan Mock
 
-This plan adds a main menu as the entry point for the ITROBOC Android app, routing the existing fake scan screen under "Mock actions" and providing stubs for "TD actions" and "Admin actions".
+This plan establishes the first real TD Actions screen with a 30-board overview grid and a mock board scanning workflow.
+
+## User Review Required
+
+> [!NOTE]
+> Navigation between `TdActions` and `BoardScan` is handled via a simple state stack or by explicit back actions to maintain the requested simplicity.
 
 ## Proposed Changes
 
 ### Android App (:app)
 
-#### [NEW] [Screen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/Screen.kt)
-- Define `sealed class Screen` for navigation state.
+#### [Screen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/Screen.kt)
+- Add `data class BoardScan(val boardNumber: Int) : Screen()` to support navigating to specific boards.
 
-#### [NEW] [MainMenuScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/MainMenuScreen.kt)
-- Implement `MainMenuScreen` with buttons for TD, Admin, and Mock actions.
+#### [NEW] [TdOverviewScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/TdOverviewScreen.kt)
+- Implement `TdOverviewScreen` containing:
+    - 3x10 grid of buttons (1-30).
+    - Color-coding logic (Green for Complete, Yellow for Empty/Partial).
+    - "Import Session" and "Export Session" stub buttons.
+    - Navigation to `BoardScan`.
+- Define `BoardUiStatus` enum.
 
-#### [NEW] [StubActionScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/StubActionScreen.kt)
-- Implement a generic `StubActionScreen` with placeholder text and a back button.
-
-#### [NEW] [MockTdScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/MockTdScreen.kt)
-- Move `FakeTdScreen` and its related helper composables/classes from `MainActivity.kt`.
+#### [NEW] [BoardScanScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/BoardScanScreen.kt)
+- Implement a placeholder screen for scanning a specific board.
+- Includes a "Back" button to return to `TdActions`.
 
 #### [MainActivity.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/MainActivity.kt)
-- Update `MainActivity` to use a `currentScreen` state and switch between the new screens.
-- Remove `FakeTdScreen` and moved logic.
+- Update `AppNavigation` to route `Screen.TdActions` to `TdOverviewScreen` and handle `Screen.BoardScan`.
 
 ---
 
 ### Documentation
 
 #### [README.md](file:///C:/home/ITROBOC/README.md)
-- Update to reflect the new app entry point and navigation structure.
+- Update "Current milestone" or "a minimal Android `:app` shell" section to mention the 30-board overview.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `./gradlew :core:test` to ensure no regressions in domain logic.
-- Run `./gradlew :app:assembleDebug` to ensure the app builds.
+- `./gradlew :core:test`
+- `./gradlew :app:assembleDebug`
 
 ### Manual Verification
-1. Launch the app.
-2. Verify "Main Menu" is shown with three buttons.
-3. Click "TD actions" -> Verify stub page -> Click "Back" -> Verify Main Menu.
-4. Click "Admin actions" -> Verify stub page -> Click "Back" -> Verify Main Menu.
-5. Click "Mock actions" -> Verify existing fake TD screen works (seat selection, scan buttons, etc.) -> Click "Back" (if added) or navigate back via state.
+1. Open "TD actions" from Main Menu.
+2. Verify 3x10 grid of 30 buttons.
+3. Verify some buttons are Green/Yellow (mock data).
+4. Click a board button (e.g., Board 7) -> Verify "Board 7" scan placeholder.
+5. Click "Back" in Board Scan -> Return to TD actions.
+6. Verify "Import/Export" buttons are present.

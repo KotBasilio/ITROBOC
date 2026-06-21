@@ -35,10 +35,17 @@ fun AppNavigation() {
             MainMenuScreen(onNavigate = { currentScreen = it })
         }
         is Screen.TdActions -> {
-            StubActionScreen(
-                title = "TD actions",
-                message = "TD workflow will be implemented here.",
+            TdOverviewScreen(
+                onNavigateToBoard = { boardNumber ->
+                    currentScreen = Screen.BoardScan(boardNumber)
+                },
                 onBack = { currentScreen = Screen.MainMenu }
+            )
+        }
+        is Screen.BoardScan -> {
+            BoardScanScreen(
+                boardNumber = screen.boardNumber,
+                onBack = { currentScreen = Screen.TdActions }
             )
         }
         is Screen.AdminActions -> {
