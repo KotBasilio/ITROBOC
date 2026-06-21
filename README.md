@@ -28,6 +28,8 @@ The repository currently contains:
 
 Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
 
+For details on the signature mapping scheme used in the fake shell, see [md-files/signatures.md](md-files/signatures.md).
+
 ## Demo deck profile
 
 The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA` and exists to support tests plus the fake Android TD shell.

@@ -120,8 +120,11 @@ private fun FakeTdScreen() {
             style = MaterialTheme.typography.bodyLarge,
         )
 
-        Panel(title = "Current Seat") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Panel(title = "Current Hand (${selectedSeat.displayName})") {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Seat.entries.forEach { seat ->
                     FilterChip(
                         selected = seat == selectedSeat,
@@ -129,6 +132,15 @@ private fun FakeTdScreen() {
                         label = { Text(seat.displayName) },
                     )
                 }
+            }
+            Spacer(Modifier.height(8.dp))
+            presentation.handProgress.cardsBySuit.forEach { suitCards ->
+                val cardText =
+                    suitCards.cards.joinToString(" ") { it.toPrettyString() }.ifBlank { "—" }
+                Text(
+                    text = "${suitCards.suit.symbol}: $cardText",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
         }
 
@@ -172,16 +184,6 @@ private fun FakeTdScreen() {
             )
             presentation.latestBatchMessages.forEach { message ->
                 Text(text = "• $message", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-
-        Panel(title = "Current Hand") {
-            presentation.handProgress.cardsBySuit.forEach { suitCards ->
-                val cardText = suitCards.cards.joinToString(" ") { it.toPrettyString() }.ifBlank { "—" }
-                Text(
-                    text = "${suitCards.suit.symbol}: $cardText",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
             }
         }
 
