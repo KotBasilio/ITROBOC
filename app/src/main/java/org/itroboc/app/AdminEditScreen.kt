@@ -5,9 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -39,7 +36,7 @@ fun AdminEditScreen(
     var updateTrigger by remember { mutableIntStateOf(0) }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        // Left Part: 52-card mapping grid
+        // Left Part: 52-card mapping grid (Stretched to fill height)
         Column(
             modifier = Modifier
                 .weight(0.5f)
@@ -55,35 +52,43 @@ fun AdminEditScreen(
             val suits = Suit.entries
             val ranks = Rank.entries
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            // Header row
+            Row(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Header row for suits
-                items(suits) { suit ->
-                    Box(contentAlignment = Alignment.Center) {
+                suits.forEach { suit ->
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(text = suit.prettySymbol, fontSize = 20.sp)
                     }
                 }
+            }
 
-                // Cards: 13 ranks * 4 suits
-                ranks.forEach { rank ->
-                    items(suits) { suit ->
+            // Card rows (13 rows)
+            ranks.forEach { rank ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    suits.forEach { suit ->
                         val card = CardId(suit, rank)
                         val isMapped = editor.isMapped(card)
                         val isSelected = card == selectedCard
                         
-                        CardButton(
-                            card = card,
-                            isMapped = isMapped,
-                            isSelected = isSelected,
-                            onClick = {
-                                selectedSuit = suit
-                                selectedRank = rank
-                            }
-                        )
+                        Box(modifier = Modifier.weight(1f)) {
+                            CardButton(
+                                card = card,
+                                isMapped = isMapped,
+                                isSelected = isSelected,
+                                onClick = {
+                                    selectedSuit = suit
+                                    selectedRank = rank
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -234,7 +239,7 @@ fun CardButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(28.dp) // Adjusted height (approx 1/4 of typical width)
+            .fillMaxHeight()
             .background(backgroundColor, RoundedCornerShape(4.dp))
             .border(borderWidth, borderColor, RoundedCornerShape(4.dp))
             .clickable(onClick = onClick),
