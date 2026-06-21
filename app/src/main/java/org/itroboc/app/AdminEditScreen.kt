@@ -248,8 +248,8 @@ fun AdminEditScreen(
     if (showUnsavedChangesDialog) {
         AlertDialog(
             onDismissRequest = { showUnsavedChangesDialog = false },
-            title = { Text("Profile was modified") },
-            text = { Text("Profile was modified. Choose action.") },
+            title = { Text("Profile was modified.") },
+            text = { Text("Save changes?") },
             confirmButton = {
                 TextButton(onClick = {
                     onSave(editor.toDeckProfile())
