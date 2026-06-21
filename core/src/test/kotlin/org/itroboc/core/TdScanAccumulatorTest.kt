@@ -86,7 +86,7 @@ class TdScanAccumulatorTest {
         ).fold(HandState()) { hand, card -> hand.addCard(CardId.parse(card)) }
 
         val accumulator = TdScanAccumulator(
-            deckProfile = DeckProfile(mapOf("sig-ha" to CardId.parse("HA"))),
+            deckProfile = DeckProfile(signatureToCard = mapOf("sig-ha" to CardId.parse("HA"))),
             boardState = BoardState(
                 mapOf(
                     Seat.NORTH to completeNorthHand,
@@ -202,7 +202,7 @@ class TdScanAccumulatorTest {
 
         val accumulator = TdScanAccumulator(
             deckProfile = DeckProfile(
-                mapOf(
+                signatureToCard = mapOf(
                     "0x1034" to CardId.parse("C2"),
                     "0x100E" to CardId.parse("HA"),
                 ),
@@ -272,5 +272,14 @@ class TdScanAccumulatorTest {
         val report = TdScanAccumulator(BuiltInDeckProfiles.demoBridge52()).scan(Seat.NORTH, "0xFFFF")
 
         assertEquals(TdScanResult.UnknownSignature("0xFFFF"), report.result)
+    }
+
+    @Test
+    fun `scan flow preserves active deck profile metadata`() {
+        val report = TdScanAccumulator(BuiltInDeckProfiles.demoBridge52()).scan(Seat.NORTH, "0x1001")
+
+        assertEquals("builtin-demo-bridge52-v1", report.accumulator.deckProfile.metadata.profileId)
+        assertEquals("Built-in Demo Bridge 52", report.accumulator.deckProfile.metadata.displayName)
+        assertEquals(TdScanResult.Added(CardId.parse("SA")), report.result)
     }
 }

@@ -9,7 +9,7 @@ class DeckProfileTest {
     @Test
     fun `looks up card ids by raw signature`() {
         val profile = DeckProfile(
-            mapOf(
+            signatureToCard = mapOf(
                 "sig-spade-ace" to CardId.parse("SA"),
                 "sig-club-queen" to CardId.parse("CQ"),
             ),
@@ -27,6 +27,18 @@ class DeckProfileTest {
         assertEquals(52, profile.mappingCount())
         assertEquals(52, profile.cardIds().size)
         assertEquals(52, profile.rawSignatures().size)
+    }
+
+    @Test
+    fun `demo bridge profile exposes expected metadata`() {
+        val profile = BuiltInDeckProfiles.demoBridge52()
+
+        assertEquals("builtin-demo-bridge52-v1", profile.metadata.profileId)
+        assertEquals("Built-in Demo Bridge 52", profile.metadata.displayName)
+        assertEquals(true, profile.metadata.isBuiltIn)
+        assertEquals(true, profile.metadata.isDemo)
+        assertTrue(profile.metadata.notes?.contains("Synthetic demo/reference mapping") == true)
+        assertTrue(profile.metadata.notes?.contains("not a real WinDup/Jannersten profile") == true)
     }
 
     @Test

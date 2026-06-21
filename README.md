@@ -32,7 +32,7 @@ For details on the signature mapping scheme used in the fake shell, see [md-file
 
 ## Demo deck profile
 
-The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA` and exists to support tests plus the fake Android TD shell.
+The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA`, carries explicit profile metadata, and exists to support tests plus the fake Android TD shell.
 
 It is not a claim about real WinDup, Jannersten, or any other physical barcode mapping. Real deck profiles are expected to come later from admin-side calibration and observation.
 

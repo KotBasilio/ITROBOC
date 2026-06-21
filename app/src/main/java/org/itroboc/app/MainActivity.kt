@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BuiltInDeckProfiles
 import org.itroboc.core.CardId
+import org.itroboc.core.DeckProfileMetadata
 import org.itroboc.core.PbnExporter
 import org.itroboc.core.Seat
 import org.itroboc.core.Suit
@@ -118,6 +119,11 @@ private fun FakeTdScreen() {
         Text(
             text = "Android shell only. Fake signatures in, pure core out.",
             style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = activeProfileLabel(accumulator.accumulator.deckProfile.metadata),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF57534E),
         )
 
         Panel(title = "Current Hand (${selectedSeat.displayName})") {
@@ -283,6 +289,11 @@ private data class TdUiState(
 }
 
 private fun CardId.toPrettyString(): String = "${suit.prettySymbol}${rank.symbol}"
+
+private fun activeProfileLabel(metadata: DeckProfileMetadata): String {
+    val suffix = if (metadata.isDemo) " (demo)" else ""
+    return "Profile: ${metadata.displayName}$suffix"
+}
 
 private val Suit.prettySymbol: String
     get() = when (this) {
