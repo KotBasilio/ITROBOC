@@ -231,7 +231,7 @@ fun CardButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            .height(28.dp) // Adjusted height (approx 1/4 of typical width)
             .background(backgroundColor, RoundedCornerShape(4.dp))
             .border(borderWidth, borderColor, RoundedCornerShape(4.dp))
             .clickable(onClick = onClick),
