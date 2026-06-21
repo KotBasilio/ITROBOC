@@ -1,5 +1,7 @@
 package org.itroboc.app
 
+import org.itroboc.core.BuiltInDeckProfiles
+import org.itroboc.core.DeckProfile
 import org.itroboc.core.DeckProfileMetadata
 
 data class ProfileListItem(
@@ -39,3 +41,18 @@ fun DeckProfileMetadata.toProfileListItem(): ProfileListItem =
         isBuiltIn = isBuiltIn,
         isDemo = isDemo,
     )
+
+fun ProfileListItem.toDeckProfileMetadata(): DeckProfileMetadata =
+    DeckProfileMetadata(
+        profileId = id,
+        displayName = displayName,
+        isBuiltIn = isBuiltIn,
+        isDemo = isDemo,
+    )
+
+fun ProfileListItem.toMockDeckProfile(baseProfile: DeckProfile = BuiltInDeckProfiles.demoBridge52()): DeckProfile =
+    if (isBuiltIn && id == baseProfile.metadata.profileId) {
+        baseProfile
+    } else {
+        baseProfile.withMetadata(toDeckProfileMetadata())
+    }

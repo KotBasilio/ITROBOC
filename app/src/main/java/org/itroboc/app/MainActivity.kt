@@ -30,7 +30,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.MainMenu) }
-    val activeProfile = remember { BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem() }
+    val builtInDemoProfile = remember { BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem() }
+    var profileState by remember {
+        mutableStateOf(
+            AdminProfileUiState(
+                profiles = listOf(builtInDemoProfile),
+                activeProfileId = builtInDemoProfile.id,
+            ),
+        )
+    }
+    val activeProfile = profileState.activeProfile ?: builtInDemoProfile
+    val activeDeckProfile = activeProfile.toMockDeckProfile()
 
     when (val screen = currentScreen) {
         is Screen.MainMenu -> {
@@ -52,10 +62,38 @@ fun AppNavigation() {
             )
         }
         is Screen.AdminActions -> {
-            AdminActionsScreen(onBack = { currentScreen = Screen.MainMenu })
+            AdminActionsScreen(
+                uiState = profileState,
+                onSelectProfile = { profileId ->
+                    profileState = profileState.copy(activeProfileId = profileId)
+                },
+                onAddProfile = { profileName ->
+                    val newProfile = ProfileListItem(
+                        id = profileState.nextCustomProfileId(),
+                        displayName = profileName,
+                        isBuiltIn = false,
+                        isDemo = false,
+                    )
+                    profileState = profileState.copy(
+                        profiles = profileState.profiles + newProfile,
+                        activeProfileId = newProfile.id,
+                    )
+                },
+                onDeleteActiveProfile = {
+                    val newProfiles = profileState.profiles.filter { it.id != profileState.activeProfileId }
+                    profileState = profileState.copy(
+                        profiles = newProfiles,
+                        activeProfileId = newProfiles.firstOrNull()?.id ?: builtInDemoProfile.id,
+                    )
+                },
+                onBack = { currentScreen = Screen.MainMenu },
+            )
         }
         is Screen.MockActions -> {
-            MockTdScreen(onBack = { currentScreen = Screen.MainMenu })
+            MockTdScreen(
+                deckProfile = activeDeckProfile,
+                onBack = { currentScreen = Screen.MainMenu },
+            )
         }
     }
 }

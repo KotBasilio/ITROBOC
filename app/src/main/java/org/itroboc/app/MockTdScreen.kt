@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BuiltInDeckProfiles
 import org.itroboc.core.CardId
+import org.itroboc.core.DeckProfile
 import org.itroboc.core.DeckProfileMetadata
 import org.itroboc.core.PbnExporter
 import org.itroboc.core.Seat
@@ -44,12 +45,13 @@ import org.itroboc.core.TdScanSessionPresentation
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MockTdScreen(
+    deckProfile: DeckProfile = BuiltInDeckProfiles.demoBridge52(),
     onBack: () -> Unit
 ) {
     var selectedSeat by rememberSaveable { mutableStateOf(Seat.NORTH) }
     var inputText by rememberSaveable { mutableStateOf("0x1001,0x1002") }
-    var accumulator by remember {
-        mutableStateOf(TdUiState.initial())
+    var accumulator by remember(deckProfile) {
+        mutableStateOf(TdUiState.initial(deckProfile))
     }
 
     val presentation = accumulator.presentationFor(selectedSeat)
@@ -135,7 +137,7 @@ fun MockTdScreen(
                 Button(onClick = { accumulator = accumulator.scan(selectedSeat, inputText) }) {
                     Text("Scan Fake Batch")
                 }
-                Button(onClick = { accumulator = TdUiState.initial() }) {
+                Button(onClick = { accumulator = TdUiState.initial(deckProfile) }) {
                     Text("Reset Session")
                 }
             }
@@ -266,8 +268,8 @@ private data class TdUiState(
         }
 
     companion object {
-        fun initial(): TdUiState {
-            val accumulator = TdScanAccumulator(BuiltInDeckProfiles.demoBridge52())
+        fun initial(deckProfile: DeckProfile): TdUiState {
+            val accumulator = TdScanAccumulator(deckProfile)
             return TdUiState(
                 accumulator = accumulator,
                 latestPresentation = TdScanSessionPresentation.from(

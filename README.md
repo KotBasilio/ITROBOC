@@ -24,16 +24,19 @@ The repository currently contains:
   - an Admin actions screen for Deck Profile management:
     - profile listing with active selection
     - in-memory Add/Delete functionality
+    - active profile retained while moving between app screens
     - placeholders for profile export/import/edit
   - a TD actions screen featuring a 30-board session overview:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
     - mock board scan screen per board
+    - active profile name/ID shown in the overview
     - placeholders for session import/export
   - a "Mock actions" screen featuring the fake TD workflow:
     - seat selection
     - free-text fake signature batch input
     - preset fake-batch buttons
+    - current active profile context shared from the app shell
     - hand status, latest batch messages, grouped hand cards, board progress, and gated PBN preview
 
 Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).

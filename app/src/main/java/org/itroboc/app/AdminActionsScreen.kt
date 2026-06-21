@@ -19,19 +19,12 @@ import org.itroboc.core.BuiltInDeckProfiles
 
 @Composable
 fun AdminActionsScreen(
+    uiState: AdminProfileUiState,
+    onSelectProfile: (String) -> Unit,
+    onAddProfile: (String) -> Unit,
+    onDeleteActiveProfile: () -> Unit,
     onBack: () -> Unit
 ) {
-    val builtInDemoProfile = remember { BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem() }
-
-    var uiState by remember {
-        mutableStateOf(
-            AdminProfileUiState(
-                profiles = listOf(builtInDemoProfile),
-                activeProfileId = builtInDemoProfile.id,
-            )
-        )
-    }
-
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDisplay by remember { mutableStateOf<String?>(null) }
@@ -78,7 +71,7 @@ fun AdminActionsScreen(
                     ProfileRow(
                         profile = profile,
                         isActive = profile.id == uiState.activeProfileId,
-                        onClick = { uiState = uiState.copy(activeProfileId = profile.id) }
+                        onClick = { onSelectProfile(profile.id) }
                     )
                 }
 
@@ -102,16 +95,7 @@ fun AdminActionsScreen(
             onConfirm = { name ->
                 val trimmed = name.trim()
                 if (trimmed.isNotEmpty() && !uiState.hasProfileNamed(trimmed)) {
-                    val newProfile = ProfileListItem(
-                        id = uiState.nextCustomProfileId(),
-                        displayName = trimmed,
-                        isBuiltIn = false,
-                        isDemo = false
-                    )
-                    uiState = uiState.copy(
-                        profiles = uiState.profiles + newProfile,
-                        activeProfileId = newProfile.id
-                    )
+                    onAddProfile(trimmed)
                     showAddDialog = false
                 }
             },
@@ -127,12 +111,7 @@ fun AdminActionsScreen(
             text = { Text("Are you sure you want to delete the active profile \"$activeName\"?") },
             confirmButton = {
                 TextButton(onClick = {
-                    val toDelete = uiState.activeProfileId
-                    val newProfiles = uiState.profiles.filter { it.id != toDelete }
-                    uiState = uiState.copy(
-                        profiles = newProfiles,
-                        activeProfileId = newProfiles.firstOrNull()?.id ?: ""
-                    )
+                    onDeleteActiveProfile()
                     showDeleteDialog = false
                 }) {
                     Text("OK")
@@ -163,7 +142,17 @@ fun AdminActionsScreen(
 @Composable
 fun AdminActionsPreview() {
     MaterialTheme {
-        AdminActionsScreen(onBack = {})
+        val builtInDemoProfile = BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem()
+        AdminActionsScreen(
+            uiState = AdminProfileUiState(
+                profiles = listOf(builtInDemoProfile),
+                activeProfileId = builtInDemoProfile.id,
+            ),
+            onSelectProfile = {},
+            onAddProfile = {},
+            onDeleteActiveProfile = {},
+            onBack = {},
+        )
     }
 }
 
