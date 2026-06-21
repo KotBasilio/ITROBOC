@@ -10,12 +10,12 @@
 - [x] Run `./gradlew :core:test`
 - [x] Run `./gradlew :app:assembleDebug`
 - [x] Verify implementation manually via UI (Compose Preview)
-- [/] Implement TD Overview Screen
-    - [ ] Update `Screen.kt` for board navigation
-    - [ ] Create `TdOverviewScreen.kt` (3x10 grid, color coding)
-    - [ ] Create `BoardScanScreen.kt` (placeholder)
-    - [ ] Update `MainActivity.kt` navigation
-    - [ ] Update `README.md`
-- [ ] Final Verification
-    - [ ] `./gradlew :core:test`
-    - [ ] `./gradlew :app:assembleDebug`
+- [x] Implement TD Overview Screen
+    - [x] Update `Screen.kt` for board navigation
+    - [x] Create `TdOverviewScreen.kt` (3x10 grid, color coding)
+    - [x] Create `BoardScanScreen.kt` (placeholder)
+    - [x] Update `MainActivity.kt` navigation
+    - [x] Update `README.md`
+- [x] Final Verification
+    - [x] `./gradlew :core:test`
+    - [x] `./gradlew :app:assembleDebug`

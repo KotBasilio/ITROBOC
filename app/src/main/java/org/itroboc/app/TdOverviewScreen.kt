@@ -45,19 +45,19 @@ fun TdOverviewScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 3x10 Grid for 30 boards
+        // 10-column Grid for 30 boards
         LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
+            columns = GridCells.Fixed(10),
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(30) { index ->
                 val boardNumber = index + 1
                 // Mock logic: alternate colors for demonstration
                 val status = when {
-                    boardNumber % 5 == 0 -> BoardUiStatus.Complete
+                    boardNumber % 10 == 0 -> BoardUiStatus.Complete
                     else -> BoardUiStatus.Empty
                 }
                 
@@ -69,7 +69,17 @@ fun TdOverviewScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mock status text area
+        Text(
+            text = "Filled: 3/30",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Session Import/Export buttons
         Row(
@@ -106,13 +116,13 @@ fun BoardButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
-        modifier = Modifier.fillMaxWidth().aspectRatio(1.5f),
+        modifier = Modifier.fillMaxWidth().aspectRatio(0.8f),
         contentPadding = PaddingValues(0.dp)
     ) {
         Text(
             text = "$number",
             color = Color.Black,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold
         )
     }
