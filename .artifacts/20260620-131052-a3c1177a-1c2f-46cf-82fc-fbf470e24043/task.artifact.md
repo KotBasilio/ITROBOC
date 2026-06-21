@@ -21,11 +21,11 @@
 - [x] Final Verification
     - [x] `./gradlew :core:test`
     - [x] `./gradlew :app:assembleDebug`
-- [/] Implement Admin Actions Screen
-    - [ ] Create UI models for Admin profiles
-    - [ ] Create `AdminActionsScreen.kt`
-    - [ ] Update `MainActivity.kt` navigation
-    - [ ] Update `README.md`
-- [ ] Post-Implementation Verification
-    - [ ] `./gradlew :core:test`
-    - [ ] `./gradlew :app:assembleDebug`
+- [x] Implement Admin Actions Screen
+    - [x] Create UI models for Admin profiles
+    - [x] Create `AdminActionsScreen.kt`
+    - [x] Update `MainActivity.kt` navigation
+    - [x] Update `README.md`
+- [x] Post-Implementation Verification
+    - [x] `./gradlew :core:test`
+    - [x] `./gradlew :app:assembleDebug`
