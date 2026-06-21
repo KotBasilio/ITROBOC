@@ -15,23 +15,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.itroboc.core.BuiltInDeckProfiles
 
 @Composable
 fun AdminActionsScreen(
     onBack: () -> Unit
 ) {
+    val builtInDemoProfile = remember { BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem() }
+
     var uiState by remember {
         mutableStateOf(
             AdminProfileUiState(
-                profiles = listOf(
-                    ProfileListItem(
-                        id = "builtin-demo-bridge52-v1",
-                        displayName = "Built-in Demo Bridge 52",
-                        isBuiltIn = true,
-                        isDemo = true
-                    )
-                ),
-                activeProfileId = "builtin-demo-bridge52-v1"
+                profiles = listOf(builtInDemoProfile),
+                activeProfileId = builtInDemoProfile.id,
             )
         )
     }
@@ -42,7 +38,7 @@ fun AdminActionsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            ItrobocTopBar(
                 title = { Text("Admin actions") },
                 actions = {
                     Button(onClick = onBack) {
@@ -199,7 +195,7 @@ fun ProfileRow(
                 )
                 if (profile.isBuiltIn) {
                     Text(
-                        text = "Built-in",
+                        text = if (profile.isDemo) "Built-in demo" else "Built-in",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -307,7 +303,7 @@ fun AdminBottomBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBar(
+fun ItrobocTopBar(
     title: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit
 ) {

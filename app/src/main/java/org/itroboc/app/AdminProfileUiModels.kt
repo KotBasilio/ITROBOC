@@ -1,5 +1,7 @@
 package org.itroboc.app
 
+import org.itroboc.core.DeckProfileMetadata
+
 data class ProfileListItem(
     val id: String,
     val displayName: String,
@@ -29,3 +31,11 @@ data class AdminProfileUiState(
         return "custom-profile-$nextSuffix"
     }
 }
+
+fun DeckProfileMetadata.toProfileListItem(): ProfileListItem =
+    ProfileListItem(
+        id = profileId,
+        displayName = displayName,
+        isBuiltIn = isBuiltIn,
+        isDemo = isDemo,
+    )
