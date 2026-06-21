@@ -35,7 +35,7 @@ The repository currently contains:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
     - mock board scan screen per board
-    - active profile name/ID shown in the overview
+    - active profile name shown in the overview
     - placeholders for session import/export
   - a "Mock actions" screen featuring the fake TD workflow:
     - seat selection

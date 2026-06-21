@@ -111,6 +111,10 @@ If `Auto-advance` is enabled, after a successful new assignment the selected car
 
 If no unmapped cards remain, selection stays or moves to a sensible final state.
 
+Current prototype note:
+
+* Known issue: the current mock implementation jumps to the first unmapped card in deck order, not yet the next unmapped card relative to the current selection.
+
 ## Selected card status area
 
 Show the currently selected card, for example:

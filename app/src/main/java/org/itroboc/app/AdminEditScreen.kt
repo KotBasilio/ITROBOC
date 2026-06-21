@@ -31,6 +31,8 @@ fun AdminEditScreen(
     var autoAdvance by remember { mutableStateOf(true) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
     var aliasPendingRemoval by remember { mutableStateOf<String?>(null) }
+    var isDirty by remember { mutableStateOf(false) }
+    var showUnsavedChangesDialog by remember { mutableStateOf(false) }
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
@@ -185,16 +187,34 @@ fun AdminEditScreen(
                                 lastResultMessage = "Profile complete! All 52 cards mapped."
                             }
                         }
+                        if (result is DeckProfileEditResult.Assigned) {
+                            isDirty = true
+                        }
                         updateTrigger++ // Force UI refresh
                     },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Scan")
                 }
-                Button(onClick = { onSave(editor.toDeckProfile()) }, modifier = Modifier.weight(1f)) {
+                Button(
+                    onClick = {
+                        onSave(editor.toDeckProfile())
+                        isDirty = false
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("Save")
                 }
-                Button(onClick = onBack, modifier = Modifier.weight(1f)) {
+                Button(
+                    onClick = {
+                        if (isDirty) {
+                            showUnsavedChangesDialog = true
+                        } else {
+                            onBack()
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("Back")
                 }
             }
@@ -210,6 +230,7 @@ fun AdminEditScreen(
                 TextButton(onClick = {
                     editor.remove(alias)
                     lastResultMessage = "Removed alias $alias"
+                    isDirty = true
                     aliasPendingRemoval = null
                     updateTrigger++
                 }) {
@@ -219,6 +240,33 @@ fun AdminEditScreen(
             dismissButton = {
                 TextButton(onClick = { aliasPendingRemoval = null }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showUnsavedChangesDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnsavedChangesDialog = false },
+            title = { Text("Profile was modified") },
+            text = { Text("Profile was modified. Choose action.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onSave(editor.toDeckProfile())
+                    isDirty = false
+                    showUnsavedChangesDialog = false
+                    onBack()
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    isDirty = false
+                    showUnsavedChangesDialog = false
+                    onBack()
+                }) {
+                    Text("Discard")
                 }
             }
         )
