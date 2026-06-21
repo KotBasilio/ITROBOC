@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import org.itroboc.core.BuiltInDeckProfiles
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.MainMenu) }
+    val activeProfile = remember { BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem() }
 
     when (val screen = currentScreen) {
         is Screen.MainMenu -> {
@@ -36,6 +38,7 @@ fun AppNavigation() {
         }
         is Screen.TdActions -> {
             TdOverviewScreen(
+                activeProfile = activeProfile,
                 onNavigateToBoard = { boardNumber ->
                     currentScreen = Screen.BoardScan(boardNumber)
                 },

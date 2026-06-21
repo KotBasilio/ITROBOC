@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.itroboc.core.BuiltInDeckProfiles
 
 enum class BoardUiStatus {
     Empty,
@@ -19,6 +20,7 @@ enum class BoardUiStatus {
 
 @Composable
 fun TdOverviewScreen(
+    activeProfile: ProfileListItem = BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem(),
     onNavigateToBoard: (Int) -> Unit,
     onBack: () -> Unit
 ) {
@@ -77,6 +79,16 @@ fun TdOverviewScreen(
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "Active profile: ${activeProfile.displayName}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+        Text(
+            text = "Profile ID: ${activeProfile.id}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
