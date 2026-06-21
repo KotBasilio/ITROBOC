@@ -163,11 +163,12 @@ fun AdminEditScreen(
                         val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
                         val result = editor.assign(mockSig, selectedCard)
                         lastResultMessage = when (result) {
-                            is DeckProfileEditResult.Assigned -> "Assigned $mockSig"
-                            is DeckProfileEditResult.AlreadyAssignedToSelected -> "Already assigned"
-                            is DeckProfileEditResult.SignatureConflict -> "Conflict with ${result.existingCard}"
-                            else -> "Error"
+                            is DeckProfileEditResult.Assigned -> "Signature $mockSig assigned to ${selectedCard.prettyString}"
+                            is DeckProfileEditResult.AlreadyAssignedToSelected -> "Alias $mockSig already exists for ${selectedCard.prettyString}"
+                            is DeckProfileEditResult.SignatureConflict -> "CONFLICT: $mockSig is already mapped to ${result.existingCard.prettyString}"
+                            else -> "No card selected"
                         }
+                        
                         if (result is DeckProfileEditResult.Assigned && autoAdvance) {
                             // Find next unmapped card or stay
                             val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
@@ -175,6 +176,8 @@ fun AdminEditScreen(
                             if (nextUnmapped != null) {
                                 selectedSuit = nextUnmapped.suit
                                 selectedRank = nextUnmapped.rank
+                            } else {
+                                lastResultMessage = "Profile complete! All 52 cards mapped."
                             }
                         }
                         updateTrigger++ // Force UI refresh

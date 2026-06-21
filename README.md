@@ -25,7 +25,12 @@ The repository currently contains:
     - profile listing with active selection
     - in-memory Add/Delete functionality
     - active profile retained while moving between app screens
-    - placeholders for profile export/import/edit
+    - placeholders for profile export/import
+    - a functional Admin::Edit calibration workshop:
+      - 4x13 mapping grid with status coloring
+      - mock scanner integration with conflict detection
+      - support for aliases (multiple signatures per card)
+      - auto-advance calibration flow
   - a TD actions screen featuring a 30-board session overview:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
