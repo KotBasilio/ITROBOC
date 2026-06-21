@@ -1,31 +1,14 @@
 # Task Management
 
-- [x] Analyze `MainActivity.kt` and plan extraction
-- [x] Create `Screen.kt` for navigation state
-- [x] Create `MainMenuScreen.kt`
-- [x] Create `StubActionScreen.kt`
-- [x] Create `MockTdScreen.kt` and move existing logic
-- [x] Update `MainActivity.kt` with navigation orchestration
-- [x] Update `README.md`
-- [x] Run `./gradlew :core:test`
-- [x] Run `./gradlew :app:assembleDebug`
-- [x] Verify implementation manually via UI (Compose Preview)
-- [x] Run `./gradlew :app:assembleDebug`
-- [x] Verify implementation manually via UI (Compose Preview)
-- [x] Implement TD Overview Screen
-    - [x] Update `Screen.kt` for board navigation
-    - [x] Create `TdOverviewScreen.kt` (3x10 grid, color coding)
-    - [x] Create `BoardScanScreen.kt` (placeholder)
-    - [x] Update `MainActivity.kt` navigation
-    - [x] Update `README.md`
-- [x] Final Verification
-    - [x] `./gradlew :core:test`
-    - [x] `./gradlew :app:assembleDebug`
-- [x] Implement Admin Actions Screen
-    - [x] Create UI models for Admin profiles
-    - [x] Create `AdminActionsScreen.kt`
-    - [x] Update `MainActivity.kt` navigation
-    - [x] Update `README.md`
-- [x] Post-Implementation Verification
-    - [x] `./gradlew :core:test`
-    - [x] `./gradlew :app:assembleDebug`
+- [x] Initial build fixes and cleanup
+- [x] Implement main menu and navigation
+- [x] Implement TD Overview screen
+- [x] Implement Admin Actions screen
+- [/] Implement Admin Edit (Ticket 1: Core Model)
+    - [ ] Create `DeckProfileEditResult.kt`
+    - [ ] Create `DeckProfileEditor.kt`
+    - [ ] Update `DeckProfile.kt` with `toEditor()`
+    - [ ] Create `DeckProfileEditorTest.kt`
+    - [ ] Run `./gradlew :core:test`
+- [ ] Implement Admin Edit UI Shell (Ticket 2)
+- [ ] Polish Admin Edit (Ticket 3)
