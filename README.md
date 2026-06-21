@@ -20,11 +20,13 @@ The repository currently contains:
   - batch presentation summaries for a future TD screen
   - basic PBN export
 - a minimal Android `:app` shell with:
-  - one fake TD screen
-  - seat selection
-  - free-text fake signature batch input
-  - preset fake-batch buttons
-  - hand status, latest batch messages, grouped hand cards, board progress, and gated PBN preview
+  - a main menu as the entry point
+  - stub screens for TD and Admin actions
+  - a "Mock actions" screen featuring the fake TD workflow:
+    - seat selection
+    - free-text fake signature batch input
+    - preset fake-batch buttons
+    - hand status, latest batch messages, grouped hand cards, board progress, and gated PBN preview
 
 Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
 
