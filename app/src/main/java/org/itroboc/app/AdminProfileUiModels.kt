@@ -32,6 +32,8 @@ data class AdminProfileUiState(
 
         return "custom-profile-$nextSuffix"
     }
+
+    fun findProfile(id: String): ProfileListItem? = profiles.find { it.id == id }
 }
 
 fun DeckProfileMetadata.toProfileListItem(): ProfileListItem =

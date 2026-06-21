@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.itroboc.core.BuiltInDeckProfiles
 
 @Composable
 fun AdminActionsScreen(
@@ -23,6 +22,7 @@ fun AdminActionsScreen(
     onSelectProfile: (String) -> Unit,
     onAddProfile: (String) -> Unit,
     onDeleteActiveProfile: () -> Unit,
+    onEdit: () -> Unit,
     onBack: () -> Unit
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -44,7 +44,7 @@ fun AdminActionsScreen(
             AdminBottomBar(
                 onExport = { messageToDisplay = "Export: Not implemented yet." },
                 onImport = { messageToDisplay = "Import: Not implemented yet." },
-                onEdit = { messageToDisplay = "Edit: Not implemented yet." },
+                onEdit = onEdit,
                 onDelete = {
                     val active = uiState.activeProfile
                     if (active?.isBuiltIn == true) {
@@ -142,16 +142,18 @@ fun AdminActionsScreen(
 @Composable
 fun AdminActionsPreview() {
     MaterialTheme {
-        val builtInDemoProfile = BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem()
         AdminActionsScreen(
             uiState = AdminProfileUiState(
-                profiles = listOf(builtInDemoProfile),
-                activeProfileId = builtInDemoProfile.id,
+                profiles = listOf(
+                    ProfileListItem("p1", "Built-in Demo", true, true)
+                ),
+                activeProfileId = "p1"
             ),
             onSelectProfile = {},
             onAddProfile = {},
             onDeleteActiveProfile = {},
-            onBack = {},
+            onEdit = {},
+            onBack = {}
         )
     }
 }
@@ -184,7 +186,7 @@ fun ProfileRow(
                 )
                 if (profile.isBuiltIn) {
                     Text(
-                        text = if (profile.isDemo) "Built-in demo" else "Built-in",
+                        text = "Built-in",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -208,14 +210,6 @@ fun AddProfileDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    val trimmedName = name.trim()
-    val nameAlreadyExists = existingNames.any { it.trim().equals(trimmedName, ignoreCase = true) }
-    val nameError = when {
-        trimmedName.isEmpty() -> "Profile name is required."
-        nameAlreadyExists -> "A profile with this name already exists."
-        else -> null
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add new profile") },
@@ -225,20 +219,11 @@ fun AddProfileDialog(
                 onValueChange = { name = it },
                 label = { Text("Profile Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                isError = nameError != null,
-                supportingText = {
-                    if (nameError != null) {
-                        Text(nameError)
-                    }
-                },
+                modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(name) },
-                enabled = nameError == null,
-            ) {
+            TextButton(onClick = { onConfirm(name) }) {
                 Text("OK")
             }
         },
