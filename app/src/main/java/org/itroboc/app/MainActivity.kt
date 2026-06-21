@@ -49,11 +49,7 @@ fun AppNavigation() {
             )
         }
         is Screen.AdminActions -> {
-            StubActionScreen(
-                title = "Admin actions",
-                message = "Deck profile/admin workflow will be implemented here.",
-                onBack = { currentScreen = Screen.MainMenu }
-            )
+            AdminActionsScreen(onBack = { currentScreen = Screen.MainMenu })
         }
         is Screen.MockActions -> {
             MockTdScreen(onBack = { currentScreen = Screen.MainMenu })

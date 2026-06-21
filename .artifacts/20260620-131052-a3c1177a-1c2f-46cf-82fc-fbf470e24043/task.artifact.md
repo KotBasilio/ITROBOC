@@ -10,6 +10,8 @@
 - [x] Run `./gradlew :core:test`
 - [x] Run `./gradlew :app:assembleDebug`
 - [x] Verify implementation manually via UI (Compose Preview)
+- [x] Run `./gradlew :app:assembleDebug`
+- [x] Verify implementation manually via UI (Compose Preview)
 - [x] Implement TD Overview Screen
     - [x] Update `Screen.kt` for board navigation
     - [x] Create `TdOverviewScreen.kt` (3x10 grid, color coding)
@@ -19,3 +21,11 @@
 - [x] Final Verification
     - [x] `./gradlew :core:test`
     - [x] `./gradlew :app:assembleDebug`
+- [/] Implement Admin Actions Screen
+    - [ ] Create UI models for Admin profiles
+    - [ ] Create `AdminActionsScreen.kt`
+    - [ ] Update `MainActivity.kt` navigation
+    - [ ] Update `README.md`
+- [ ] Post-Implementation Verification
+    - [ ] `./gradlew :core:test`
+    - [ ] `./gradlew :app:assembleDebug`

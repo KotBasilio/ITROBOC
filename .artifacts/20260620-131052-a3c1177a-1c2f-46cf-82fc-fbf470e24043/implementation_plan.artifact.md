@@ -1,40 +1,38 @@
-# Implement TD Overview and Board Scan Mock
+# Implement Admin Actions Screen (Deck Profile Management)
 
-This plan establishes the first real TD Actions screen with a 30-board overview grid and a mock board scanning workflow.
+This plan replaces the `Admin actions` stub with a minimal interactive screen for managing Deck Profiles, supporting in-memory add/delete operations and profile selection.
 
 ## User Review Required
 
 > [!NOTE]
-> Navigation between `TdActions` and `BoardScan` is handled via a simple state stack or by explicit back actions to maintain the requested simplicity.
+> All profile changes (Add/Delete/Selection) are currently **in-memory only**. They will reset when the app process is killed.
 
 ## Proposed Changes
 
 ### Android App (:app)
 
-#### [Screen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/Screen.kt)
-- Add `data class BoardScan(val boardNumber: Int) : Screen()` to support navigating to specific boards.
+#### [NEW] [AdminProfileUiModels.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminProfileUiModels.kt)
+- Define `ProfileListItem` data class.
+- Define `AdminProfileUiState` to hold the list of profiles and the current selection.
 
-#### [NEW] [TdOverviewScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/TdOverviewScreen.kt)
-- Implement `TdOverviewScreen` containing:
-    - 3x10 grid of buttons (1-30).
-    - Color-coding logic (Green for Complete, Yellow for Empty/Partial).
-    - "Import Session" and "Export Session" stub buttons.
-    - Navigation to `BoardScan`.
-- Define `BoardUiStatus` enum.
-
-#### [NEW] [BoardScanScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/BoardScanScreen.kt)
-- Implement a placeholder screen for scanning a specific board.
-- Includes a "Back" button to return to `TdActions`.
+#### [NEW] [AdminActionsScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminActionsScreen.kt)
+- Implement `AdminActionsScreen` with:
+    - Scrollable list of profiles with tick marks for the active one.
+    - "Add new" button at the end of the list.
+    - Dialog for adding a new profile name.
+    - Bottom row of 5 buttons: Export, Import, Edit, Delete, Settings.
+    - Confirmation dialog for deleting the active profile.
+    - Protection logic to prevent deleting built-in profiles.
 
 #### [MainActivity.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/MainActivity.kt)
-- Update `AppNavigation` to route `Screen.TdActions` to `TdOverviewScreen` and handle `Screen.BoardScan`.
+- Update `AppNavigation` to route `Screen.AdminActions` to `AdminActionsScreen`.
 
 ---
 
 ### Documentation
 
 #### [README.md](file:///C:/home/ITROBOC/README.md)
-- Update "Current milestone" or "a minimal Android `:app` shell" section to mention the 30-board overview.
+- Update to mention the new Admin profile management shell.
 
 ## Verification Plan
 
@@ -43,9 +41,11 @@ This plan establishes the first real TD Actions screen with a 30-board overview 
 - `./gradlew :app:assembleDebug`
 
 ### Manual Verification
-1. Open "TD actions" from Main Menu.
-2. Verify 3x10 grid of 30 buttons.
-3. Verify some buttons are Green/Yellow (mock data).
-4. Click a board button (e.g., Board 7) -> Verify "Board 7" scan placeholder.
-5. Click "Back" in Board Scan -> Return to TD actions.
-6. Verify "Import/Export" buttons are present.
+1. Open "Admin actions" from Main Menu.
+2. Verify "Built-in Demo Bridge 52" is present and active (✓).
+3. Click "Add new", enter "Custom 1", click OK -> Verify it appears and becomes active.
+4. Click the demo profile -> Verify tick moves to it.
+5. Click "Delete" while "Custom 1" is active -> Confirm -> Verify it is gone.
+6. Click "Delete" while "Built-in Demo Bridge 52" is active -> Verify "cannot be deleted" message.
+7. Verify all 5 bottom buttons are visible.
+8. Verify "Back" returns to Main Menu.

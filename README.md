@@ -21,7 +21,10 @@ The repository currently contains:
   - basic PBN export
 - a minimal Android `:app` shell with:
   - a main menu as the entry point
-  - stub screens for Admin actions
+  - an Admin actions screen for Deck Profile management:
+    - profile listing with active selection
+    - in-memory Add/Delete functionality
+    - placeholders for profile export/import/edit
   - a TD actions screen featuring a 30-board session overview:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
