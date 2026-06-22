@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -50,6 +52,9 @@ fun AdminEditScreen(
     var isDirty by remember { mutableStateOf(false) }
     var showUnsavedChangesDialog by remember { mutableStateOf(false) }
     
+    var frameDebugInfo by remember { mutableStateOf<String?>(null) }
+    var scanRequested by remember { mutableStateOf(false) }
+    
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
 
@@ -80,7 +85,7 @@ fun AdminEditScreen(
         // Left Part: 52-card mapping grid (Stretched to fill height)
         Column(
             modifier = Modifier
-                .weight(0.45f)
+                .weight(0.4f)
                 .fillMaxHeight()
                 .padding(8.dp)
         ) {
@@ -138,7 +143,7 @@ fun AdminEditScreen(
         // Right Part: Scanner and controls
         Column(
             modifier = Modifier
-                .weight(0.55f)
+                .weight(0.6f)
                 .fillMaxHeight()
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -152,7 +157,15 @@ fun AdminEditScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (hasCameraPermission) {
-                    CameraPreview()
+                    CameraPreview(
+                        onImageProxy = { imageProxy ->
+                            if (scanRequested) {
+                                frameDebugInfo = "Frame: ${imageProxy.width}x${imageProxy.height} rot=${imageProxy.imageInfo.rotationDegrees}"
+                                scanRequested = false
+                            }
+                            imageProxy.close()
+                        }
+                    )
                     BarcodeGuideOverlay()
                 } else {
                     Text(
@@ -201,6 +214,14 @@ fun AdminEditScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             // Controls
+            frameDebugInfo?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+
             lastResultMessage?.let {
                 Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
@@ -216,6 +237,7 @@ fun AdminEditScreen(
             ) {
                 Button(
                     onClick = {
+                        scanRequested = true
                         val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
                         val result = editor.assign(mockSig, selectedCard)
                         lastResultMessage = when (result) {
@@ -323,8 +345,10 @@ fun AdminEditScreen(
 }
 
 @Composable
-fun CameraPreview() {
-    val lifecycleOwner = LocalLifecycleOwner.current
+fun CameraPreview(
+    onImageProxy: (ImageProxy) -> Unit
+) {
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
@@ -338,6 +362,13 @@ fun CameraPreview() {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .build()
+                
+                imageAnalysis.setAnalyzer(executor) { imageProxy ->
+                    onImageProxy(imageProxy)
+                }
+
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 try {
@@ -345,7 +376,8 @@ fun CameraPreview() {
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
-                        preview
+                        preview,
+                        imageAnalysis
                     )
                 } catch (e: Exception) {
                     Log.e("CameraPreview", "Use case binding failed", e)

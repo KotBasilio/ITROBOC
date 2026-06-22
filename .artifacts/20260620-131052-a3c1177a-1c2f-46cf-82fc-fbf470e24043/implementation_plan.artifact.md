@@ -1,26 +1,27 @@
-# Ticket 1 — Add CameraX preview shell to Admin::Edit
+# Ticket 2 — Add ImageAnalysis frame tap and debug state
 
-This plan replaces the mock camera placeholder in the profile calibration workshop with a real CameraX preview area, including permission handling and a visual guide.
+This plan enables the Admin::Edit screen to receive and process real camera frames via `ImageAnalysis`, reporting debug information when "Scan" is pressed.
 
 ## Proposed Changes
 
 ### Android App (:app)
 
-#### [build.gradle.kts](file:///C:/home/ITROBOC/app/build.gradle.kts)
-- Add CameraX dependencies:
-    - `androidx.camera:camera-camera2:1.4.1`
-    - `androidx.camera:camera-lifecycle:1.4.1`
-    - `androidx.camera:camera-view:1.4.1`
-
-#### [AndroidManifest.xml](file:///C:/home/ITROBOC/app/src/main/AndroidManifest.xml)
-- Add `<uses-permission android:name="android.permission.CAMERA" />`
-- Add `<uses-feature android:name="android.hardware.camera" android:required="false" />`
-
 #### [AdminEditScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminEditScreen.kt)
-- Implement `CameraPreview` composable using `AndroidView` and `PreviewView`.
-- Implement `CameraPermissionHandler` to manage the request and show placeholders on denial.
-- Add `BarcodeGuideOverlay` to draw a simple target rectangle over the preview.
-- Replace the dark gray box with the live camera feed.
+- Add state to track frame debug info:
+    ```kotlin
+    var frameDebugInfo by remember { mutableStateOf<String?>(null) }
+    var scanRequested by remember { mutableStateOf(false) }
+    ```
+- Update `CameraPreview` to accept an `ImageAnalysis.Analyzer` and a configuration:
+    - Use `STRATEGY_KEEP_LATEST`.
+    - Ensure `ImageProxy` is always closed.
+- Implement the analyzer logic:
+    - When `scanRequested` is true, extract frame metadata (width, height, rotation, timestamp).
+    - Update `frameDebugInfo`.
+    - Set `scanRequested` to false (process only one frame per click).
+- Update the UI to display `frameDebugInfo` in the status area.
+- Update the "Scan" button to set `scanRequested = true`.
+- Maintain existing mock signature assignment alongside frame capture for now.
 
 ---
 
@@ -31,9 +32,10 @@ This plan replaces the mock camera placeholder in the profile calibration worksh
 - `./gradlew :app:assembleDebug`
 
 ### Manual Verification
-1. Launch app -> Admin Actions -> Edit.
-2. Observe camera permission request.
-3. **Grant permission**: Verify live camera feed appears in the upper-right area.
-4. Verify guide rectangle is visible over the feed.
-5. **Deny permission**: Verify a message "Camera permission is required for scanning" is shown instead.
-6. Click "Scan" (mock): Verify it still works and assigns mock IDs.
+1. Open Admin Actions -> Edit.
+2. Grant camera permission if needed.
+3. Observe live camera feed.
+4. Click **Scan**.
+5. Verify debug text appears/updates: e.g., `Frame: 1280x720 rot=90`.
+6. Verify "Last scan frame received" indicator (if added).
+7. Verify that mock signature assignment still occurs as before.
