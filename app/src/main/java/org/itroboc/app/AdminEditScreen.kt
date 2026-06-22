@@ -27,12 +27,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.itroboc.core.*
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -52,7 +53,7 @@ fun AdminEditScreen(
     var isDirty by remember { mutableStateOf(false) }
     var showUnsavedChangesDialog by remember { mutableStateOf(false) }
     
-    var frameDebugInfo by remember { mutableStateOf<String?>(null) }
+    var frameDebugInfo by remember { mutableStateOf<FrameDebugInfo?>(null) }
     var scanRequested by remember { mutableStateOf(false) }
     
     // Trigger recomposition when editor state changes
@@ -158,12 +159,12 @@ fun AdminEditScreen(
             ) {
                 if (hasCameraPermission) {
                     CameraPreview(
-                        onImageProxy = { imageProxy ->
+                        onFrameCaptured = { capturedFrame ->
                             if (scanRequested) {
-                                frameDebugInfo = "Frame: ${imageProxy.width}x${imageProxy.height} rot=${imageProxy.imageInfo.rotationDegrees}"
+                                frameDebugInfo = capturedFrame
+                                lastResultMessage = "Last scan frame received"
                                 scanRequested = false
                             }
-                            imageProxy.close()
                         }
                     )
                     BarcodeGuideOverlay()
@@ -172,7 +173,7 @@ fun AdminEditScreen(
                         text = "Camera permission is required for scanning.",
                         color = Color.LightGray,
                         modifier = Modifier.padding(16.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -253,7 +254,7 @@ fun AdminEditScreen(
             // Controls
             frameDebugInfo?.let {
                 Text(
-                    text = it,
+                    text = it.describe(),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
@@ -275,6 +276,7 @@ fun AdminEditScreen(
                 Button(
                     onClick = {
                         scanRequested = true
+                        lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
                     },
                     modifier = Modifier.weight(1f)
@@ -359,46 +361,60 @@ fun AdminEditScreen(
 }
 
 @Composable
-fun CameraPreview(
-    onImageProxy: (ImageProxy) -> Unit
+private fun CameraPreview(
+    onFrameCaptured: (FrameDebugInfo) -> Unit
 ) {
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val previewView = remember { PreviewView(context) }
+    val executor = remember(context) { ContextCompat.getMainExecutor(context) }
+
+    DisposableEffect(lifecycleOwner, cameraProviderFuture) {
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+
+            imageAnalysis.setAnalyzer(executor) { imageProxy ->
+                try {
+                    onFrameCaptured(imageProxy.toFrameDebugInfo())
+                } finally {
+                    imageProxy.close()
+                }
+            }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalysis
+                )
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Use case binding failed", e)
+            }
+        }, executor)
+
+        onDispose {
+            runCatching {
+                cameraProviderFuture.get().unbindAll()
+            }.onFailure { error ->
+                Log.w("CameraPreview", "Failed to unbind camera on dispose", error)
+            }
+        }
+    }
 
     AndroidView(
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
-            val executor = ContextCompat.getMainExecutor(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .build()
-                
-                imageAnalysis.setAnalyzer(executor) { imageProxy ->
-                    onImageProxy(imageProxy)
-                }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalysis
-                    )
-                } catch (e: Exception) {
-                    Log.e("CameraPreview", "Use case binding failed", e)
-                }
-            }, executor)
-            previewView
-        },
+        factory = { previewView },
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -461,3 +477,23 @@ private val Suit.prettySymbol: String
         Suit.DIAMONDS -> "♦"
         Suit.CLUBS -> "♣"
     }
+
+private data class FrameDebugInfo(
+    val width: Int,
+    val height: Int,
+    val rotationDegrees: Int,
+    val timestampNanos: Long,
+    val requestedByScan: Boolean,
+)
+
+private fun ImageProxy.toFrameDebugInfo(): FrameDebugInfo =
+    FrameDebugInfo(
+        width = width,
+        height = height,
+        rotationDegrees = imageInfo.rotationDegrees,
+        timestampNanos = imageInfo.timestamp,
+        requestedByScan = true,
+    )
+
+private fun FrameDebugInfo.describe(): String =
+    "Frame: ${width}x${height} rot=$rotationDegrees ts=$timestampNanos scan=$requestedByScan"
