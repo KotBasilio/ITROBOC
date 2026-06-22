@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 rootProject.name = "ITROBOC"
 
 include(":core")
+include(":vision")
 include(":app")
