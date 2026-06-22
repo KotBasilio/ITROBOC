@@ -35,6 +35,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.itroboc.core.*
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -55,6 +57,7 @@ fun AdminEditScreen(
     
     var frameDebugInfo by remember { mutableStateOf<FrameDebugInfo?>(null) }
     var scanRequested by remember { mutableStateOf(false) }
+    val pendingScanRequest = remember { AtomicBoolean(false) }
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
@@ -159,12 +162,11 @@ fun AdminEditScreen(
             ) {
                 if (hasCameraPermission) {
                     CameraPreview(
+                        consumeScanRequest = { pendingScanRequest.compareAndSet(true, false) },
                         onFrameCaptured = { capturedFrame ->
-                            if (scanRequested) {
-                                frameDebugInfo = capturedFrame
-                                lastResultMessage = "Last scan frame received"
-                                scanRequested = false
-                            }
+                            frameDebugInfo = capturedFrame
+                            lastResultMessage = "Last scan frame received"
+                            scanRequested = false
                         }
                     )
                     BarcodeGuideOverlay()
@@ -275,6 +277,7 @@ fun AdminEditScreen(
             ) {
                 Button(
                     onClick = {
+                        pendingScanRequest.set(true)
                         scanRequested = true
                         lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
@@ -362,15 +365,17 @@ fun AdminEditScreen(
 
 @Composable
 private fun CameraPreview(
+    consumeScanRequest: () -> Boolean,
     onFrameCaptured: (FrameDebugInfo) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val previewView = remember { PreviewView(context) }
-    val executor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
-    DisposableEffect(lifecycleOwner, cameraProviderFuture) {
+    DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor) {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
@@ -381,9 +386,16 @@ private fun CameraPreview(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
 
-            imageAnalysis.setAnalyzer(executor) { imageProxy ->
+            imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
                 try {
-                    onFrameCaptured(imageProxy.toFrameDebugInfo())
+                    if (!consumeScanRequest()) {
+                        return@setAnalyzer
+                    }
+
+                    val frameDebugInfo = imageProxy.toFrameDebugInfo()
+                    mainExecutor.execute {
+                        onFrameCaptured(frameDebugInfo)
+                    }
                 } finally {
                     imageProxy.close()
                 }
@@ -402,7 +414,7 @@ private fun CameraPreview(
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Use case binding failed", e)
             }
-        }, executor)
+        }, mainExecutor)
 
         onDispose {
             runCatching {
@@ -410,6 +422,7 @@ private fun CameraPreview(
             }.onFailure { error ->
                 Log.w("CameraPreview", "Failed to unbind camera on dispose", error)
             }
+            analysisExecutor.shutdown()
         }
     }
 
