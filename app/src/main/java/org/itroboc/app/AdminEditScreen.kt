@@ -80,7 +80,7 @@ fun AdminEditScreen(
         // Left Part: 52-card mapping grid (Stretched to fill height)
         Column(
             modifier = Modifier
-                .weight(0.5f)
+                .weight(0.45f)
                 .fillMaxHeight()
                 .padding(8.dp)
         ) {
@@ -138,7 +138,7 @@ fun AdminEditScreen(
         // Right Part: Scanner and controls
         Column(
             modifier = Modifier
-                .weight(0.5f)
+                .weight(0.55f)
                 .fillMaxHeight()
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally

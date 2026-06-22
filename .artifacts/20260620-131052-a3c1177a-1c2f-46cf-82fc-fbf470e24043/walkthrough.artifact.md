@@ -1,23 +1,22 @@
-# Walkthrough - Admin Actions (Deck Profile Management)
+# Walkthrough - CameraX Preview and Layout Refinement
 
-I have replaced the `Admin actions` stub with a functional (in-memory) screen for managing Deck Profiles. This establishes the UI pattern for future persistence and calibration work.
+I have successfully implemented the CameraX preview shell for the Admin::Edit screen and refined the UI to stretch the card mapping grid vertically.
 
 ## Changes
 
-### New Admin Actions Screen
-- **Profile Listing**: A scrollable list showing available profiles. The active one is highlighted and marked with a tick icon.
-- **In-Memory Selection**: Clicking a profile row immediately updates the active selection in the UI state.
-- **Add New Profile**: A dialog-driven workflow to create new custom profiles by name.
-- **Protected Deletion**: A confirmation dialog for deleting the active profile. Built-in profiles (like the demo) are protected from deletion with a clear warning message.
-- **Action Buttons**: A dedicated bottom bar with Export, Import, Edit, Delete, and Settings buttons.
+### 1. CameraX Integration (Ticket 1)
+- **Sight**: Replaced the mock camera placeholder with a live [CameraX](https://developer.android.com/training/camerax) preview.
+- **Permissions**: Added the `CAMERA` permission to the manifest and implemented a runtime permission flow in [AdminEditScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminEditScreen.kt).
+- **Guide**: Added a white [BarcodeGuideOverlay](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminEditScreen.kt) to help with future barcode alignment.
+- **Fallbacks**: Provided a clear message when camera permissions are denied.
 
-### Implementation Details
-- Created [AdminActionsScreen.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminActionsScreen.kt) for the screen UI.
-- Created [AdminProfileUiModels.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/AdminProfileUiModels.kt) for lightweight UI state management.
-- Updated [MainActivity.kt](file:///C:/home/ITROBOC/app/src/main/java/org/itroboc/app/MainActivity.kt) to route to the new screen.
+### 2. Layout Refinement
+- **Vertical Stretch**: Updated the card mapping grid to use a weighted layout.
+- **Optimization**: The 52-card grid (13 rows + header) now automatically stretches to fill the available vertical space on the screen.
 
-### Documentation
-- Updated [README.md](file:///C:/home/ITROBOC/README.md) to reflect the new Admin shell capabilities.
+### 3. Build & Tooling
+- **Dependencies**: Added CameraX libraries (`camera2`, `lifecycle`, `view`) to [build.gradle.kts](file:///C:/home/ITROBOC/app/build.gradle.kts).
+- **Permissions Persistence**: Verified that "Always allow" settings for file writes and shell commands are persisting correctly.
 
 ## Verification Summary
 
@@ -25,13 +24,10 @@ I have replaced the `Admin actions` stub with a functional (in-memory) screen fo
 - Ran `./gradlew :core:test`: **Passed**.
 - Ran `./gradlew :app:assembleDebug`: **Passed**.
 
-### Visual Verification
-- Verified the screen layout using Compose Preview.
-
-![Admin Actions Preview](file:///C:/home/ITROBOC/.artifacts/20260620-131052-a3c1177a-1c2f-46cf-82fc-fbf470e24043/AdminActionsPreview.png)
-
-## Manual Test Result
-1. **Add**: Created "Tournament Pack A" -> Success.
-2. **Select**: Toggled between Built-in and Custom -> Active state updated.
-3. **Delete**: Tried deleting Built-in -> Blocked with message. Deleted Custom -> Removed from list, first profile became active.
-4. **Navigation**: Back to Main Menu -> Success.
+### Manual Verification
+1.  **Launch**: App starts on Main Menu -> Admin Actions -> Edit.
+2.  **Permission**: Observed and granted the camera permission request.
+3.  **Preview**: Verified live camera feed appears with the white guide rectangle overlay.
+4.  **Layout**: Confirmed the mapping grid covers the entire left area as intended.
+5.  **Scan**: Verified that the mock "Scan" button still assigns signatures to cards correctly.
+6.  **Navigation**: Back and Save buttons work correctly.
