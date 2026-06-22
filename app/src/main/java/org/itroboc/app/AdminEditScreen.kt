@@ -180,11 +180,48 @@ fun AdminEditScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Selected card status
-            Text(
-                text = "Selected: ${selectedCard.prettyString}",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Selected: ${selectedCard.prettyString}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = {
+                        val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
+                        val result = editor.assign(mockSig, selectedCard)
+                        lastResultMessage = when (result) {
+                            is DeckProfileEditResult.Assigned -> "Signature $mockSig assigned to ${selectedCard.prettyString}"
+                            is DeckProfileEditResult.AlreadyAssignedToSelected -> "Alias $mockSig already exists for ${selectedCard.prettyString}"
+                            is DeckProfileEditResult.SignatureConflict -> "CONFLICT: $mockSig is already mapped to ${result.existingCard.prettyString}"
+                            else -> "No card selected"
+                        }
+
+                        if (result is DeckProfileEditResult.Assigned && autoAdvance) {
+                            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
+                            val nextUnmapped = allCards.firstOrNull { !editor.isMapped(it) }
+                            if (nextUnmapped != null) {
+                                selectedSuit = nextUnmapped.suit
+                                selectedRank = nextUnmapped.rank
+                            } else {
+                                lastResultMessage = "Profile complete! All 52 cards mapped."
+                            }
+                        }
+                        if (result is DeckProfileEditResult.Assigned) {
+                            isDirty = true
+                        }
+                        updateTrigger++
+                    },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                ) {
+                    Text("Mock", style = MaterialTheme.typography.labelSmall)
+                }
+            }
             val aliases = editor.getAliases(selectedCard)
             Text(
                 text = if (aliases.isEmpty()) "Unmapped" else "Mapped",
@@ -238,29 +275,6 @@ fun AdminEditScreen(
                 Button(
                     onClick = {
                         scanRequested = true
-                        val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
-                        val result = editor.assign(mockSig, selectedCard)
-                        lastResultMessage = when (result) {
-                            is DeckProfileEditResult.Assigned -> "Signature $mockSig assigned to ${selectedCard.prettyString}"
-                            is DeckProfileEditResult.AlreadyAssignedToSelected -> "Alias $mockSig already exists for ${selectedCard.prettyString}"
-                            is DeckProfileEditResult.SignatureConflict -> "CONFLICT: $mockSig is already mapped to ${result.existingCard.prettyString}"
-                            else -> "No card selected"
-                        }
-                        
-                        if (result is DeckProfileEditResult.Assigned && autoAdvance) {
-                            // Find next unmapped card or stay
-                            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
-                            val nextUnmapped = allCards.firstOrNull { !editor.isMapped(it) }
-                            if (nextUnmapped != null) {
-                                selectedSuit = nextUnmapped.suit
-                                selectedRank = nextUnmapped.rank
-                            } else {
-                                lastResultMessage = "Profile complete! All 52 cards mapped."
-                            }
-                        }
-                        if (result is DeckProfileEditResult.Assigned) {
-                            isDirty = true
-                        }
                         updateTrigger++ // Force UI refresh
                     },
                     modifier = Modifier.weight(1f)
