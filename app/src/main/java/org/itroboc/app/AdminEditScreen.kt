@@ -1,20 +1,36 @@
 package org.itroboc.app
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import org.itroboc.core.*
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -36,6 +52,29 @@ fun AdminEditScreen(
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
+
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            launcher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Part: 52-card mapping grid (Stretched to fill height)
@@ -104,7 +143,7 @@ fun AdminEditScreen(
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Mock Camera Preview
+            // Camera Preview area
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -112,7 +151,17 @@ fun AdminEditScreen(
                     .background(Color.DarkGray, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Mock Camera Preview", color = Color.LightGray)
+                if (hasCameraPermission) {
+                    CameraPreview()
+                    BarcodeGuideOverlay()
+                } else {
+                    Text(
+                        text = "Camera permission is required for scanning.",
+                        color = Color.LightGray,
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -269,6 +318,60 @@ fun AdminEditScreen(
                     Text("Discard")
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun CameraPreview() {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx)
+            val executor = ContextCompat.getMainExecutor(ctx)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview
+                    )
+                } catch (e: Exception) {
+                    Log.e("CameraPreview", "Use case binding failed", e)
+                }
+            }, executor)
+            previewView
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+fun BarcodeGuideOverlay() {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val strokeWidth = 2.dp.toPx()
+        val guideWidth = size.width * 0.8f
+        val guideHeight = size.height * 0.15f
+        val left = (size.width - guideWidth) / 2
+        val top = (size.height - guideHeight) / 2
+
+        drawRoundRect(
+            color = Color.White,
+            topLeft = Offset(left, top),
+            size = Size(guideWidth, guideHeight),
+            cornerRadius = CornerRadius(8.dp.toPx()),
+            style = Stroke(width = strokeWidth)
         )
     }
 }

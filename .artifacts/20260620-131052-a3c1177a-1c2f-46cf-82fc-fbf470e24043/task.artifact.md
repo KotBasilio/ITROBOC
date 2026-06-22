@@ -7,7 +7,8 @@
 - [x] Implement Admin Edit (Ticket 1: Core Model)
 - [x] Implement Admin Edit UI Shell (Ticket 2)
 - [x] Polish Admin Edit (Ticket 3)
-    - [x] Refine grid layout (4x shorter buttons)
-    - [x] Enhance status messages and results
-    - [x] Update README
-    - [x] Final Build & Test
+- [/] Camera and Barcode Vision (Roadmap)
+    - [ ] Ticket 1: Add CameraX preview shell to Admin::Edit
+    - [ ] Ticket 2: Add ImageAnalysis frame tap and debug state
+    - [ ] Ticket 3: Add pure `:vision` module and static decoder prototype
+    - [ ] Ticket 4: Integrate Admin::Edit Scan with camera pipeline

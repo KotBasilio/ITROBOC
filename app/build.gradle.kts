@@ -44,4 +44,10 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // CameraX
+    val cameraVersion = "1.4.1"
+    implementation("androidx.camera:camera-camera2:$cameraVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraVersion")
+    implementation("androidx.camera:camera-view:$cameraVersion")
 }
