@@ -12,13 +12,13 @@ class AdminEditCameraSupportTest {
         val roi = centeredBarcodeRoi(
             imageWidth = 100,
             imageHeight = 60,
-            guideSpec = AdminScanGuideSpec(widthFraction = 0.25f, heightFraction = 0.10f),
+            guideSpec = AdminScanGuideSpec(widthFraction = 0.20f, heightFraction = 0.08f),
         )
 
-        assertEquals(37, roi.x)
+        assertEquals(40, roi.x)
         assertEquals(27, roi.y)
-        assertEquals(25, roi.width)
-        assertEquals(6, roi.height)
+        assertEquals(20, roi.width)
+        assertEquals(5, roi.height)
     }
 
     @Test
