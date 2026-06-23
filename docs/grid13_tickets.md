@@ -15,6 +15,8 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
   Known current mismatch: analyzer reads `C8` as `1001011001101`, while the research table golden value is `0001011001101`.
 - Ticket 5: Done in `63fe0d7` — degradation tests with report output at `vision/build/reports/grid13-degradation-report.txt`.
   Current report shows mild skew is unstable and needs later ROI/rectification work before live TD scanning.
+- Ticket 6: Done — Admin::Edit live scan integration now uses the `grid13-v1` decoder and emits `bfmHHHH` signatures with reverse token, bits, RL2, run, span, confidence, and warning evidence in debug output.
+  Current live camera path still derives ink from luma-only `GrayImage`; min-RGB/YUV-aware extraction remains a later seam if red-suit scans prove unstable.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
 

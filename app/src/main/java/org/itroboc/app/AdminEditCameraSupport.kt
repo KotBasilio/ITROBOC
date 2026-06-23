@@ -9,8 +9,8 @@ import org.itroboc.vision.BarcodeDebugInfo
 import org.itroboc.vision.BarcodeDecoder
 import org.itroboc.vision.BarcodeRoi
 import org.itroboc.vision.DetectedSignature
+import org.itroboc.vision.Grid13BarcodeDecoder
 import org.itroboc.vision.GrayImage
-import org.itroboc.vision.SimpleBarRunBarcodeDecoder
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -62,7 +62,7 @@ internal sealed interface CameraScanOutcome {
 }
 
 internal class AdminEditCameraFrameDecoder(
-    private val decoder: BarcodeDecoder = SimpleBarRunBarcodeDecoder(),
+    private val decoder: BarcodeDecoder = Grid13BarcodeDecoder(),
     private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
 ) {
     fun decode(imageProxy: ImageProxy): CameraScanOutcome {
@@ -209,6 +209,10 @@ internal fun CameraScanOutcome.describe(): String = when (this) {
                 append(" pattern=")
                 append(pattern)
             }
+            result.signature.debug?.reverseSignature?.let { reverseSignature ->
+                append(" reverse=")
+                append(reverseSignature)
+            }
         }
         is BarcodeDecodeResult.NotFound -> result.reason
         is BarcodeDecodeResult.Ambiguous -> buildString {
@@ -236,6 +240,20 @@ internal data class AdminEditScanDebugRecord(
     val normalizedPattern: String? = null,
     val blackRuns: List<String> = emptyList(),
     val ambiguousCandidates: List<String> = emptyList(),
+    val signatureModel: String? = null,
+    val reverseSignature: String? = null,
+    val grid13FwdBits: String? = null,
+    val grid13RevBits: String? = null,
+    val grid13FwdHex: String? = null,
+    val grid13RevHex: String? = null,
+    val rl2: String? = null,
+    val blackRunsPx: List<Int> = emptyList(),
+    val whiteGapsPx: List<Int> = emptyList(),
+    val blackRunCentersPx: List<Double> = emptyList(),
+    val activeStartX: Int? = null,
+    val activeEndX: Int? = null,
+    val activeSpanPx: Int? = null,
+    val warnings: List<String> = emptyList(),
 ) {
     fun toJsonLine(): String {
         val fields = mutableListOf<String>()
@@ -260,11 +278,33 @@ internal data class AdminEditScanDebugRecord(
         confidence?.let { fields += jsonField("confidence", formatConfidenceForJson(it), raw = true) }
         failureReason?.let { fields += jsonField("failureReason", it) }
         normalizedPattern?.let { fields += jsonField("normalizedPattern", it) }
+        signatureModel?.let { fields += jsonField("signatureModel", it) }
+        reverseSignature?.let { fields += jsonField("reverseSignature", it) }
+        grid13FwdBits?.let { fields += jsonField("grid13FwdBits", it) }
+        grid13RevBits?.let { fields += jsonField("grid13RevBits", it) }
+        grid13FwdHex?.let { fields += jsonField("grid13FwdHex", it) }
+        grid13RevHex?.let { fields += jsonField("grid13RevHex", it) }
+        rl2?.let { fields += jsonField("rl2", it) }
+        activeStartX?.let { fields += jsonField("activeStartX", it.toString(), raw = true) }
+        activeEndX?.let { fields += jsonField("activeEndX", it.toString(), raw = true) }
+        activeSpanPx?.let { fields += jsonField("activeSpanPx", it.toString(), raw = true) }
         if (blackRuns.isNotEmpty()) {
             fields += "\"blackRuns\":" + blackRuns.toJsonArray()
         }
+        if (blackRunsPx.isNotEmpty()) {
+            fields += "\"blackRunsPx\":" + blackRunsPx.toJsonIntArray()
+        }
+        if (whiteGapsPx.isNotEmpty()) {
+            fields += "\"whiteGapsPx\":" + whiteGapsPx.toJsonIntArray()
+        }
+        if (blackRunCentersPx.isNotEmpty()) {
+            fields += "\"blackRunCentersPx\":" + blackRunCentersPx.toJsonDoubleArray()
+        }
         if (ambiguousCandidates.isNotEmpty()) {
             fields += "\"ambiguousCandidates\":" + ambiguousCandidates.toJsonArray()
+        }
+        if (warnings.isNotEmpty()) {
+            fields += "\"warnings\":" + warnings.toJsonArray()
         }
         return "{${fields.joinToString(",")}}"
     }
@@ -348,6 +388,20 @@ internal fun CameraScanOutcome.toDebugRecord(
             failureReason = result.reason,
             normalizedPattern = result.debug?.normalizedPattern,
             blackRuns = result.debug.toBlackRunStrings(),
+            signatureModel = result.debug?.signatureModel,
+            reverseSignature = result.debug?.reverseSignature,
+            grid13FwdBits = result.debug?.grid13FwdBits,
+            grid13RevBits = result.debug?.grid13RevBits,
+            grid13FwdHex = result.debug?.grid13FwdHex,
+            grid13RevHex = result.debug?.grid13RevHex,
+            rl2 = result.debug?.rl2,
+            blackRunsPx = result.debug?.blackRunsPx.orEmpty(),
+            whiteGapsPx = result.debug?.whiteGapsPx.orEmpty(),
+            blackRunCentersPx = result.debug?.blackRunCentersPx.orEmpty(),
+            activeStartX = result.debug?.activeStartX,
+            activeEndX = result.debug?.activeEndX,
+            activeSpanPx = result.debug?.activeSpanPx,
+            warnings = result.debug?.warnings.orEmpty(),
         )
         is BarcodeDecodeResult.Ambiguous -> AdminEditScanDebugRecord(
             timestampMillis = timestampMillis,
@@ -362,6 +416,20 @@ internal fun CameraScanOutcome.toDebugRecord(
             normalizedPattern = result.debug?.normalizedPattern,
             blackRuns = result.debug.toBlackRunStrings(),
             ambiguousCandidates = result.candidates.map { it.rawSignature },
+            signatureModel = result.debug?.signatureModel,
+            reverseSignature = result.debug?.reverseSignature,
+            grid13FwdBits = result.debug?.grid13FwdBits,
+            grid13RevBits = result.debug?.grid13RevBits,
+            grid13FwdHex = result.debug?.grid13FwdHex,
+            grid13RevHex = result.debug?.grid13RevHex,
+            rl2 = result.debug?.rl2,
+            blackRunsPx = result.debug?.blackRunsPx.orEmpty(),
+            whiteGapsPx = result.debug?.whiteGapsPx.orEmpty(),
+            blackRunCentersPx = result.debug?.blackRunCentersPx.orEmpty(),
+            activeStartX = result.debug?.activeStartX,
+            activeEndX = result.debug?.activeEndX,
+            activeSpanPx = result.debug?.activeSpanPx,
+            warnings = result.debug?.warnings.orEmpty(),
         )
     }
     is CameraScanOutcome.ConversionFailed -> AdminEditScanDebugRecord(
@@ -395,6 +463,20 @@ private fun DetectedSignature.toDebugRecord(
     confidence = confidence,
     normalizedPattern = debug?.normalizedPattern,
     blackRuns = debug.toBlackRunStrings(),
+    signatureModel = debug?.signatureModel,
+    reverseSignature = debug?.reverseSignature,
+    grid13FwdBits = debug?.grid13FwdBits,
+    grid13RevBits = debug?.grid13RevBits,
+    grid13FwdHex = debug?.grid13FwdHex,
+    grid13RevHex = debug?.grid13RevHex,
+    rl2 = debug?.rl2,
+    blackRunsPx = debug?.blackRunsPx.orEmpty(),
+    whiteGapsPx = debug?.whiteGapsPx.orEmpty(),
+    blackRunCentersPx = debug?.blackRunCentersPx.orEmpty(),
+    activeStartX = debug?.activeStartX,
+    activeEndX = debug?.activeEndX,
+    activeSpanPx = debug?.activeSpanPx,
+    warnings = debug?.warnings.orEmpty(),
 )
 
 private fun BarcodeDebugInfo?.toBlackRunStrings(): List<String> =
@@ -403,6 +485,14 @@ private fun BarcodeDebugInfo?.toBlackRunStrings(): List<String> =
 private fun List<String>.toJsonArray(): String =
     joinToString(prefix = "[", postfix = "]", separator = ",") { value ->
         "\"${value.escapeJson()}\""
+    }
+
+private fun List<Int>.toJsonIntArray(): String =
+    joinToString(prefix = "[", postfix = "]", separator = ",")
+
+private fun List<Double>.toJsonDoubleArray(): String =
+    joinToString(prefix = "[", postfix = "]", separator = ",") { value ->
+        formatConfidenceForJson(value)
     }
 
 private fun jsonField(
