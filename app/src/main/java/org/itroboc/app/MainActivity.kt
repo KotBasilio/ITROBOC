@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import org.itroboc.core.BuiltInDeckProfiles
 import org.itroboc.core.DeckProfile
+import org.itroboc.core.DeckProfileSignatureModels
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +89,7 @@ fun AppNavigation() {
                         displayName = profileName,
                         isBuiltIn = false,
                         isDemo = false,
+                        signatureModel = DeckProfileSignatureModels.GRID13_V1,
                     )
                     profileState = profileState.copy(
                         profiles = profileState.profiles + newProfile,
