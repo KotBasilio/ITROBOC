@@ -364,15 +364,15 @@ fun AdminEditScreen(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
-            debugLogStatus?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+//            debugLogStatus?.let {
+//                Text(
+//                    text = it,
+//                    style = MaterialTheme.typography.labelSmall,
+//                    color = Color.Gray,
+//                    maxLines = 2,
+//                    overflow = TextOverflow.Ellipsis,
+//                )
+//            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
