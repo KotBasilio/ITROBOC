@@ -231,6 +231,7 @@ fun AdminEditScreen(
                             debugLogManager.appendScanRecord(
                                 selectedCard = scanCard.prettyString,
                                 outcome = scanOutcome,
+                                deckProfileMatchCount = scanOutcome.deckProfileMatchCount(editor.toDeckProfile()),
                             )
 
                             when (scanOutcome) {
@@ -619,5 +620,17 @@ private val Suit.prettySymbol: String
         Suit.DIAMONDS -> "♦"
         Suit.CLUBS -> "♣"
     }
+
+private fun CameraScanOutcome.deckProfileMatchCount(deckProfile: DeckProfile): Int = when (this) {
+    is CameraScanOutcome.Decoded -> when (val result = decodeResult) {
+        is BarcodeDecodeResult.Found -> if (deckProfile.lookup(result.signature.rawSignature) != null) 1 else 0
+        is BarcodeDecodeResult.Ambiguous -> result.candidates
+            .map { it.rawSignature }
+            .distinct()
+            .count { deckProfile.lookup(it) != null }
+        is BarcodeDecodeResult.NotFound -> 0
+    }
+    is CameraScanOutcome.ConversionFailed -> 0
+}
 
 private fun Double.formatAsUiConfidence(): String = "%.2f".format(this)

@@ -234,9 +234,12 @@ internal data class AdminEditScanDebugRecord(
     val frameTimestampNanos: Long,
     val roi: BarcodeRoi?,
     val decodeResultType: String,
+    val roiAngleDeg: Double = 0.0,
     val rawSignature: String? = null,
     val confidence: Double? = null,
     val failureReason: String? = null,
+    val thresholdMode: String? = null,
+    val thresholdValue: Int? = null,
     val normalizedPattern: String? = null,
     val blackRuns: List<String> = emptyList(),
     val ambiguousCandidates: List<String> = emptyList(),
@@ -253,7 +256,10 @@ internal data class AdminEditScanDebugRecord(
     val activeStartX: Int? = null,
     val activeEndX: Int? = null,
     val activeSpanPx: Int? = null,
+    val scanlineAgreement: Double? = null,
+    val ambiguous: Boolean = false,
     val warnings: List<String> = emptyList(),
+    val deckProfileMatchCount: Int? = null,
 ) {
     fun toJsonLine(): String {
         val fields = mutableListOf<String>()
@@ -264,7 +270,10 @@ internal data class AdminEditScanDebugRecord(
         fields += jsonField("frameRotation", frameRotation.toString(), raw = true)
         fields += jsonField("frameTimestampNanos", frameTimestampNanos.toString(), raw = true)
         fields += jsonField("decodeResultType", decodeResultType)
+        fields += jsonField("roiAngleDeg", formatConfidenceForJson(roiAngleDeg), raw = true)
         roi?.let {
+            fields += jsonField("cropWidthPx", it.width.toString(), raw = true)
+            fields += jsonField("cropHeightPx", it.height.toString(), raw = true)
             fields += "\"roi\":{" +
                 listOf(
                     jsonField("x", it.x.toString(), raw = true),
@@ -277,6 +286,8 @@ internal data class AdminEditScanDebugRecord(
         rawSignature?.let { fields += jsonField("rawSignature", it) }
         confidence?.let { fields += jsonField("confidence", formatConfidenceForJson(it), raw = true) }
         failureReason?.let { fields += jsonField("failureReason", it) }
+        thresholdMode?.let { fields += jsonField("thresholdMode", it) }
+        thresholdValue?.let { fields += jsonField("thresholdValue", it.toString(), raw = true) }
         normalizedPattern?.let { fields += jsonField("normalizedPattern", it) }
         signatureModel?.let { fields += jsonField("signatureModel", it) }
         reverseSignature?.let { fields += jsonField("reverseSignature", it) }
@@ -288,6 +299,13 @@ internal data class AdminEditScanDebugRecord(
         activeStartX?.let { fields += jsonField("activeStartX", it.toString(), raw = true) }
         activeEndX?.let { fields += jsonField("activeEndX", it.toString(), raw = true) }
         activeSpanPx?.let { fields += jsonField("activeSpanPx", it.toString(), raw = true) }
+        fields += scanlineAgreement?.let {
+            jsonField("scanlineAgreement", formatConfidenceForJson(it), raw = true)
+        } ?: jsonNullField("scanlineAgreement")
+        fields += jsonField("ambiguous", ambiguous.toString(), raw = true)
+        deckProfileMatchCount?.let {
+            fields += jsonField("deckProfileMatchCount", it.toString(), raw = true)
+        }
         if (blackRuns.isNotEmpty()) {
             fields += "\"blackRuns\":" + blackRuns.toJsonArray()
         }
@@ -326,10 +344,12 @@ internal class AdminEditScanDebugLogManager(private val context: Context) {
     fun appendScanRecord(
         selectedCard: String,
         outcome: CameraScanOutcome,
+        deckProfileMatchCount: Int? = null,
     ) {
         val record = outcome.toDebugRecord(
             selectedCard = selectedCard,
             timestampMillis = System.currentTimeMillis(),
+            deckProfileMatchCount = deckProfileMatchCount,
         )
         logFile.appendText(record.toJsonLine() + "\n")
     }
@@ -368,6 +388,7 @@ internal object AdminEditScanDebugLogStartup {
 internal fun CameraScanOutcome.toDebugRecord(
     selectedCard: String,
     timestampMillis: Long,
+    deckProfileMatchCount: Int? = null,
 ): AdminEditScanDebugRecord = when (this) {
     is CameraScanOutcome.Decoded -> when (val result = decodeResult) {
         is BarcodeDecodeResult.Found -> result.signature.toDebugRecord(
@@ -375,6 +396,7 @@ internal fun CameraScanOutcome.toDebugRecord(
             selectedCard = selectedCard,
             frameDebugInfo = frameDebugInfo,
             roi = roi,
+            deckProfileMatchCount = deckProfileMatchCount,
         )
         is BarcodeDecodeResult.NotFound -> AdminEditScanDebugRecord(
             timestampMillis = timestampMillis,
@@ -386,6 +408,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             roi = roi,
             decodeResultType = "NotFound",
             failureReason = result.reason,
+            thresholdMode = result.debug.toThresholdMode(),
+            thresholdValue = result.debug?.threshold,
             normalizedPattern = result.debug?.normalizedPattern,
             blackRuns = result.debug.toBlackRunStrings(),
             signatureModel = result.debug?.signatureModel,
@@ -401,7 +425,9 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeStartX = result.debug?.activeStartX,
             activeEndX = result.debug?.activeEndX,
             activeSpanPx = result.debug?.activeSpanPx,
+            ambiguous = false,
             warnings = result.debug?.warnings.orEmpty(),
+            deckProfileMatchCount = deckProfileMatchCount,
         )
         is BarcodeDecodeResult.Ambiguous -> AdminEditScanDebugRecord(
             timestampMillis = timestampMillis,
@@ -413,6 +439,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             roi = roi,
             decodeResultType = "Ambiguous",
             failureReason = result.reason,
+            thresholdMode = result.debug.toThresholdMode(),
+            thresholdValue = result.debug?.threshold,
             normalizedPattern = result.debug?.normalizedPattern,
             blackRuns = result.debug.toBlackRunStrings(),
             ambiguousCandidates = result.candidates.map { it.rawSignature },
@@ -429,7 +457,9 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeStartX = result.debug?.activeStartX,
             activeEndX = result.debug?.activeEndX,
             activeSpanPx = result.debug?.activeSpanPx,
+            ambiguous = true,
             warnings = result.debug?.warnings.orEmpty(),
+            deckProfileMatchCount = deckProfileMatchCount,
         )
     }
     is CameraScanOutcome.ConversionFailed -> AdminEditScanDebugRecord(
@@ -442,6 +472,8 @@ internal fun CameraScanOutcome.toDebugRecord(
         roi = roi,
         decodeResultType = "ConversionFailed",
         failureReason = reason,
+        ambiguous = false,
+        deckProfileMatchCount = deckProfileMatchCount,
     )
 }
 
@@ -450,6 +482,7 @@ private fun DetectedSignature.toDebugRecord(
     selectedCard: String,
     frameDebugInfo: FrameDebugInfo,
     roi: BarcodeRoi,
+    deckProfileMatchCount: Int?,
 ): AdminEditScanDebugRecord = AdminEditScanDebugRecord(
     timestampMillis = timestampMillis,
     selectedCard = selectedCard,
@@ -461,6 +494,8 @@ private fun DetectedSignature.toDebugRecord(
     decodeResultType = "Found",
     rawSignature = rawSignature,
     confidence = confidence,
+    thresholdMode = debug.toThresholdMode(),
+    thresholdValue = debug?.threshold,
     normalizedPattern = debug?.normalizedPattern,
     blackRuns = debug.toBlackRunStrings(),
     signatureModel = debug?.signatureModel,
@@ -476,11 +511,23 @@ private fun DetectedSignature.toDebugRecord(
     activeStartX = debug?.activeStartX,
     activeEndX = debug?.activeEndX,
     activeSpanPx = debug?.activeSpanPx,
+    ambiguous = false,
     warnings = debug?.warnings.orEmpty(),
+    deckProfileMatchCount = deckProfileMatchCount,
 )
 
 private fun BarcodeDebugInfo?.toBlackRunStrings(): List<String> =
     this?.blackRuns?.map { "${it.first}..${it.last}" }.orEmpty()
+
+private fun BarcodeDebugInfo?.toThresholdMode(): String? =
+    this?.let { debug ->
+        debug.threshold ?: return@let null
+        if (debug.signatureModel == "grid13-v1") {
+            "adaptive-ink-midrange"
+        } else {
+            "intensity-midrange"
+        }
+    }
 
 private fun List<String>.toJsonArray(): String =
     joinToString(prefix = "[", postfix = "]", separator = ",") { value ->
@@ -504,6 +551,8 @@ private fun jsonField(
 } else {
     "\"${name.escapeJson()}\":\"${value.escapeJson()}\""
 }
+
+private fun jsonNullField(name: String): String = "\"${name.escapeJson()}\":null"
 
 private fun formatConfidenceForJson(value: Double): String = "%.4f".format(value)
 
