@@ -11,7 +11,7 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
 - Fixture cleanup: Done in `5709062` — canonical PNG location is `vision/src/test/resources/barcode-sheets/`.
 - Ticket 3a: Done in `0516c89` — measurement primitives: ink channel, projection, thresholding, runs, active span.
 - Ticket 3b: Done in `deab98d` — compose primitives into static barcode measurements with RL2/Grid13 output.
-- Ticket 4: Done — golden manifest from `docs/barcode-sheets/deep-research-report.md`; analyzer-to-golden tuning remains explicit validation work.
+- Ticket 4: Done in `2e919a1` — golden manifest from `docs/barcode-sheets/deep-research-report.md`; analyzer-to-golden tuning remains explicit validation work.
   Known current mismatch: analyzer reads `C8` as `1001011001101`, while the research table golden value is `0001011001101`.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
