@@ -28,9 +28,13 @@ The repository currently contains:
     - placeholders for profile export/import
     - a functional Admin::Edit calibration workshop:
       - 4x13 mapping grid with status coloring
-      - mock scanner integration with conflict detection
+      - real CameraX preview plus one-frame scan attempts for Admin calibration
+      - shared scan guide / ROI crop aimed at one barcode strip
+      - mock scanner fallback with conflict detection
       - support for aliases (multiple signatures per card)
       - auto-advance calibration flow
+      - on-screen frame/decode debug text
+      - JSONL scan debug logging with share/export action
   - a TD actions screen featuring a 30-board session overview:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
@@ -64,4 +68,6 @@ Run tests from the repository root with:
 
 ## Not in scope yet
 
-This milestone still does not add camera capture, CameraX, OpenCV, barcode image processing, or device integration code. The Android app shell uses fake signatures only and delegates scan/domain logic to the pure core module.
+This milestone still does not add TD multi-card scanning, OpenCV, production-grade barcode decoding, rotation/perspective handling, persistent profile storage, or device-wide session persistence.
+
+The Android app now includes early Admin-side camera capture and a first pure `:vision` decoder prototype, but the broader TD workflow still uses fake signatures and the current camera path should be treated as an experimental calibration loop rather than finished scanning.
