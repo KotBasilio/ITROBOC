@@ -2,7 +2,12 @@
 
 ## Scope of the current milestone
 
-The current milestone builds a pure Kotlin/JVM core that models bridge cards, hand and board state, deck-profile lookup, TD scan accumulation, batch scan summaries, and basic PBN export. It also includes a minimal Android shell that exercises the core with fake signatures and displays TD-facing summaries. Camera capture, barcode image processing, and device-specific scanning integration are still intentionally excluded.
+The current milestone builds a pure Kotlin/JVM core that models bridge cards, hand and board state, deck-profile lookup, TD scan accumulation, batch scan summaries, and basic PBN export. It also includes a minimal Android shell with two different scanning-facing layers:
+
+- a TD shell that still exercises the core with fake signatures and displays TD-facing summaries
+- an Admin::Edit calibration shell with early CameraX preview, one-frame ROI crop, a pure `:vision` decoder prototype, and shareable scan debug logging
+
+The project still intentionally excludes TD multi-card scanning, production-grade barcode decoding, and full device/persistence integration.
 
 ## Admin side
 
@@ -30,4 +35,9 @@ The planned end-to-end pipeline is:
 
 `camera frame -> barcode ROI -> raw signature -> deck profile lookup -> card ID -> hand/board state -> PBN`
 
-The current project starts at the `raw signature -> card ID` stage, supports ordered batch accumulation for one scan action, exposes TD-friendly presentation summaries, and carries the domain model through `PBN`. The Android shell currently plugs in at the `raw signature list -> core scan flow` boundary using fake signatures only.
+The current project now covers two entry slices of that pipeline:
+
+- Admin::Edit experimentally reaches into `camera frame -> barcode ROI -> raw signature` for one-strip calibration scans
+- TD/Mock actions still plug in at `raw signature list -> core scan flow` using fake signatures
+
+From there, the pure core supports ordered batch accumulation for one scan action, exposes TD-friendly presentation summaries, and carries the domain model through `PBN`.

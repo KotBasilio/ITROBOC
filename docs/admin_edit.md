@@ -58,7 +58,11 @@ The right part is split vertically.
 
 Top area: camera preview, about 66% of the right part.
 
-For now, this may be a mock camera preview placeholder. No real camera is required in the first implementation.
+The current prototype now uses a real CameraX preview for Admin-side calibration.
+
+A small centered scan guide rectangle is drawn over the preview. The same guide spec is used for the visible overlay and the actual ROI crop sent to the decoder, so the "mouth" the user sees and the crop the app analyzes stay aligned.
+
+The guide is intentionally small and currently tuned for one barcode strip rather than a broad card region. The exact fractions may still be adjusted as manual testing teaches us more.
 
 Below the preview: mapping controls and selected-card status.
 
@@ -71,10 +75,17 @@ Required buttons:
 * `Scan`
 * `Save`
 * `Back`
+* `Share Debug Log`
 
 Required option:
 
 * `Auto-advance` toggle
+
+Current UI placement:
+
+* `Auto-advance` sits beside the `Card Mapping` title on the left pane.
+* `Scan` sits near `Selected: <card>` and is visually stronger than `Mock`.
+* `Mock` remains available as a fallback/debug path.
 
 ### Scan behavior
 
@@ -86,7 +97,16 @@ If the selected card already has mappings, the scanned signature is added as an 
 
 There is no separate `Assign` button and no separate `Add alias` button.
 
-In mock phase, the raw signature may come from a fake text field or generated mock scanner value.
+Current prototype behavior:
+
+* one button press requests one camera frame
+* the app crops the centered guide ROI from the frame
+* the app converts that ROI into a pure grayscale image
+* the pure `:vision` decoder returns `Found`, `NotFound`, or `Ambiguous`
+* on `Found`, the raw signature is assigned through existing profile-edit logic
+* on `NotFound` or `Ambiguous`, profile state does not change
+
+The raw signature format currently remains synthetic/debug-oriented rather than a claim about any real physical deck encoding.
 
 ### Save behavior
 
@@ -121,11 +141,11 @@ Show the currently selected card, for example:
 
 `Selected: ♦A`
 
-Show all raw signatures currently assigned to that card.
+Show whether the card is mapped plus the currently known aliases.
 
 Example:
 
-`Aliases: 0x367A, 0x367B`
+`Mapped • Aliases: 0x367A, 0x367B`
 
 Each alias/signature should be clickable.
 
@@ -141,6 +161,30 @@ Buttons:
 On `OK`, remove only that alias.
 
 There is no separate `Clear selected mapping` button.
+
+## Debug feedback and logging
+
+The current prototype keeps lightweight debug feedback visible on screen:
+
+* frame width / height / rotation / timestamp
+* latest decoder outcome
+* latest assignment/conflict message
+* log file path
+
+In addition, each camera scan attempt is appended to a JSON Lines debug log. The user can export/share that log through `Share Debug Log`.
+
+Transient share/export status text may be hidden in the UI when space is tight. The durable retrieval affordances are the visible log path plus `Share Debug Log`.
+
+Current log content includes at least:
+
+* selected card at scan-request time
+* frame dimensions and rotation
+* ROI pixel rectangle
+* decode result type
+* found raw signature and confidence when present
+* failure reason when present
+* normalized pattern / black-run debug info when present
+* ambiguous candidates when present
 
 ## Data layout and invariants
 
@@ -219,15 +263,16 @@ Do not permanently mutate the built-in profile definition in core.
 
 Do not implement yet:
 
-* real CameraX integration
-* real barcode decoding
 * persistence/database
 * file import/export
 * full admin calibration wizard
 * cloud sync
 * complex navigation framework
+* TD multi-card scanning
+* full rotation/perspective correction
+* production-grade barcode decoding tuned to real deck physics
 
-For now, use mock scanning to exercise the edit workflow.
+The current build already includes early CameraX integration and an experimental pure decoder path. Those are still exploratory calibration tools, not finished production scanning.
 
 ## Acceptance behavior
 
@@ -239,9 +284,10 @@ At the end of the phase:
 * The user sees a 52-card grid.
 * Green/yellow status reflects whether each card has at least one mapping.
 * The user can select a card.
-* The user can mock-scan a raw signature and assign it to the selected card.
+* The user can request one camera scan through the visible guide ROI and assign a found raw signature to the selected card.
+* The user can still use mock-scan fallback.
 * The selected card shows its aliases.
 * The user can click an alias and remove it after confirmation.
 * Auto-advance can move selection to the next unmapped card after successful assignment.
-* Save and Back exist.
+* Save, Back, and Share Debug Log exist.
 * Core/profile editing logic is testable and not hidden inside Compose UI.
