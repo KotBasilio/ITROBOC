@@ -24,4 +24,10 @@ data class DeckProfileMetadata(
     val isBuiltIn: Boolean = false,
     val isDemo: Boolean = false,
     val notes: String? = null,
+    val signatureModel: String? = null,
 )
+
+object DeckProfileSignatureModels {
+    const val GRID13_V1: String = "grid13-v1"
+    const val SYNTHETIC_DEMO_BRIDGE_52_V1: String = "synthetic-demo-bridge52-v1"
+}

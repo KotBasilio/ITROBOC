@@ -12,7 +12,7 @@ The repository currently contains:
   - card, suit, and rank domain models
   - canonical card ID parsing and formatting
   - hand and board validation logic
-  - deck-profile signature mapping
+  - deck-profile signature mapping and signature-model metadata
   - a built-in 52-card demo/reference deck profile with opaque synthetic signatures
   - single-scan and batch-scan accumulator logic for TD workflow
   - scan severity classification for future UI messaging
@@ -55,9 +55,9 @@ For details on the signature mapping scheme used in the fake shell, see [md-file
 
 ## Demo deck profile
 
-The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA`, carries explicit profile metadata, and exists to support tests plus the fake Android TD shell.
+The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA`, carries explicit profile metadata including a synthetic signature-model tag, and exists to support tests plus the fake Android TD shell.
 
-It is not a claim about real WinDup, Jannersten, or any other physical barcode mapping. Real deck profiles are expected to come later from admin-side calibration and observation.
+It is not a claim about real WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to use `grid13-v1` signatures from admin-side calibration and observation.
 
 ## Running tests
 

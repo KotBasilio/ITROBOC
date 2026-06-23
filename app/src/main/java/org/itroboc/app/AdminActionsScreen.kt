@@ -191,6 +191,13 @@ fun ProfileRow(
                         color = Color.Gray
                     )
                 }
+                profile.signatureModel?.let { signatureModel ->
+                    Text(
+                        text = "Signature model: $signatureModel",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray,
+                    )
+                }
             }
             if (isActive) {
                 Icon(

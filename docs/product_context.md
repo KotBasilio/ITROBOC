@@ -49,6 +49,8 @@ sig-dq -> DQ
 
 Deck Profiles should allow future support for different physical deck types. If the club buys another deck with a different barcode scheme, the app should be able to learn or configure another profile rather than requiring app code changes.
 
+Deck Profile metadata also records the raw-signature model, for example `grid13-v1` for calibrated camera profiles. Built-in demo profiles may use synthetic signature models and must not be mistaken for real physical deck mappings.
+
 ### TD side
 
 The TD side uses an existing Deck Profile to build hands and boards.
@@ -109,4 +111,3 @@ The raw signature should remain available in scan reports/logs where useful. Thi
 10. Admin calibration UI.
 
 Camera and Android UI should wait until the core workflow is stable and tested.
-

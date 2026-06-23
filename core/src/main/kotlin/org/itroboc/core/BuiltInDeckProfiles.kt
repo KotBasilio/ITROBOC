@@ -18,6 +18,7 @@ object BuiltInDeckProfiles {
                 isBuiltIn = true,
                 isDemo = true,
                 notes = "Synthetic demo/reference mapping only; not a real WinDup/Jannersten profile.",
+                signatureModel = DeckProfileSignatureModels.SYNTHETIC_DEMO_BRIDGE_52_V1,
             ),
         )
 }

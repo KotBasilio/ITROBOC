@@ -3,12 +3,14 @@ package org.itroboc.app
 import org.itroboc.core.BuiltInDeckProfiles
 import org.itroboc.core.DeckProfile
 import org.itroboc.core.DeckProfileMetadata
+import org.itroboc.core.DeckProfileSignatureModels
 
 data class ProfileListItem(
     val id: String,
     val displayName: String,
     val isBuiltIn: Boolean,
-    val isDemo: Boolean
+    val isDemo: Boolean,
+    val signatureModel: String? = null,
 )
 
 data class AdminProfileUiState(
@@ -42,6 +44,7 @@ fun DeckProfileMetadata.toProfileListItem(): ProfileListItem =
         displayName = displayName,
         isBuiltIn = isBuiltIn,
         isDemo = isDemo,
+        signatureModel = signatureModel,
     )
 
 fun ProfileListItem.toDeckProfileMetadata(): DeckProfileMetadata =
@@ -50,6 +53,7 @@ fun ProfileListItem.toDeckProfileMetadata(): DeckProfileMetadata =
         displayName = displayName,
         isBuiltIn = isBuiltIn,
         isDemo = isDemo,
+        signatureModel = signatureModel ?: DeckProfileSignatureModels.GRID13_V1,
     )
 
 fun ProfileListItem.toEmptyDeckProfile(): DeckProfile =
