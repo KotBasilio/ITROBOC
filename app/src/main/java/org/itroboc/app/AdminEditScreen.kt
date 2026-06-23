@@ -260,6 +260,21 @@ fun AdminEditScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
+                Button(
+                    onClick = {
+                        pendingScanRequest.set(true)
+                        scanRequested = true
+                        pendingScanCard = selectedCard
+                        cameraDecodeInfo = null
+                        lastResultMessage = "Waiting for next camera frame..."
+                        updateTrigger++ // Force UI refresh
+                    },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                ) {
+                    Text("Scan", style = MaterialTheme.typography.labelSmall)
+                }
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "Selected: ${selectedCard.prettyString}",
                     style = MaterialTheme.typography.headlineSmall,
@@ -355,19 +370,6 @@ fun AdminEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = {
-                        pendingScanRequest.set(true)
-                        scanRequested = true
-                        pendingScanCard = selectedCard
-                        cameraDecodeInfo = null
-                        lastResultMessage = "Waiting for next camera frame..."
-                        updateTrigger++ // Force UI refresh
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Scan")
-                }
                 Button(
                     onClick = {
                         onSave(editor.toDeckProfile())
