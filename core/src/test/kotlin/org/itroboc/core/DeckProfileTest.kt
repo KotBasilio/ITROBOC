@@ -96,22 +96,25 @@ class DeckProfileTest {
         assertEquals(true, profile.metadata.isBuiltIn)
         assertEquals(false, profile.metadata.isDemo)
         assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
-        assertTrue(profile.metadata.notes?.contains("S6 is omitted") == true)
+        assertTrue(profile.metadata.notes?.contains("S6/C6 resolved") == true)
     }
 
     @Test
-    fun `observed profile contains scanned aliases and expected incomplete coverage`() {
+    fun `observed profile contains scanned aliases and complete coverage`() {
         val profile = BuiltInDeckProfiles.observedV1()
 
-        assertEquals(102, profile.mappingCount())
-        assertEquals(51, profile.cardIds().size)
+        assertEquals(104, profile.mappingCount())
+        assertEquals(52, profile.cardIds().size)
         assertEquals(profile.mappingCount(), profile.rawSignatures().size)
 
         assertEquals(CardId.parse("SA"), profile.lookup("bfm1255"))
         assertEquals(CardId.parse("SA"), profile.lookup("brm1549"))
-        assertEquals(CardId.parse("C6"), profile.lookup("bfm002A"))
-        assertEquals(CardId.parse("C6"), profile.lookup("brm0A80"))
-        assertTrue(CardId.parse("S6") !in profile.cardIds())
+        assertEquals(CardId.parse("S6"), profile.lookup("bfm1669"))
+        assertEquals(CardId.parse("S6"), profile.lookup("brm12CD"))
+        assertEquals(CardId.parse("C6"), profile.lookup("bfm164D"))
+        assertEquals(CardId.parse("C6"), profile.lookup("brm164D"))
+        assertEquals(null, profile.lookup("bfm002A"))
+        assertEquals(null, profile.lookup("brm0A80"))
     }
 
     @Test
