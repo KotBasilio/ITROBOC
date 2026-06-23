@@ -136,12 +136,26 @@ fun AdminEditScreen(
                 .fillMaxHeight()
                 .padding(8.dp)
         ) {
-            Text(
-                text = "Card Mapping",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Card Mapping",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = autoAdvance,
+                        onCheckedChange = { autoAdvance = it }
+                    )
+                    Text("Auto-advance", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
             val suits = Suit.entries
             val ranks = Rank.entries
 
@@ -269,10 +283,10 @@ fun AdminEditScreen(
                         lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
                     },
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    modifier = Modifier.height(44.dp),
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
                 ) {
-                    Text("Scan", style = MaterialTheme.typography.labelSmall)
+                    Text("Scan", style = MaterialTheme.typography.labelLarge)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
@@ -299,17 +313,16 @@ fun AdminEditScreen(
             }
             val aliases = editor.getAliases(selectedCard)
             Text(
-                text = if (aliases.isEmpty()) "Unmapped" else "Mapped",
+                text = if (aliases.isEmpty()) {
+                    "Unmapped • Aliases: none"
+                } else {
+                    "Mapped • Aliases: ${aliases.joinToString()}"
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (aliases.isEmpty()) Color.Red else Color.Unspecified
             )
             if (aliases.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Aliases",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -359,11 +372,6 @@ fun AdminEditScreen(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = autoAdvance, onCheckedChange = { autoAdvance = it })
-                Text("Auto-advance", style = MaterialTheme.typography.labelMedium)
             }
 
             Row(

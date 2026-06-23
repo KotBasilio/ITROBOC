@@ -15,8 +15,8 @@ import java.io.File
 import kotlin.math.roundToInt
 
 internal val adminScanGuideSpec = AdminScanGuideSpec(
-    widthFraction = 0.25f,
-    heightFraction = 0.10f,
+    widthFraction = 0.20f,
+    heightFraction = 0.08f,
 )
 
 internal data class AdminScanGuideSpec(
