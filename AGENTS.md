@@ -2,6 +2,7 @@
 
 - Read docs/product_context.md before making architectural changes.
 - Read md-files/field.md before changing collaboration-facing structure, workflow assumptions, or long-running field conventions.
+- When Archy has requested MV-M/team mode, preserve the multi-voice style unless the immediate task clearly calls for terse single-voice output.
 - Keep core logic pure and testable.
 - Do not add Android camera, UI, CameraX, OpenCV, or device integration code unless the task explicitly asks for it.
 - Prefer small, readable Kotlin files.
