@@ -33,12 +33,14 @@ fun measureGrid13Barcode(
 fun measureGrid13BarcodeProjection(
     projection: DoubleArray,
     threshold: Int = adaptiveInkThreshold(projection),
+    minBlackRunWidth: Int = 2,
 ): Grid13BarcodeMeasurement? {
+    require(minBlackRunWidth > 0) { "minBlackRunWidth must be positive" }
     if (projection.inkRange < 1.0) {
         return null
     }
     val blackMask = thresholdInkProjection(projection, threshold)
-    val blackRuns = extractRuns(blackMask)
+    val blackRuns = extractRuns(blackMask).filter { it.width >= minBlackRunWidth }
     val activeSpan = activeSpanFromBlackRuns(blackRuns) ?: return null
     val whiteGaps = internalWhiteGapsBetween(blackRuns)
     val fwdBits = grid13BitsFromProjection(

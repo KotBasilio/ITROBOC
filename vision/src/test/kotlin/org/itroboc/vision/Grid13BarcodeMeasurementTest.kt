@@ -40,6 +40,22 @@ class Grid13BarcodeMeasurementTest {
     }
 
     @Test
+    fun `ignores tiny edge artifacts before active barcode span`() {
+        val projection = doubleArrayOf(
+            100.0,
+            0.0, 0.0,
+            100.0, 100.0,
+            0.0,
+            100.0, 100.0,
+        )
+
+        val measurement = assertNotNull(measureGrid13BarcodeProjection(projection, threshold = 50))
+
+        assertEquals(listOf(3..4, 6..7), measurement.blackRunEdges)
+        assertEquals(3, measurement.activeStartX)
+    }
+
+    @Test
     fun `computes grid13 bits over active span cells`() {
         val projection = doubleArrayOf(
             100.0, 0.0, 100.0, 0.0, 100.0, 0.0, 100.0,

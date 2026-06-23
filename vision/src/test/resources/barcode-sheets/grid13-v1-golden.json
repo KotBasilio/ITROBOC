@@ -1,0 +1,1194 @@
+{
+  "signatureModel": "grid13-v1",
+  "source": "docs/barcode-sheets/deep-research-report.md Table of the 52 cards and proposed signatures",
+  "cards": [
+    {
+      "cardId": "SA",
+      "rawSignature": "bfm1549",
+      "reverseSignature": "brm1255",
+      "grid13FwdBits": "1010101001001",
+      "grid13RevBits": "1001001010101",
+      "rl2": "B1-W1-B1-W1-B2-W1-B2-W2-B2-W2-B1",
+      "blackRunsPx": [
+        3,
+        4,
+        5,
+        5,
+        5,
+        3
+      ],
+      "whiteGapsPx": [
+        4,
+        4,
+        3,
+        7,
+        8
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "SK",
+      "rawSignature": "bfm14A9",
+      "reverseSignature": "brm12A5",
+      "grid13FwdBits": "1010010101001",
+      "grid13RevBits": "1001010100101",
+      "rl2": "B1-W1-B2-W2-B2-W1-B2-W1-B2-W2-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        6,
+        5,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        3,
+        3,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "SQ",
+      "rawSignature": "bfm15A9",
+      "reverseSignature": "brm12B5",
+      "grid13FwdBits": "1010110101001",
+      "grid13RevBits": "1001010110101",
+      "rl2": "B1-W1-B1-W1-B2-W1-B1-W1-B1-W2-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        9,
+        5,
+        5,
+        4
+      ],
+      "whiteGapsPx": [
+        3,
+        4,
+        3,
+        4,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "SJ",
+      "rawSignature": "bfm1359",
+      "reverseSignature": "brm1359",
+      "grid13FwdBits": "1001101011001",
+      "grid13RevBits": "1001101011001",
+      "rl2": "B1-W2-B2-W1-B1-W1-B2-W2-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        5,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        3,
+        3,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "ST",
+      "rawSignature": "bfm0659",
+      "reverseSignature": "brm134C",
+      "grid13FwdBits": "0011001011001",
+      "grid13RevBits": "1001101001100",
+      "rl2": "B1-W1-B2-W2-B1-W1-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        10,
+        6,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        6,
+        3,
+        7
+      ],
+      "confidence": "Medium"
+    },
+    {
+      "cardId": "S9",
+      "rawSignature": "bfm12A9",
+      "reverseSignature": "brm12A9",
+      "grid13FwdBits": "1001010101001",
+      "grid13RevBits": "1001010101001",
+      "rl2": "B1-W2-B2-W1-B2-W1-B2-W1-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        3,
+        2,
+        3,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S8",
+      "rawSignature": "bfm1529",
+      "reverseSignature": "brm1295",
+      "grid13FwdBits": "1010100101001",
+      "grid13RevBits": "1001010010101",
+      "rl2": "B1-W1-B2-W1-B2-W2-B2-W1-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        2,
+        7,
+        3,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S7",
+      "rawSignature": "bfm1329",
+      "reverseSignature": "brm1299",
+      "grid13FwdBits": "1001100101001",
+      "grid13RevBits": "1001010011001",
+      "rl2": "B1-W2-B2-W2-B1-W1-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        10,
+        6,
+        6,
+        6
+      ],
+      "whiteGapsPx": [
+        7,
+        7,
+        3,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S6",
+      "rawSignature": "bfm1669",
+      "reverseSignature": "brm12CD",
+      "grid13FwdBits": "1011001101001",
+      "grid13RevBits": "1001011001101",
+      "rl2": "B1-W1-B2-W2-B2-W1-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        10,
+        11,
+        7,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        7,
+        2,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S5",
+      "rawSignature": "bfm1269",
+      "reverseSignature": "brm12C9",
+      "grid13FwdBits": "1001001101001",
+      "grid13RevBits": "1001011001001",
+      "rl2": "B1-W2-B1-W2-B2-W1-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        7,
+        3,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S4",
+      "rawSignature": "bfm1259",
+      "reverseSignature": "brm1349",
+      "grid13FwdBits": "1001001011001",
+      "grid13RevBits": "1001101001001",
+      "rl2": "B1-W2-B1-W2-B1-W1-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        11,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        7,
+        2,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S3",
+      "rawSignature": "bfm14C9",
+      "reverseSignature": "brm1265",
+      "grid13FwdBits": "1010011001001",
+      "grid13RevBits": "1001001100101",
+      "rl2": "B1-W1-B1-W2-B2-W2-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        5,
+        11,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        7,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "S2",
+      "rawSignature": "bfm12C9",
+      "reverseSignature": "brm1269",
+      "grid13FwdBits": "1001011001001",
+      "grid13RevBits": "1001001101001",
+      "rl2": "B1-W2-B1-W1-B2-W2-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        12,
+        7,
+        6
+      ],
+      "whiteGapsPx": [
+        7,
+        2,
+        6,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "HA",
+      "rawSignature": "bfm1249",
+      "reverseSignature": "brm1249",
+      "grid13FwdBits": "1001001001001",
+      "grid13RevBits": "1001001001001",
+      "rl2": "B1-W1-B2-W1-B2-W1-B2-W1-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        6,
+        5,
+        4
+      ],
+      "whiteGapsPx": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "HK",
+      "rawSignature": "bfm15B5",
+      "reverseSignature": "brm15B5",
+      "grid13FwdBits": "1010110110101",
+      "grid13RevBits": "1010110110101",
+      "rl2": "B1-W1-B1-W2-B2-W1-B2-W1-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        10,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        3,
+        2,
+        2,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "HQ",
+      "rawSignature": "bfm1535",
+      "reverseSignature": "brm1595",
+      "grid13FwdBits": "1010100110101",
+      "grid13RevBits": "1010110010101",
+      "rl2": "B1-W1-B1-W1-B1-W2-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        6,
+        6,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        2,
+        7,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "HJ",
+      "rawSignature": "bfm14B5",
+      "reverseSignature": "brm15A5",
+      "grid13FwdBits": "1010010110101",
+      "grid13RevBits": "1010110100101",
+      "rl2": "B1-W1-B1-W2-B1-W1-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        6,
+        9,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        3,
+        3,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "HT",
+      "rawSignature": "bfm12B5",
+      "reverseSignature": "brm15A9",
+      "grid13FwdBits": "1001010110101",
+      "grid13RevBits": "1010110101001",
+      "rl2": "B1-W2-B1-W1-B1-W1-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        3,
+        2,
+        3,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H9",
+      "rawSignature": "bfm1335",
+      "reverseSignature": "brm1599",
+      "grid13FwdBits": "1001100110101",
+      "grid13RevBits": "1010110011001",
+      "rl2": "B1-W2-B2-W2-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        7,
+        2,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H8",
+      "rawSignature": "bfm1635",
+      "reverseSignature": "brm158D",
+      "grid13FwdBits": "1011000110101",
+      "grid13RevBits": "1010110001101",
+      "rl2": "B1-W1-B2-W2-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        11,
+        11,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        10,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H7",
+      "rawSignature": "bfm1595",
+      "reverseSignature": "brm1535",
+      "grid13FwdBits": "1010110010101",
+      "grid13RevBits": "1010100110101",
+      "rl2": "B1-W1-B1-W1-B2-W2-B1-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        11,
+        6,
+        7,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        2,
+        6,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H6",
+      "rawSignature": "bfm1195",
+      "reverseSignature": "brm1531",
+      "grid13FwdBits": "1000110010101",
+      "grid13RevBits": "1010100110001",
+      "rl2": "B1-W2-B2-W2-B1-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        10,
+        6,
+        6,
+        6
+      ],
+      "whiteGapsPx": [
+        11,
+        7,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H5",
+      "rawSignature": "bfm1495",
+      "reverseSignature": "brm1525",
+      "grid13FwdBits": "1010010010101",
+      "grid13RevBits": "1010100100101",
+      "rl2": "B1-W1-B2-W2-B2-W2-B2-W1-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        7,
+        7,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        6,
+        6,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H4",
+      "rawSignature": "bfm1295",
+      "reverseSignature": "brm1529",
+      "grid13FwdBits": "1001010010101",
+      "grid13RevBits": "1010100101001",
+      "rl2": "B1-W2-B1-W1-B1-W2-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        6,
+        6,
+        6,
+        7,
+        6,
+        6
+      ],
+      "whiteGapsPx": [
+        6,
+        3,
+        6,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H3",
+      "rawSignature": "bfm1235",
+      "reverseSignature": "brm1589",
+      "grid13FwdBits": "1001000110101",
+      "grid13RevBits": "1010110001001",
+      "rl2": "B1-W2-B1-W2-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        6,
+        6,
+        11,
+        7,
+        6
+      ],
+      "whiteGapsPx": [
+        6,
+        11,
+        1,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "H2",
+      "rawSignature": "bfm11B5",
+      "reverseSignature": "brm15B1",
+      "grid13FwdBits": "1000110110101",
+      "grid13RevBits": "1010110110001",
+      "rl2": "B1-W2-B2-W1-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        12,
+        11,
+        7,
+        5
+      ],
+      "whiteGapsPx": [
+        10,
+        1,
+        2,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "DA",
+      "rawSignature": "bfm1649",
+      "reverseSignature": "brm124D",
+      "grid13FwdBits": "1011001001001",
+      "grid13RevBits": "1001001001101",
+      "rl2": "B1-W1-B2-W2-B1-W2-B1-W2-B1",
+      "blackRunsPx": [
+        4,
+        9,
+        5,
+        5,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        7,
+        7
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "DK",
+      "rawSignature": "bfm1555",
+      "reverseSignature": "brm1555",
+      "grid13FwdBits": "1010101010101",
+      "grid13RevBits": "1010101010101",
+      "rl2": "B1-W1-B2-W1-B2-W1-B2-W2-B1-W2-B1-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        5,
+        5,
+        4
+      ],
+      "whiteGapsPx": [
+        2,
+        2,
+        2,
+        3,
+        3,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "DQ",
+      "rawSignature": "bfm1355",
+      "reverseSignature": "brm1559",
+      "grid13FwdBits": "1001101010101",
+      "grid13RevBits": "1010101011001",
+      "rl2": "B1-W2-B2-W1-B1-W1-B1-W1-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        9,
+        6,
+        6,
+        5,
+        4
+      ],
+      "whiteGapsPx": [
+        7,
+        3,
+        2,
+        3,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "DJ",
+      "rawSignature": "bfm1655",
+      "reverseSignature": "brm154D",
+      "grid13FwdBits": "1011001010101",
+      "grid13RevBits": "1010101001101",
+      "rl2": "B1-W1-B2-W2-B1-W1-B1-W1-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        5,
+        5,
+        5,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        3,
+        3,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "DT",
+      "rawSignature": "bfm1255",
+      "reverseSignature": "brm1549",
+      "grid13FwdBits": "1001001010101",
+      "grid13RevBits": "1010101001001",
+      "rl2": "B1-W2-B2-W2-B2-W1-B2-W1-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        5,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        7,
+        2,
+        3,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D9",
+      "rawSignature": "bfm15A5",
+      "reverseSignature": "brm14B5",
+      "grid13FwdBits": "1010110100101",
+      "grid13RevBits": "1010010110101",
+      "rl2": "B1-W1-B1-W1-B2-W1-B1-W2-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        5,
+        9,
+        6,
+        5,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        3,
+        3,
+        7,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D8",
+      "rawSignature": "bfm11A5",
+      "reverseSignature": "brm14B1",
+      "grid13FwdBits": "1000110100101",
+      "grid13RevBits": "1010010110001",
+      "rl2": "B1-W2-B2-W1-B1-W2-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        5,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        11,
+        3,
+        7,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D7",
+      "rawSignature": "bfm14A5",
+      "reverseSignature": "brm14A5",
+      "grid13FwdBits": "1010010100101",
+      "grid13RevBits": "1010010100101",
+      "rl2": "B1-W1-B2-W2-B1-W1-B2-W2-B2-W1-B1",
+      "blackRunsPx": [
+        4,
+        6,
+        5,
+        6,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        3,
+        7,
+        3,
+        6,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D6",
+      "rawSignature": "bfm12A5",
+      "reverseSignature": "brm14A9",
+      "grid13FwdBits": "1001010100101",
+      "grid13RevBits": "1010010101001",
+      "rl2": "B1-W2-B2-W1-B2-W1-B1-W2-B2-W1-B1",
+      "blackRunsPx": [
+        4,
+        6,
+        6,
+        5,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        7,
+        2,
+        3,
+        7,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D5",
+      "rawSignature": "bfm1565",
+      "reverseSignature": "brm14D5",
+      "grid13FwdBits": "1010101100101",
+      "grid13RevBits": "1010011010101",
+      "rl2": "B1-W1-B1-W1-B1-W1-B2-W2-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        6,
+        9,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        3,
+        3,
+        3,
+        7,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D4",
+      "rawSignature": "bfm1265",
+      "reverseSignature": "brm14C9",
+      "grid13FwdBits": "1001001100101",
+      "grid13RevBits": "1010011001001",
+      "rl2": "B1-W2-B1-W2-B2-W2-B1-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        10,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        6,
+        7,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D3",
+      "rawSignature": "bfm154D",
+      "reverseSignature": "brm1655",
+      "grid13FwdBits": "1010101001101",
+      "grid13RevBits": "1011001010101",
+      "rl2": "B1-W1-B1-W1-B1-W1-B1-W2-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        11,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        2,
+        3,
+        6,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "D2",
+      "rawSignature": "bfm124D",
+      "reverseSignature": "brm1649",
+      "grid13FwdBits": "1001001001101",
+      "grid13RevBits": "1011001001001",
+      "rl2": "B1-W2-B1-W1-B2-W2-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        10,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        3,
+        7,
+        2
+      ],
+      "confidence": "Medium"
+    },
+    {
+      "cardId": "CA",
+      "rawSignature": "bfm1349",
+      "reverseSignature": "brm1259",
+      "grid13FwdBits": "1001101001001",
+      "grid13RevBits": "1001001011001",
+      "rl2": "B1-W2-B2-W1-B1-W2-B1-W2-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        6,
+        6,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        2,
+        6,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "CK",
+      "rawSignature": "bfm1365",
+      "reverseSignature": "brm14D9",
+      "grid13FwdBits": "1001101100101",
+      "grid13RevBits": "1010011011001",
+      "rl2": "B1-W2-B2-W1-B2-W2-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        9,
+        9,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        7,
+        3,
+        7,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "CQ",
+      "rawSignature": "bfm1599",
+      "reverseSignature": "brm1335",
+      "grid13FwdBits": "1010110011001",
+      "grid13RevBits": "1001100110101",
+      "rl2": "B1-W1-B1-W1-B2-W2-B2-W2-B1",
+      "blackRunsPx": [
+        4,
+        5,
+        9,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        3,
+        7,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "CJ",
+      "rawSignature": "bfm158D",
+      "reverseSignature": "brm1635",
+      "grid13FwdBits": "1010110001101",
+      "grid13RevBits": "1011000110101",
+      "rl2": "B1-W1-B1-W1-B2-W2-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        10,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        2,
+        10,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "CT",
+      "rawSignature": "bfm1665",
+      "reverseSignature": "brm14CD",
+      "grid13FwdBits": "1011001100101",
+      "grid13RevBits": "1010011001101",
+      "rl2": "B1-W1-B2-W2-B2-W2-B1-W1-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        10,
+        6,
+        4
+      ],
+      "whiteGapsPx": [
+        3,
+        6,
+        6,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C9",
+      "rawSignature": "bfm14CD",
+      "reverseSignature": "brm1665",
+      "grid13FwdBits": "1010011001101",
+      "grid13RevBits": "1011001100101",
+      "rl2": "B1-W1-B1-W2-B2-W2-B2-W1-B1",
+      "blackRunsPx": [
+        4,
+        6,
+        10,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        3,
+        6,
+        6,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C8",
+      "rawSignature": "bfm02CD",
+      "reverseSignature": "brm1668",
+      "grid13FwdBits": "0001011001101",
+      "grid13RevBits": "1011001101000",
+      "rl2": "B1-W2-B1-W1-B2-W2-B2-W1-B1",
+      "blackRunsPx": [
+        6,
+        6,
+        10,
+        9,
+        5
+      ],
+      "whiteGapsPx": [
+        6,
+        2,
+        7,
+        3
+      ],
+      "confidence": "Medium"
+    },
+    {
+      "cardId": "C7",
+      "rawSignature": "bfm134D",
+      "reverseSignature": "brm1659",
+      "grid13FwdBits": "1001101001101",
+      "grid13RevBits": "1011001011001",
+      "rl2": "B1-W2-B2-W1-B1-W2-B2-W1-B1",
+      "blackRunsPx": [
+        4,
+        10,
+        6,
+        10,
+        4
+      ],
+      "whiteGapsPx": [
+        7,
+        2,
+        6,
+        3
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C6",
+      "rawSignature": "bfm164D",
+      "reverseSignature": "brm164D",
+      "grid13FwdBits": "1011001001101",
+      "grid13RevBits": "1011001001101",
+      "rl2": "B1-W1-B2-W2-B1-W2-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        10,
+        6,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        6,
+        7,
+        2
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C5",
+      "rawSignature": "bfm1199",
+      "reverseSignature": "brm1331",
+      "grid13FwdBits": "1000110011001",
+      "grid13RevBits": "1001100110001",
+      "rl2": "B1-W2-B2-W1-B2-W1-B1",
+      "blackRunsPx": [
+        5,
+        12,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        10,
+        5,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C4",
+      "rawSignature": "bfm1559",
+      "reverseSignature": "brm1355",
+      "grid13FwdBits": "1010101011001",
+      "grid13RevBits": "1001101010101",
+      "rl2": "B1-W1-B1-W1-B1-W1-B1-W1-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        6,
+        10,
+        6
+      ],
+      "whiteGapsPx": [
+        2,
+        2,
+        2,
+        2,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C3",
+      "rawSignature": "bfm1299",
+      "reverseSignature": "brm1329",
+      "grid13FwdBits": "1001010011001",
+      "grid13RevBits": "1001100101001",
+      "rl2": "B1-W2-B1-W1-B1-W2-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        6,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        7,
+        2,
+        6,
+        6
+      ],
+      "confidence": "High"
+    },
+    {
+      "cardId": "C2",
+      "rawSignature": "bfm1499",
+      "reverseSignature": "brm1325",
+      "grid13FwdBits": "1010010011001",
+      "grid13RevBits": "1001100100101",
+      "rl2": "B1-W1-B1-W2-B1-W2-B2-W2-B1",
+      "blackRunsPx": [
+        5,
+        6,
+        7,
+        10,
+        5
+      ],
+      "whiteGapsPx": [
+        2,
+        6,
+        6,
+        6
+      ],
+      "confidence": "High"
+    }
+  ]
+}

@@ -81,6 +81,15 @@ class BarcodeSheetAnalyzerTest {
         assertTrue(report.contains("bfm"), report)
     }
 
+    @Test
+    fun `selected sheet measurements match research table grid13 values`() {
+        val byCard = BarcodeSheetAnalyzer.measureAllSuitSheetCrops().associateBy { it.cardId }
+
+        assertEquals("1010101001001", byCard.getValue("SA").measurement.grid13FwdBits)
+        assertEquals("1010010101001", byCard.getValue("SK").measurement.grid13FwdBits)
+        assertEquals("1001001001101", byCard.getValue("D2").measurement.grid13FwdBits)
+    }
+
 }
 
 internal object BarcodeSheetAnalyzer {
