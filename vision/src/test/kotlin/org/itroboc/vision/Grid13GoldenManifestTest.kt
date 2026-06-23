@@ -1,0 +1,113 @@
+package org.itroboc.vision
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+
+class Grid13GoldenManifestTest {
+    private val manifest = Grid13GoldenManifest.load()
+
+    @Test
+    fun `golden manifest contains all fifty two cards`() {
+        val expectedCards = listOf('S', 'H', 'D', 'C').flatMap { suit ->
+            listOf("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2").map { rank ->
+                "$suit$rank"
+            }
+        }.toSet()
+
+        assertEquals("grid13-v1", manifest.signatureModel)
+        assertEquals(52, manifest.cards.size)
+        assertEquals(expectedCards, manifest.cards.map { it.cardId }.toSet())
+    }
+
+    @Test
+    fun `golden manifest signatures are formatted and unique`() {
+        assertEquals(52, manifest.cards.map { it.rawSignature }.toSet().size)
+        assertEquals(52, manifest.cards.map { it.grid13FwdBits }.toSet().size)
+
+        manifest.cards.forEach { card ->
+            assertTrue(card.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")), card.cardId)
+            assertTrue(card.reverseSignature.matches(Regex("^brm[0-9A-F]{4}$")), card.cardId)
+            assertEquals(13, card.grid13FwdBits.length, card.cardId)
+            assertEquals(reverseBits(card.grid13FwdBits), card.grid13RevBits, card.cardId)
+            assertEquals(forwardMealSignature(card.grid13FwdBits), card.rawSignature, card.cardId)
+            assertEquals(reverseMealSignature(card.grid13RevBits), card.reverseSignature, card.cardId)
+        }
+    }
+
+    @Test
+    fun `golden manifest preserves known RL2 collision`() {
+        val byCard = manifest.cards.associateBy { it.cardId }
+
+        assertEquals(byCard.getValue("D2").rl2, byCard.getValue("C8").rl2)
+        assertNotEquals(byCard.getValue("D2").grid13FwdBits, byCard.getValue("C8").grid13FwdBits)
+    }
+
+    @Test
+    fun `golden manifest does not canonicalize orientation`() {
+        val canonicalized = manifest.cards.map { card ->
+            minOf(card.grid13FwdBits, card.grid13RevBits)
+        }
+
+        assertTrue(canonicalized.toSet().size < manifest.cards.size)
+    }
+}
+
+private data class Grid13GoldenManifest(
+    val signatureModel: String,
+    val cards: List<Grid13GoldenCard>,
+) {
+    companion object {
+        fun load(): Grid13GoldenManifest {
+            val text = requireNotNull(
+                Grid13GoldenManifest::class.java.getResource("/barcode-sheets/grid13-v1-golden.json"),
+            ) {
+                "Missing grid13-v1 golden manifest"
+            }.readText()
+
+            val signatureModel = requireNotNull(
+                Regex("\"signatureModel\"\\s*:\\s*\"([^\"]+)\"").find(text)?.groupValues?.get(1),
+            ) {
+                "Missing signatureModel"
+            }
+            val cards = Regex("\\{\\n\\s+\"cardId\".*?\\n\\s+\\}", RegexOption.DOT_MATCHES_ALL)
+                .findAll(text)
+                .map { match -> Grid13GoldenCard.fromJsonObject(match.value) }
+                .toList()
+
+            return Grid13GoldenManifest(
+                signatureModel = signatureModel,
+                cards = cards,
+            )
+        }
+    }
+}
+
+private data class Grid13GoldenCard(
+    val cardId: String,
+    val rawSignature: String,
+    val reverseSignature: String,
+    val grid13FwdBits: String,
+    val grid13RevBits: String,
+    val rl2: String,
+) {
+    companion object {
+        fun fromJsonObject(json: String): Grid13GoldenCard =
+            Grid13GoldenCard(
+                cardId = json.stringField("cardId"),
+                rawSignature = json.stringField("rawSignature"),
+                reverseSignature = json.stringField("reverseSignature"),
+                grid13FwdBits = json.stringField("grid13FwdBits"),
+                grid13RevBits = json.stringField("grid13RevBits"),
+                rl2 = json.stringField("rl2"),
+            )
+    }
+}
+
+private fun String.stringField(name: String): String =
+    requireNotNull(
+        Regex("\"$name\"\\s*:\\s*\"([^\"]*)\"").find(this)?.groupValues?.get(1),
+    ) {
+        "Missing string field $name"
+    }
