@@ -42,6 +42,7 @@ object BuiltInDeckProfiles {
                 addObserved(CardId(Suit.SPADES, Rank.NINE), "bfm12A9", "brm12A9")
                 addObserved(CardId(Suit.SPADES, Rank.EIGHT), "bfm1295", "brm1529")
                 addObserved(CardId(Suit.SPADES, Rank.SEVEN), "bfm1299", "brm1329")
+                addObserved(CardId(Suit.SPADES, Rank.SIX), "bfm1669", "brm12CD")
                 addObserved(CardId(Suit.SPADES, Rank.FIVE), "bfm12C9", "brm1269")
                 addObserved(CardId(Suit.SPADES, Rank.FOUR), "bfm1348", "brm0259")
                 addObserved(CardId(Suit.SPADES, Rank.THREE), "bfm0015", "brm1500")
@@ -80,7 +81,7 @@ object BuiltInDeckProfiles {
                 addObserved(CardId(Suit.CLUBS, Rank.NINE), "bfm1665", "brm14CD")
                 addObserved(CardId(Suit.CLUBS, Rank.EIGHT), "bfm131D", "brm1719")
                 addObserved(CardId(Suit.CLUBS, Rank.SEVEN), "bfm1658", "brm034D")
-                addObserved(CardId(Suit.CLUBS, Rank.SIX), "bfm002A", "brm0A80")
+                addObserved(CardId(Suit.CLUBS, Rank.SIX), "bfm164D", "brm164D")
                 addObserved(CardId(Suit.CLUBS, Rank.FIVE), "bfm1C0D", "brm1607")
                 addObserved(CardId(Suit.CLUBS, Rank.FOUR), "bfm1377", "brm1DD9")
                 addObserved(CardId(Suit.CLUBS, Rank.THREE), "bfm1016", "brm0D01")
@@ -91,7 +92,7 @@ object BuiltInDeckProfiles {
                 displayName = "Built-in Observed v1",
                 isBuiltIn = true,
                 isDemo = false,
-                notes = "Observed grid13-v1 profile from scanned_attempt1.jsonl. Incomplete: S6 is omitted because its best scan exactly collided with C6.",
+                notes = "Observed grid13-v1 profile from scanned_attempt1.jsonl, with S6/C6 resolved by focused rescan 6S-and-6C.jsonl.",
                 signatureModel = DeckProfileSignatureModels.GRID13_V1,
             ),
         )
