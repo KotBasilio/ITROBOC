@@ -40,3 +40,6 @@ google-services.json
 .artifacts/
 .codex/
 .agents/
+
+# ITROBOT logs
+.logs/
