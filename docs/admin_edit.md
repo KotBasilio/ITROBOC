@@ -149,16 +149,26 @@ Example:
 
 Each alias/signature should be clickable.
 
-Clicking an alias opens a confirmation dialog:
+Clicking an alias opens an alias details dialog. For aliases scanned during the current edit session, the dialog can show retained decoder evidence such as:
 
-`Remove alias 0x367A from ♦A?`
+* signature model
+* forward/reverse Grid13 bits
+* reverse token
+* RL2
+* black and white run widths
+* confidence
+* warnings
+
+Older aliases may only show the compact alias plus a note that no scan evidence is retained in the current session.
+
+The same dialog keeps the existing remove action for the selected alias.
 
 Buttons:
 
-* `OK`
-* `Cancel`
+* `Remove`
+* `Close`
 
-On `OK`, remove only that alias.
+On `Remove`, remove only that alias.
 
 There is no separate `Clear selected mapping` button.
 
