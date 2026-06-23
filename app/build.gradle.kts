@@ -32,6 +32,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":vision"))
 
     val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)
@@ -50,4 +51,6 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$cameraVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraVersion")
     implementation("androidx.camera:camera-view:$cameraVersion")
+
+    testImplementation(kotlin("test"))
 }

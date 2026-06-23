@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import org.itroboc.vision.BarcodeDecodeResult
 import org.itroboc.core.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,8 +57,10 @@ fun AdminEditScreen(
     var showUnsavedChangesDialog by remember { mutableStateOf(false) }
     
     var frameDebugInfo by remember { mutableStateOf<FrameDebugInfo?>(null) }
+    var cameraDecodeInfo by remember { mutableStateOf<String?>(null) }
     var scanRequested by remember { mutableStateOf(false) }
     val pendingScanRequest = remember { AtomicBoolean(false) }
+    val frameDecoder = remember { AdminEditCameraFrameDecoder() }
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
@@ -83,6 +86,40 @@ fun AdminEditScreen(
         if (!hasCameraPermission) {
             launcher.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    fun advanceToNextUnmappedCardOrReportCompletion() {
+        val allCards = Suit.entries.flatMap { suit ->
+            Rank.entries.map { rank -> CardId(suit, rank) }
+        }
+        val nextUnmapped = allCards.firstOrNull { !editor.isMapped(it) }
+        if (nextUnmapped != null) {
+            selectedSuit = nextUnmapped.suit
+            selectedRank = nextUnmapped.rank
+        } else {
+            lastResultMessage = "Profile complete! All 52 cards mapped."
+        }
+    }
+
+    fun applySignature(rawSignature: String, detectionLabel: String) {
+        val result = editor.assign(rawSignature, selectedCard)
+        lastResultMessage = when (result) {
+            is DeckProfileEditResult.Assigned ->
+                "$detectionLabel assigned to ${selectedCard.prettyString}"
+            is DeckProfileEditResult.AlreadyAssignedToSelected ->
+                "$detectionLabel already exists for ${selectedCard.prettyString}"
+            is DeckProfileEditResult.SignatureConflict ->
+                "$detectionLabel CONFLICT: already mapped to ${result.existingCard.prettyString}"
+            else -> "No card selected"
+        }
+
+        if (result is DeckProfileEditResult.Assigned && autoAdvance) {
+            advanceToNextUnmappedCardOrReportCompletion()
+        }
+        if (result is DeckProfileEditResult.Assigned) {
+            isDirty = true
+        }
+        updateTrigger++
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
@@ -163,13 +200,33 @@ fun AdminEditScreen(
                 if (hasCameraPermission) {
                     CameraPreview(
                         consumeScanRequest = { pendingScanRequest.compareAndSet(true, false) },
-                        onFrameCaptured = { capturedFrame ->
-                            frameDebugInfo = capturedFrame
-                            lastResultMessage = "Last scan frame received"
+                        frameDecoder = frameDecoder,
+                        onScanProcessed = { scanOutcome ->
+                            frameDebugInfo = scanOutcome.frameDebugInfo
+                            cameraDecodeInfo = scanOutcome.describe()
                             scanRequested = false
+
+                            when (scanOutcome) {
+                                is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
+                                    is BarcodeDecodeResult.Found -> {
+                                        val signature = decodeResult.signature
+                                        val detectionLabel = "Detected ${signature.rawSignature} (${signature.confidence.formatAsUiConfidence()})"
+                                        applySignature(signature.rawSignature, detectionLabel)
+                                    }
+                                    is BarcodeDecodeResult.NotFound -> {
+                                        lastResultMessage = decodeResult.reason
+                                    }
+                                    is BarcodeDecodeResult.Ambiguous -> {
+                                        lastResultMessage = scanOutcome.describe()
+                                    }
+                                }
+                                is CameraScanOutcome.ConversionFailed -> {
+                                    lastResultMessage = scanOutcome.reason
+                                }
+                            }
                         }
                     )
-                    BarcodeGuideOverlay()
+                    BarcodeGuideOverlay(guideRectSpec = adminEditGuideRectSpec)
                 } else {
                     Text(
                         text = "Camera permission is required for scanning.",
@@ -196,28 +253,8 @@ fun AdminEditScreen(
                 Button(
                     onClick = {
                         val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
-                        val result = editor.assign(mockSig, selectedCard)
-                        lastResultMessage = when (result) {
-                            is DeckProfileEditResult.Assigned -> "Signature $mockSig assigned to ${selectedCard.prettyString}"
-                            is DeckProfileEditResult.AlreadyAssignedToSelected -> "Alias $mockSig already exists for ${selectedCard.prettyString}"
-                            is DeckProfileEditResult.SignatureConflict -> "CONFLICT: $mockSig is already mapped to ${result.existingCard.prettyString}"
-                            else -> "No card selected"
-                        }
-
-                        if (result is DeckProfileEditResult.Assigned && autoAdvance) {
-                            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
-                            val nextUnmapped = allCards.firstOrNull { !editor.isMapped(it) }
-                            if (nextUnmapped != null) {
-                                selectedSuit = nextUnmapped.suit
-                                selectedRank = nextUnmapped.rank
-                            } else {
-                                lastResultMessage = "Profile complete! All 52 cards mapped."
-                            }
-                        }
-                        if (result is DeckProfileEditResult.Assigned) {
-                            isDirty = true
-                        }
-                        updateTrigger++
+                        cameraDecodeInfo = "Mock fallback used"
+                        applySignature(mockSig, "Mock signature $mockSig")
                     },
                     modifier = Modifier.height(32.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
@@ -261,6 +298,13 @@ fun AdminEditScreen(
                     color = Color.Gray
                 )
             }
+            cameraDecodeInfo?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
 
             lastResultMessage?.let {
                 Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
@@ -279,6 +323,7 @@ fun AdminEditScreen(
                     onClick = {
                         pendingScanRequest.set(true)
                         scanRequested = true
+                        cameraDecodeInfo = null
                         lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
                     },
@@ -366,7 +411,8 @@ fun AdminEditScreen(
 @Composable
 private fun CameraPreview(
     consumeScanRequest: () -> Boolean,
-    onFrameCaptured: (FrameDebugInfo) -> Unit
+    frameDecoder: AdminEditCameraFrameDecoder,
+    onScanProcessed: (CameraScanOutcome) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -392,9 +438,9 @@ private fun CameraPreview(
                         return@setAnalyzer
                     }
 
-                    val frameDebugInfo = imageProxy.toFrameDebugInfo()
+                    val scanOutcome = frameDecoder.decode(imageProxy)
                     mainExecutor.execute {
-                        onFrameCaptured(frameDebugInfo)
+                        onScanProcessed(scanOutcome)
                     }
                 } finally {
                     imageProxy.close()
@@ -433,18 +479,19 @@ private fun CameraPreview(
 }
 
 @Composable
-fun BarcodeGuideOverlay() {
+private fun BarcodeGuideOverlay(guideRectSpec: GuideRectSpec) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val strokeWidth = 2.dp.toPx()
-        val guideWidth = size.width * 0.8f
-        val guideHeight = size.height * 0.15f
-        val left = (size.width - guideWidth) / 2
-        val top = (size.height - guideHeight) / 2
+        val guideBounds = centeredGuideRectBounds(
+            containerWidth = size.width,
+            containerHeight = size.height,
+            guideRectSpec = guideRectSpec,
+        )
 
         drawRoundRect(
             color = Color.White,
-            topLeft = Offset(left, top),
-            size = Size(guideWidth, guideHeight),
+            topLeft = Offset(guideBounds.left, guideBounds.top),
+            size = Size(guideBounds.width, guideBounds.height),
             cornerRadius = CornerRadius(8.dp.toPx()),
             style = Stroke(width = strokeWidth)
         )
@@ -491,22 +538,4 @@ private val Suit.prettySymbol: String
         Suit.CLUBS -> "♣"
     }
 
-private data class FrameDebugInfo(
-    val width: Int,
-    val height: Int,
-    val rotationDegrees: Int,
-    val timestampNanos: Long,
-    val requestedByScan: Boolean,
-)
-
-private fun ImageProxy.toFrameDebugInfo(): FrameDebugInfo =
-    FrameDebugInfo(
-        width = width,
-        height = height,
-        rotationDegrees = imageInfo.rotationDegrees,
-        timestampNanos = imageInfo.timestamp,
-        requestedByScan = true,
-    )
-
-private fun FrameDebugInfo.describe(): String =
-    "Frame: ${width}x${height} rot=$rotationDegrees ts=$timestampNanos scan=$requestedByScan"
+private fun Double.formatAsUiConfidence(): String = "%.2f".format(this)
