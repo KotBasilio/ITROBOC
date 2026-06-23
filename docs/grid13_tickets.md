@@ -20,6 +20,7 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
 - Ticket 7: Done — Admin::Edit alias chips stay compact and open a details dialog with retained session scan evidence plus a remove action.
 - Ticket 8: Done — Deck Profile metadata now carries a signature model; custom calibration profiles default to `grid13-v1`, while the built-in demo profile is explicitly marked as synthetic.
 - Ticket 9: Done — Admin::Edit JSONL logs now include compact signatures plus richer Grid13 evidence, ROI/crop fields, threshold fields, ambiguity flag, scanline-agreement placeholder, and deck-profile match count.
+- Ticket 10: Done — final Grid13 implementation handoff lives in `md-files/grid13-v1-barcode-model.md`.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
 
