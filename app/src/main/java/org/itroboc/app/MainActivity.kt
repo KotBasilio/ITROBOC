@@ -14,6 +14,7 @@ import org.itroboc.core.DeckProfile
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AdminEditScanDebugLogStartup.clearOnce(this)
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {

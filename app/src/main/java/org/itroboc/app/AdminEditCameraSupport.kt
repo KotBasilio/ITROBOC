@@ -279,6 +279,10 @@ internal class AdminEditScanDebugLogManager(private val context: Context) {
         File(baseDir, "admin-edit-scan-log.jsonl")
     }
 
+    fun clearLog() {
+        logFile.writeText("")
+    }
+
     fun appendScanRecord(
         selectedCard: String,
         outcome: CameraScanOutcome,
@@ -305,6 +309,19 @@ internal class AdminEditScanDebugLogManager(private val context: Context) {
             putExtra(Intent.EXTRA_SUBJECT, "ITROBOC Admin::Edit scan debug log")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+    }
+}
+
+internal object AdminEditScanDebugLogStartup {
+    private var clearedForProcess = false
+
+    @Synchronized
+    fun clearOnce(context: Context) {
+        if (clearedForProcess) {
+            return
+        }
+        AdminEditScanDebugLogManager(context.applicationContext).clearLog()
+        clearedForProcess = true
     }
 }
 
