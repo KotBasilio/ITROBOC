@@ -84,8 +84,7 @@ fun AppNavigation() {
                         profiles = profileState.profiles + newProfile,
                         activeProfileId = newProfile.id,
                     )
-                    // Initialize new profile as a copy of demo for now, but with new metadata
-                    editedProfiles = editedProfiles + (newProfile.id to builtInDemo.withMetadata(newProfile.toDeckProfileMetadata()))
+                    editedProfiles = editedProfiles + (newProfile.id to newProfile.toEmptyDeckProfile())
                 },
                 onDeleteActiveProfile = {
                     val toDelete = profileState.activeProfileId
