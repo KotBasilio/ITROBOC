@@ -9,7 +9,7 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
 - Ticket 1: Done in `f47a4dd` — signature formatting helpers.
 - Ticket 2: Done in `428173c` — sheet resources and analyzer skeleton.
 - Fixture cleanup: Done in `5709062` — canonical PNG location is `vision/src/test/resources/barcode-sheets/`.
-- Ticket 3a: Done — measurement primitives: ink channel, projection, thresholding, runs, active span.
+- Ticket 3a: Done in `0516c89` — measurement primitives: ink channel, projection, thresholding, runs, active span.
 - Ticket 3b: Next — compose primitives into static barcode measurements with RL2/Grid13 output.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
