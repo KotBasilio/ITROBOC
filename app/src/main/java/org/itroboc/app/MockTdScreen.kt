@@ -37,6 +37,7 @@ import org.itroboc.core.CardId
 import org.itroboc.core.DeckProfile
 import org.itroboc.core.DeckProfileMetadata
 import org.itroboc.core.PbnExporter
+import org.itroboc.core.Rank
 import org.itroboc.core.Seat
 import org.itroboc.core.Suit
 import org.itroboc.core.TdScanAccumulator
@@ -45,11 +46,13 @@ import org.itroboc.core.TdScanSessionPresentation
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MockTdScreen(
-    deckProfile: DeckProfile = BuiltInDeckProfiles.demoBridge52(),
+    deckProfile: DeckProfile = BuiltInDeckProfiles.defaultProfile(),
     onBack: () -> Unit
 ) {
     var selectedSeat by rememberSaveable { mutableStateOf(Seat.NORTH) }
-    var inputText by rememberSaveable { mutableStateOf("0x1001,0x1002") }
+    var inputText by rememberSaveable(deckProfile.metadata.profileId) {
+        mutableStateOf(deckProfile.sampleSignatures(count = 2))
+    }
     var accumulator by remember(deckProfile) {
         mutableStateOf(TdUiState.initial(deckProfile))
     }
@@ -126,7 +129,7 @@ fun MockTdScreen(
             )
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                presetBatches.forEach { preset ->
+                presetBatches(deckProfile).forEach { preset ->
                     Button(onClick = { inputText = preset.signatures }) {
                         Text(preset.label)
                     }
@@ -210,37 +213,120 @@ private data class FakeBatchPreset(
     val signatures: String,
 )
 
-private val presetBatches = listOf(
-    FakeBatchPreset(
-        label = "Add two random cards",
-        signatures = "0x101A,0x102F",
-    ),
-    FakeBatchPreset(
-        label = "Unknown signature",
-        signatures = "0x10FF",
-    ),
-    FakeBatchPreset(
-        label = "Duplicate test",
-        signatures = "0x1001,0x1001,0x1002",
-    ),
-    FakeBatchPreset(
-        label = "North Demo",
-        signatures = "0x1001,0x1002,0x1003,0x1004,0x1005,0x1012,0x1013,0x1014,0x1021,0x1022,0x1031,0x1032,0x1033",
-    ),
-    FakeBatchPreset(
-        label = "East Demo",
-        signatures = "0x1006,0x101A,0x102F,0x101D,0x1027,0x100C,0x1019,0x102B,0x1030,0x100F,0x1020,0x1016,0x1034",
-    ),
-    FakeBatchPreset(
-        label = "South Demo",
-        signatures = "0x1007,0x1011,0x1023,0x100B,0x101C,0x1026,0x1009,0x1028,0x101F,0x100E,0x102C,0x1015,0x1029",
-    ),
-    FakeBatchPreset(
-        label = "West Demo",
-        signatures = "0x1008,0x1010,0x1017,0x100A,0x101B,0x1025,0x100D,0x102D,0x1018,0x1024,0x102A,0x101E,0x102E",
-    ),
-    FakeBatchPreset(label = "Conflict test", signatures = "0x1002"),
-)
+private fun presetBatches(deckProfile: DeckProfile): List<FakeBatchPreset> =
+    listOf(
+        FakeBatchPreset(
+            label = "Add two random cards",
+            signatures = deckProfile.sampleSignatures(count = 2),
+        ),
+        FakeBatchPreset(
+            label = "Unknown signature",
+            signatures = "bfmFFFF",
+        ),
+        FakeBatchPreset(
+            label = "Duplicate test",
+            signatures = deckProfile.sampleSignatures(count = 2).duplicateFirstSignature(),
+        ),
+        FakeBatchPreset(
+            label = "North Demo",
+            signatures = deckProfile.signaturesForCards(
+                CardId(Suit.SPADES, Rank.ACE),
+                CardId(Suit.SPADES, Rank.KING),
+                CardId(Suit.SPADES, Rank.QUEEN),
+                CardId(Suit.SPADES, Rank.JACK),
+                CardId(Suit.SPADES, Rank.TEN),
+                CardId(Suit.SPADES, Rank.NINE),
+                CardId(Suit.SPADES, Rank.EIGHT),
+                CardId(Suit.SPADES, Rank.SEVEN),
+                CardId(Suit.SPADES, Rank.SIX),
+                CardId(Suit.SPADES, Rank.FIVE),
+                CardId(Suit.SPADES, Rank.FOUR),
+                CardId(Suit.SPADES, Rank.THREE),
+                CardId(Suit.SPADES, Rank.TWO),
+            ),
+        ),
+        FakeBatchPreset(
+            label = "East Demo",
+            signatures = deckProfile.signaturesForCards(
+                CardId(Suit.HEARTS, Rank.ACE),
+                CardId(Suit.HEARTS, Rank.KING),
+                CardId(Suit.HEARTS, Rank.QUEEN),
+                CardId(Suit.HEARTS, Rank.JACK),
+                CardId(Suit.HEARTS, Rank.TEN),
+                CardId(Suit.HEARTS, Rank.NINE),
+                CardId(Suit.HEARTS, Rank.EIGHT),
+                CardId(Suit.HEARTS, Rank.SEVEN),
+                CardId(Suit.HEARTS, Rank.SIX),
+                CardId(Suit.HEARTS, Rank.FIVE),
+                CardId(Suit.HEARTS, Rank.FOUR),
+                CardId(Suit.HEARTS, Rank.THREE),
+                CardId(Suit.HEARTS, Rank.TWO),
+            ),
+        ),
+        FakeBatchPreset(
+            label = "South Demo",
+            signatures = deckProfile.signaturesForCards(
+                CardId(Suit.DIAMONDS, Rank.ACE),
+                CardId(Suit.DIAMONDS, Rank.KING),
+                CardId(Suit.DIAMONDS, Rank.QUEEN),
+                CardId(Suit.DIAMONDS, Rank.JACK),
+                CardId(Suit.DIAMONDS, Rank.TEN),
+                CardId(Suit.DIAMONDS, Rank.NINE),
+                CardId(Suit.DIAMONDS, Rank.EIGHT),
+                CardId(Suit.DIAMONDS, Rank.SEVEN),
+                CardId(Suit.DIAMONDS, Rank.SIX),
+                CardId(Suit.DIAMONDS, Rank.FIVE),
+                CardId(Suit.DIAMONDS, Rank.FOUR),
+                CardId(Suit.DIAMONDS, Rank.THREE),
+                CardId(Suit.DIAMONDS, Rank.TWO),
+            ),
+        ),
+        FakeBatchPreset(
+            label = "West Demo",
+            signatures = deckProfile.signaturesForCards(
+                CardId(Suit.CLUBS, Rank.ACE),
+                CardId(Suit.CLUBS, Rank.KING),
+                CardId(Suit.CLUBS, Rank.QUEEN),
+                CardId(Suit.CLUBS, Rank.JACK),
+                CardId(Suit.CLUBS, Rank.TEN),
+                CardId(Suit.CLUBS, Rank.NINE),
+                CardId(Suit.CLUBS, Rank.EIGHT),
+                CardId(Suit.CLUBS, Rank.SEVEN),
+                CardId(Suit.CLUBS, Rank.SIX),
+                CardId(Suit.CLUBS, Rank.FIVE),
+                CardId(Suit.CLUBS, Rank.FOUR),
+                CardId(Suit.CLUBS, Rank.THREE),
+                CardId(Suit.CLUBS, Rank.TWO),
+            ),
+        ),
+        FakeBatchPreset(label = "Conflict test", signatures = deckProfile.sampleSignatures(count = 1)),
+    )
+
+private fun DeckProfile.sampleSignatures(count: Int): String =
+    rawSignatures()
+        .sortedWith(compareBy<String> { !it.startsWith("bfm") }.thenBy { it })
+        .asSequence()
+        .distinctBy { lookup(it) }
+        .take(count)
+        .joinToString(separator = ",")
+
+private fun DeckProfile.signaturesForCards(vararg cards: CardId): String =
+    cards.mapNotNull { card ->
+        rawSignatures()
+            .filter { lookup(it) == card }
+            .minWithOrNull(compareBy<String> { !it.startsWith("bfm") }.thenBy { it })
+    }.joinToString(separator = ",")
+
+private fun String.duplicateFirstSignature(): String {
+    val signatures = split(',')
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+    return if (signatures.isEmpty()) {
+        this
+    } else {
+        (listOf(signatures.first()) + signatures).joinToString(separator = ",")
+    }
+}
 
 private data class TdUiState(
     val accumulator: TdScanAccumulator,

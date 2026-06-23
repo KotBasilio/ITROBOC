@@ -55,11 +55,14 @@ For details on the signature mapping scheme used in the fake shell, see [md-file
 
 For the current barcode signature model and Grid13 implementation handoff, see [md-files/grid13-v1-barcode-model.md](md-files/grid13-v1-barcode-model.md).
 
-## Demo deck profile
+## Built-in deck profiles
 
-The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA`, carries explicit profile metadata including a synthetic signature-model tag, and exists to support tests plus the fake Android TD shell.
+The app currently ships with two built-in profiles:
 
-It is not a claim about real WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to use `grid13-v1` signatures from admin-side calibration and observation.
+- `builtin-observed-v1` is the default active profile. It was generated from an Admin::Edit scan log and uses `grid13-v1` aliases such as `bfm1255` plus retained `brm...` reverse aliases. It is intentionally incomplete: `S6` is omitted because its best scan exactly collided with `C6`.
+- `builtin-demo-bridge52-v1` is a synthetic demo/reference mapping only. It uses opaque raw signatures such as `0x1001 -> SA`, carries explicit synthetic signature-model metadata, and remains useful for tests plus the fake Android TD shell.
+
+Neither built-in profile is a claim about official WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to come from admin-side calibration and observation.
 
 ## Running tests
 

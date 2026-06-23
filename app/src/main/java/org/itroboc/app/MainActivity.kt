@@ -29,6 +29,8 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.MainMenu) }
     
+    val builtInDefault = remember { BuiltInDeckProfiles.defaultProfile() }
+    val builtInDefaultMetadata = remember { builtInDefault.metadata.toProfileListItem() }
     val builtInDemo = remember { BuiltInDeckProfiles.demoBridge52() }
     val builtInDemoMetadata = remember { builtInDemo.metadata.toProfileListItem() }
     
@@ -36,17 +38,24 @@ fun AppNavigation() {
     var profileState by remember {
         mutableStateOf(
             AdminProfileUiState(
-                profiles = listOf(builtInDemoMetadata),
-                activeProfileId = builtInDemoMetadata.id,
+                profiles = listOf(builtInDefaultMetadata, builtInDemoMetadata),
+                activeProfileId = builtInDefaultMetadata.id,
             )
         )
     }
     
     // Map profile IDs to their in-memory edited versions
-    var editedProfiles by remember { mutableStateOf(mapOf(builtInDemoMetadata.id to builtInDemo)) }
+    var editedProfiles by remember {
+        mutableStateOf(
+            mapOf(
+                builtInDefaultMetadata.id to builtInDefault,
+                builtInDemoMetadata.id to builtInDemo,
+            )
+        )
+    }
 
-    val activeProfileItem = profileState.activeProfile ?: builtInDemoMetadata
-    val activeDeckProfile = editedProfiles[activeProfileItem.id] ?: builtInDemo
+    val activeProfileItem = profileState.activeProfile ?: builtInDefaultMetadata
+    val activeDeckProfile = editedProfiles[activeProfileItem.id] ?: builtInDefault
 
     when (val screen = currentScreen) {
         is Screen.MainMenu -> {
@@ -91,7 +100,7 @@ fun AppNavigation() {
                     val newProfiles = profileState.profiles.filter { it.id != toDelete }
                     profileState = profileState.copy(
                         profiles = newProfiles,
-                        activeProfileId = newProfiles.firstOrNull()?.id ?: builtInDemoMetadata.id,
+                        activeProfileId = newProfiles.firstOrNull()?.id ?: builtInDefaultMetadata.id,
                     )
                     editedProfiles = editedProfiles - toDelete
                 },

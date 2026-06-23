@@ -1,0 +1,56 @@
+
+miron@MIRONYCH:~/proj/ITROBOC$ sudo apt update
+Get:1 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:4 http://security.ubuntu.com/ubuntu noble-security/main amd64 Components [44.8 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.2 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1031 kB]
+Get:8 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [180 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [17.4 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1656 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:13 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5744 B]
+Get:14 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.5 kB]
+Fetched 3789 kB in 1s (2871 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+23 packages can be upgraded. Run 'apt list --upgradable' to see them.
+miron@MIRONYCH:~/proj/ITROBOC$ sudo apt install jq
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  libjq1 libonig5
+The following NEW packages will be installed:
+  jq libjq1 libonig5
+0 upgraded, 3 newly installed, 0 to remove and 23 not upgraded.
+Need to get 380 kB of archives.
+After this operation, 1127 kB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://archive.ubuntu.com/ubuntu noble/main amd64 libonig5 amd64 6.9.9-1build1 [172 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libjq1 amd64 1.7.1-3ubuntu0.24.04.2 [142 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 jq amd64 1.7.1-3ubuntu0.24.04.2 [65.7 kB]
+Fetched 380 kB in 1s (713 kB/s)
+Selecting previously unselected package libonig5:amd64.
+(Reading database ... 50892 files and directories currently installed.)
+Preparing to unpack .../libonig5_6.9.9-1build1_amd64.deb ...
+Unpacking libonig5:amd64 (6.9.9-1build1) ...
+Selecting previously unselected package libjq1:amd64.
+Preparing to unpack .../libjq1_1.7.1-3ubuntu0.24.04.2_amd64.deb ...
+Unpacking libjq1:amd64 (1.7.1-3ubuntu0.24.04.2) ...
+Selecting previously unselected package jq.
+Preparing to unpack .../jq_1.7.1-3ubuntu0.24.04.2_amd64.deb ...
+Unpacking jq (1.7.1-3ubuntu0.24.04.2) ...
+Setting up libonig5:amd64 (6.9.9-1build1) ...
+Setting up libjq1:amd64 (1.7.1-3ubuntu0.24.04.2) ...
+Setting up jq (1.7.1-3ubuntu0.24.04.2) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+miron@MIRONYCH:~/proj/ITROBOC$ jq --version
+jq-1.7
+miron@MIRONYCH:~/proj/ITROBOC$ which jq
+/usr/bin/jq

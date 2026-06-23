@@ -86,4 +86,46 @@ class DeckProfileTest {
         assertTrue(profile.rawSignatures().all { it.startsWith("0x") })
         assertEquals(profile.mappingCount(), profile.rawSignatures().size)
     }
+
+    @Test
+    fun `observed profile exposes expected metadata`() {
+        val profile = BuiltInDeckProfiles.observedV1()
+
+        assertEquals("builtin-observed-v1", profile.metadata.profileId)
+        assertEquals("Built-in Observed v1", profile.metadata.displayName)
+        assertEquals(true, profile.metadata.isBuiltIn)
+        assertEquals(false, profile.metadata.isDemo)
+        assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
+        assertTrue(profile.metadata.notes?.contains("S6 is omitted") == true)
+    }
+
+    @Test
+    fun `observed profile contains scanned aliases and expected incomplete coverage`() {
+        val profile = BuiltInDeckProfiles.observedV1()
+
+        assertEquals(102, profile.mappingCount())
+        assertEquals(51, profile.cardIds().size)
+        assertEquals(profile.mappingCount(), profile.rawSignatures().size)
+
+        assertEquals(CardId.parse("SA"), profile.lookup("bfm1255"))
+        assertEquals(CardId.parse("SA"), profile.lookup("brm1549"))
+        assertEquals(CardId.parse("C6"), profile.lookup("bfm002A"))
+        assertEquals(CardId.parse("C6"), profile.lookup("brm0A80"))
+        assertTrue(CardId.parse("S6") !in profile.cardIds())
+    }
+
+    @Test
+    fun `observed profile keeps cross orientation payloads as distinct aliases`() {
+        val profile = BuiltInDeckProfiles.observedV1()
+
+        assertEquals(CardId.parse("SA"), profile.lookup("bfm1255"))
+        assertEquals(CardId.parse("DT"), profile.lookup("brm1255"))
+        assertEquals(CardId.parse("DT"), profile.lookup("bfm1549"))
+        assertEquals(CardId.parse("SA"), profile.lookup("brm1549"))
+    }
+
+    @Test
+    fun `default built in profile is observed profile`() {
+        assertEquals("builtin-observed-v1", BuiltInDeckProfiles.defaultProfile().metadata.profileId)
+    }
 }
