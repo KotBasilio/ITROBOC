@@ -177,6 +177,10 @@ Transient share/export status text may be hidden in the UI when space is tight. 
 
 The debug log is cleared once when the app process starts, so a manual testing session begins with a fresh file instead of accumulating old scans across launches.
 
+Current camera scan attempts use the `grid13-v1` decoder and produce compact forward raw signatures such as `bfm1549`. The reverse/debug token such as `brm1255` is logged for diagnosis, but it is not automatically added as a profile alias.
+
+The current live camera path derives its ink signal from the luma ROI already supplied to `:vision`. The static research path prefers min-RGB ink, so red-suit instability may point to a future RGB/YUV-aware extraction seam.
+
 Current log content includes at least:
 
 * selected card at scan-request time
@@ -185,7 +189,7 @@ Current log content includes at least:
 * decode result type
 * found raw signature and confidence when present
 * failure reason when present
-* normalized pattern / black-run debug info when present
+* signature model, forward/reverse Grid13 bits, forward/reverse compact tokens, RL2, active span, and run debug info when present
 * ambiguous candidates when present
 
 ## Data layout and invariants

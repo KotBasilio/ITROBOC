@@ -59,6 +59,20 @@ class AdminEditCameraSupportTest {
             confidence = 0.875,
             normalizedPattern = "1-1-1",
             blackRuns = listOf("1..3", "5..7"),
+            signatureModel = "grid13-v1",
+            reverseSignature = "brm1255",
+            grid13FwdBits = "1010101001001",
+            grid13RevBits = "1001001010101",
+            grid13FwdHex = "1549",
+            grid13RevHex = "1255",
+            rl2 = "B1-W1-B1",
+            blackRunsPx = listOf(3, 3),
+            whiteGapsPx = listOf(2),
+            blackRunCentersPx = listOf(2.0, 6.0),
+            activeStartX = 1,
+            activeEndX = 7,
+            activeSpanPx = 7,
+            warnings = listOf("debug warning"),
         )
 
         val jsonLine = record.toJsonLine()
@@ -70,5 +84,19 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"rawSignature\":\"bars:1-1-1\"")
         assertContains(jsonLine, "\"confidence\":0.8750")
         assertContains(jsonLine, "\"blackRuns\":[\"1..3\",\"5..7\"]")
+        assertContains(jsonLine, "\"signatureModel\":\"grid13-v1\"")
+        assertContains(jsonLine, "\"reverseSignature\":\"brm1255\"")
+        assertContains(jsonLine, "\"grid13FwdBits\":\"1010101001001\"")
+        assertContains(jsonLine, "\"grid13RevBits\":\"1001001010101\"")
+        assertContains(jsonLine, "\"grid13FwdHex\":\"1549\"")
+        assertContains(jsonLine, "\"grid13RevHex\":\"1255\"")
+        assertContains(jsonLine, "\"rl2\":\"B1-W1-B1\"")
+        assertContains(jsonLine, "\"blackRunsPx\":[3,3]")
+        assertContains(jsonLine, "\"whiteGapsPx\":[2]")
+        assertContains(jsonLine, "\"blackRunCentersPx\":[2.0000,6.0000]")
+        assertContains(jsonLine, "\"activeStartX\":1")
+        assertContains(jsonLine, "\"activeEndX\":7")
+        assertContains(jsonLine, "\"activeSpanPx\":7")
+        assertContains(jsonLine, "\"warnings\":[\"debug warning\"]")
     }
 }
