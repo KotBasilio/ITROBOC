@@ -18,6 +18,7 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
 - Ticket 6: Done — Admin::Edit live scan integration now uses the `grid13-v1` decoder and emits `bfmHHHH` signatures with reverse token, bits, RL2, run, span, confidence, and warning evidence in debug output.
   Current live camera path still derives ink from luma-only `GrayImage`; min-RGB/YUV-aware extraction remains a later seam if red-suit scans prove unstable.
 - Ticket 7: Done — Admin::Edit alias chips stay compact and open a details dialog with retained session scan evidence plus a remove action.
+- Ticket 8: Done — Deck Profile metadata now carries a signature model; custom calibration profiles default to `grid13-v1`, while the built-in demo profile is explicitly marked as synthetic.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
 

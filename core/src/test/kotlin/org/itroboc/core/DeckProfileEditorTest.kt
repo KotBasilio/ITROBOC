@@ -7,7 +7,13 @@ import kotlin.test.assertTrue
 
 class DeckProfileEditorTest {
 
-    private val metadata = DeckProfileMetadata("test", "Test Profile", false, false)
+    private val metadata = DeckProfileMetadata(
+        profileId = "test",
+        displayName = "Test Profile",
+        isBuiltIn = false,
+        isDemo = false,
+        signatureModel = DeckProfileSignatureModels.GRID13_V1,
+    )
     private val sa = CardId.parse("SA")
     private val sk = CardId.parse("SK")
 
@@ -57,6 +63,7 @@ class DeckProfileEditorTest {
         // Mapping should not have changed
         assertEquals(sa, editor.toDeckProfile().lookup("0x1"))
         assertFalse(editor.isMapped(sk))
+        assertEquals(DeckProfileSignatureModels.GRID13_V1, editor.toDeckProfile().metadata.signatureModel)
     }
 
     @Test

@@ -37,8 +37,24 @@ class DeckProfileTest {
         assertEquals("Built-in Demo Bridge 52", profile.metadata.displayName)
         assertEquals(true, profile.metadata.isBuiltIn)
         assertEquals(true, profile.metadata.isDemo)
+        assertEquals(DeckProfileSignatureModels.SYNTHETIC_DEMO_BRIDGE_52_V1, profile.metadata.signatureModel)
         assertTrue(profile.metadata.notes?.contains("Synthetic demo/reference mapping") == true)
         assertTrue(profile.metadata.notes?.contains("not a real WinDup/Jannersten profile") == true)
+    }
+
+    @Test
+    fun `deck profile metadata can carry grid13 signature model`() {
+        val profile = DeckProfile(
+            signatureToCard = mapOf("bfm1549" to CardId.parse("SA")),
+            metadata = DeckProfileMetadata(
+                profileId = "club-calibration",
+                displayName = "Club calibration",
+                signatureModel = DeckProfileSignatureModels.GRID13_V1,
+            ),
+        )
+
+        assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
+        assertEquals(CardId.parse("SA"), profile.lookup("bfm1549"))
     }
 
     @Test
