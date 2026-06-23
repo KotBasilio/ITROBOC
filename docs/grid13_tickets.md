@@ -19,6 +19,7 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
   Current live camera path still derives ink from luma-only `GrayImage`; min-RGB/YUV-aware extraction remains a later seam if red-suit scans prove unstable.
 - Ticket 7: Done — Admin::Edit alias chips stay compact and open a details dialog with retained session scan evidence plus a remove action.
 - Ticket 8: Done — Deck Profile metadata now carries a signature model; custom calibration profiles default to `grid13-v1`, while the built-in demo profile is explicitly marked as synthetic.
+- Ticket 9: Done — Admin::Edit JSONL logs now include compact signatures plus richer Grid13 evidence, ROI/crop fields, threshold fields, ambiguity flag, scanline-agreement placeholder, and deck-profile match count.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
 

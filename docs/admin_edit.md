@@ -195,12 +195,15 @@ Current log content includes at least:
 
 * selected card at scan-request time
 * frame dimensions and rotation
-* ROI pixel rectangle
+* ROI pixel rectangle, crop width/height, and current ROI angle placeholder
 * decode result type
 * found raw signature and confidence when present
 * failure reason when present
+* threshold mode/value when present
 * signature model, forward/reverse Grid13 bits, forward/reverse compact tokens, RL2, active span, and run debug info when present
-* ambiguous candidates when present
+* ambiguity flag and ambiguous candidates when present
+* scanline-agreement field, currently `null` until multi-scanline analysis exists
+* deck-profile match count at scan time
 
 ## Data layout and invariants
 

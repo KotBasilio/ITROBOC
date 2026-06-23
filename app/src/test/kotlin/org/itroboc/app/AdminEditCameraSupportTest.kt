@@ -55,8 +55,11 @@ class AdminEditCameraSupportTest {
             frameTimestampNanos = 456L,
             roi = BarcodeRoi(x = 10, y = 20, width = 30, height = 40),
             decodeResultType = "Found",
+            roiAngleDeg = 0.0,
             rawSignature = "bars:1-1-1",
             confidence = 0.875,
+            thresholdMode = "adaptive-ink-midrange",
+            thresholdValue = 127,
             normalizedPattern = "1-1-1",
             blackRuns = listOf("1..3", "5..7"),
             signatureModel = "grid13-v1",
@@ -72,7 +75,9 @@ class AdminEditCameraSupportTest {
             activeStartX = 1,
             activeEndX = 7,
             activeSpanPx = 7,
+            ambiguous = false,
             warnings = listOf("debug warning"),
+            deckProfileMatchCount = 1,
         )
 
         val jsonLine = record.toJsonLine()
@@ -80,9 +85,14 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"timestampMillis\":123")
         assertContains(jsonLine, "\"selectedCard\":\"♦A\"")
         assertContains(jsonLine, "\"decodeResultType\":\"Found\"")
+        assertContains(jsonLine, "\"roiAngleDeg\":0.0000")
+        assertContains(jsonLine, "\"cropWidthPx\":30")
+        assertContains(jsonLine, "\"cropHeightPx\":40")
         assertContains(jsonLine, "\"roi\":{\"x\":10,\"y\":20,\"width\":30,\"height\":40}")
         assertContains(jsonLine, "\"rawSignature\":\"bars:1-1-1\"")
         assertContains(jsonLine, "\"confidence\":0.8750")
+        assertContains(jsonLine, "\"thresholdMode\":\"adaptive-ink-midrange\"")
+        assertContains(jsonLine, "\"thresholdValue\":127")
         assertContains(jsonLine, "\"blackRuns\":[\"1..3\",\"5..7\"]")
         assertContains(jsonLine, "\"signatureModel\":\"grid13-v1\"")
         assertContains(jsonLine, "\"reverseSignature\":\"brm1255\"")
@@ -97,6 +107,9 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"activeStartX\":1")
         assertContains(jsonLine, "\"activeEndX\":7")
         assertContains(jsonLine, "\"activeSpanPx\":7")
+        assertContains(jsonLine, "\"scanlineAgreement\":null")
+        assertContains(jsonLine, "\"ambiguous\":false")
         assertContains(jsonLine, "\"warnings\":[\"debug warning\"]")
+        assertContains(jsonLine, "\"deckProfileMatchCount\":1")
     }
 }
