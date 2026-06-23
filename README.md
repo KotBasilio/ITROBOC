@@ -53,6 +53,8 @@ Broader product direction and workflow notes live in [docs/product_context.md](d
 
 For details on the signature mapping scheme used in the fake shell, see [md-files/signatures.md](md-files/signatures.md).
 
+For the current barcode signature model and Grid13 implementation handoff, see [md-files/grid13-v1-barcode-model.md](md-files/grid13-v1-barcode-model.md).
+
 ## Demo deck profile
 
 The built-in deck profile is a demo/reference mapping only. It uses synthetic opaque raw signatures such as `0x1001 -> SA`, carries explicit profile metadata including a synthetic signature-model tag, and exists to support tests plus the fake Android TD shell.
