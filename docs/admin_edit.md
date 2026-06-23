@@ -175,6 +175,8 @@ In addition, each camera scan attempt is appended to a JSON Lines debug log. The
 
 Transient share/export status text may be hidden in the UI when space is tight. The durable retrieval affordances are the visible log path plus `Share Debug Log`.
 
+The debug log is cleared once when the app process starts, so a manual testing session begins with a fresh file instead of accumulating old scans across launches.
+
 Current log content includes at least:
 
 * selected card at scan-request time
