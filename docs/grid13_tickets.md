@@ -1,8 +1,16 @@
 # ITROBOC `grid13-v1` Tickets for Bob/Codex
 
 Status: proposed implementation sequence  
-Related design doc: `ITROBOC_grid13_design_for_Bob.md`  
+Related design doc: `docs/grid13_design.md`  
 Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` raw signatures: `bfmHHHH` / `brmHHHH`.
+
+## Progress
+
+- Ticket 1: Done in `f47a4dd` — signature formatting helpers.
+- Ticket 2: Done in `428173c` — sheet resources and analyzer skeleton.
+- Fixture cleanup: Done in `5709062` — canonical PNG location is `vision/src/test/resources/barcode-sheets/`.
+- Ticket 3a: Done — measurement primitives: ink channel, projection, thresholding, runs, active span.
+- Ticket 3b: Next — compose primitives into static barcode measurements with RL2/Grid13 output.
 
 ## Ticket 1 — Add `grid13-v1` signature formatting helpers
 
