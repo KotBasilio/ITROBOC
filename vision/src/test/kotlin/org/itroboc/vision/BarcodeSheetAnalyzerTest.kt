@@ -54,6 +54,33 @@ class BarcodeSheetAnalyzerTest {
         assertEquals(52, crops.size)
         assertEquals(expectedCards, crops.map { it.cardId }.toSet())
     }
+
+    @Test
+    fun `all suit sheet crops produce grid13 measurement records`() {
+        val measurements = BarcodeSheetAnalyzer.measureAllSuitSheetCrops()
+
+        assertEquals(52, measurements.size)
+        measurements.forEach { record ->
+            assertTrue(record.measurement.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")), record.cardId)
+            assertTrue(record.measurement.reverseSignature.matches(Regex("^brm[0-9A-F]{4}$")), record.cardId)
+            assertEquals(13, record.measurement.grid13FwdBits.length, record.cardId)
+            assertEquals(reverseBits(record.measurement.grid13FwdBits), record.measurement.grid13RevBits, record.cardId)
+            assertTrue(record.measurement.rl2.startsWith("B"), record.cardId)
+        }
+    }
+
+    @Test
+    fun `sheet measurement report includes readable rows`() {
+        val report = BarcodeSheetAnalyzer.measureAllSuitSheetCrops()
+            .take(3)
+            .joinToString(separator = "\n") { it.toReportRow() }
+
+        assertTrue(report.contains("SA |"), report)
+        assertTrue(report.contains("SK |"), report)
+        assertTrue(report.contains("SQ |"), report)
+        assertTrue(report.contains("bfm"), report)
+    }
+
 }
 
 internal object BarcodeSheetAnalyzer {
@@ -68,6 +95,21 @@ internal object BarcodeSheetAnalyzer {
 
     fun enumerateAllSuitSheetCrops(): List<LabeledBarcodeCrop> =
         suitSheets.flatMap(::enumerateSuitSheetCrops)
+
+    fun measureAllSuitSheetCrops(): List<LabeledBarcodeMeasurement> =
+        suitSheets.flatMap { sheet ->
+            val image = loadResourceImage(sheet.resourceName)
+            analyzeSuitSheet(sheet).crops.map { crop ->
+                val measurement = requireNotNull(measureGrid13Barcode(crop.toInkImage(image))) {
+                    "Could not measure ${crop.cardId} from ${crop.sheetResourceName}"
+                }
+                LabeledBarcodeMeasurement(
+                    cardId = crop.cardId,
+                    crop = crop,
+                    measurement = measurement,
+                )
+            }
+        }
 
     fun enumerateSuitSheetCrops(sheet: SuitSheet): List<LabeledBarcodeCrop> =
         analyzeSuitSheet(sheet).crops
@@ -164,6 +206,25 @@ internal object BarcodeSheetAnalyzer {
         val blue = argb and 0xFF
         return minOf(red, green, blue) < 245
     }
+
+    private fun LabeledBarcodeCrop.toInkImage(image: BufferedImage): InkImage {
+        val values = IntArray(bounds.width * bounds.height)
+        var index = 0
+        for (y in bounds.y until bounds.y + bounds.height) {
+            for (x in bounds.x until bounds.x + bounds.width) {
+                val argb = image.getRGB(x, y)
+                val red = (argb ushr 16) and 0xFF
+                val green = (argb ushr 8) and 0xFF
+                val blue = argb and 0xFF
+                values[index++] = inkFromRgb(red = red, green = green, blue = blue)
+            }
+        }
+        return InkImage(
+            width = bounds.width,
+            height = bounds.height,
+            inkValues = values,
+        )
+    }
 }
 
 internal data class SuitSheet(
@@ -186,6 +247,22 @@ internal data class LabeledBarcodeCrop(
     val sheetResourceName: String,
     val bounds: CropBounds,
 )
+
+internal data class LabeledBarcodeMeasurement(
+    val cardId: String,
+    val crop: LabeledBarcodeCrop,
+    val measurement: Grid13BarcodeMeasurement,
+) {
+    fun toReportRow(): String =
+        listOf(
+            cardId,
+            measurement.blackRunsPx.joinToString(separator = ","),
+            measurement.whiteGapsPx.joinToString(separator = ","),
+            measurement.rl2,
+            measurement.grid13FwdBits,
+            measurement.rawSignature,
+        ).joinToString(separator = " | ")
+}
 
 internal data class CropBounds(
     val x: Int,
