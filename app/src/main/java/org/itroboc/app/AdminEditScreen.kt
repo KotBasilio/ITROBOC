@@ -55,7 +55,7 @@ fun AdminEditScreen(
     
     var autoAdvance by remember { mutableStateOf(true) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
-    var aliasPendingRemoval by remember { mutableStateOf<String?>(null) }
+    var aliasDetailsDialog by remember { mutableStateOf<AdminAliasDetails?>(null) }
     var isDirty by remember { mutableStateOf(false) }
     var showUnsavedChangesDialog by remember { mutableStateOf(false) }
     
@@ -66,6 +66,7 @@ fun AdminEditScreen(
     var debugLogStatus by remember { mutableStateOf<String?>(null) }
     val pendingScanRequest = remember { AtomicBoolean(false) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder() }
+    val scanEvidenceByAlias = remember { mutableStateMapOf<String, AdminAliasScanEvidence>() }
     
     // Trigger recomposition when editor state changes
     var updateTrigger by remember { mutableIntStateOf(0) }
@@ -237,6 +238,7 @@ fun AdminEditScreen(
                                     is BarcodeDecodeResult.Found -> {
                                         val signature = decodeResult.signature
                                         val detectionLabel = "Detected ${signature.rawSignature} (${signature.confidence.formatAsUiConfidence()})"
+                                        scanEvidenceByAlias[signature.rawSignature] = signature.toAdminAliasScanEvidence()
                                         applySignature(
                                             targetCard = scanCard,
                                             rawSignature = signature.rawSignature,
@@ -329,7 +331,12 @@ fun AdminEditScreen(
                 ) {
                     aliases.forEach { alias ->
                         SuggestionChip(
-                            onClick = { aliasPendingRemoval = alias },
+                            onClick = {
+                                aliasDetailsDialog = AdminAliasDetails(
+                                    rawSignature = alias,
+                                    evidence = scanEvidenceByAlias[alias],
+                                )
+                            },
                             label = { Text(alias) }
                         )
                     }
@@ -421,25 +428,35 @@ fun AdminEditScreen(
         }
     }
 
-    aliasPendingRemoval?.let { alias ->
+    aliasDetailsDialog?.let { details ->
         AlertDialog(
-            onDismissRequest = { aliasPendingRemoval = null },
-            title = { Text("Remove alias") },
-            text = { Text("Remove alias $alias from ${selectedCard.prettyString}?") },
+            onDismissRequest = { aliasDetailsDialog = null },
+            title = { Text("Alias details") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    details.displayLines().forEach { line ->
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
+                    val alias = details.rawSignature
                     editor.remove(alias)
                     lastResultMessage = "Removed alias $alias"
                     isDirty = true
-                    aliasPendingRemoval = null
+                    aliasDetailsDialog = null
                     updateTrigger++
                 }) {
-                    Text("OK")
+                    Text("Remove")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { aliasPendingRemoval = null }) {
-                    Text("Cancel")
+                TextButton(onClick = { aliasDetailsDialog = null }) {
+                    Text("Close")
                 }
             }
         )
