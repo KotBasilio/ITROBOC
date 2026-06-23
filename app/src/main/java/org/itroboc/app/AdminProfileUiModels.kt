@@ -52,6 +52,12 @@ fun ProfileListItem.toDeckProfileMetadata(): DeckProfileMetadata =
         isDemo = isDemo,
     )
 
+fun ProfileListItem.toEmptyDeckProfile(): DeckProfile =
+    DeckProfile(
+        signatureToCard = emptyMap(),
+        metadata = toDeckProfileMetadata(),
+    )
+
 fun ProfileListItem.toMockDeckProfile(baseProfile: DeckProfile = BuiltInDeckProfiles.demoBridge52()): DeckProfile =
     if (isBuiltIn && id == baseProfile.metadata.profileId) {
         baseProfile
