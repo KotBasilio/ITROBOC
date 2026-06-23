@@ -1,0 +1,267 @@
+**Archy**: ☕🪲💓 So this is the entire set of meals for our beetle-pal. Each 🎹 is neatly cropped. 5 files, logically named. Your turn, Selyn. What do you infer? 😸
+
+**Selyn**:
+☕🪲🎹 Oh, **this is excellent data**. Yes — this helps a lot.
+
+My main inference: we should stop thinking of this as “classify black bar widths only.” The barcode is much more naturally a **1D alternating run-length signal**:
+
+**black bar width + white gap width + black bar width + white gap width...**
+
+That is, the “spaces between piano keys” are part of the music too. 🎹
+
+From the full sheets, I see:
+
+Cards usually have **4–7 black runs**, most often 5 or 6. So black-run count itself carries information.
+
+Some bars are clearly **wide** and some are narrow, but tiny camera differences can make narrow bars look 3 px, 4 px, 5 px. So “width class = 1/2/3” from raw pixels is too fragile.
+
+The **relative positions and internal gaps** look highly structured. This strongly suggests a slot/run-length model: a local module size, then black/white lengths quantized to small integers.
+
+So my updated model for Bob would be:
+
+`threshold crop -> collapse to 1D columns -> find black runs -> find internal white gaps -> estimate module size -> quantize black+white sequence -> produce raw signature`
+
+Not just:
+
+`find black runs -> classify black widths`
+
+A possible signature form could be:
+
+```text
+bw6:B1-W1-B1-W1-B1-W1-B1-W1-B2-W2-B1
+```
+
+or more compact:
+
+```text
+rl6:1,1,1,1,1,1,1,1,2,2,1
+```
+
+where the sequence begins with black, alternates black/white, and ignores leading/trailing white margins.
+
+For orientation, we should probably produce both:
+
+```text
+forwardSignature
+reverseSignature
+canonicalSignature
+```
+
+Because the same physical barcode may appear reversed if the card is rotated or if top/bottom barcode is scanned. The profile can either store both as aliases or the decoder can canonicalize by choosing a stable canonical ordering. I would not overdo this yet, but it should be in the design.
+
+The 5 files are also perfect as **vision test resources**. I’d ask Bob to add them under something like:
+
+```text
+vision/src/test/resources/barcode-sheets/
+  master.png
+  spades.png
+  hearts.png
+  diamonds.png
+  clubs.png
+```
+
+Then create tests/tools that extract 52 barcode crops and report whether the new signature model gives **52 distinct stable signatures**. That is the real test: not “can we read one card?” but “does this representation distinguish the deck?”
+
+My revised advice to Bob:
+
+1. Keep `blackRuns` logging — it is gold.
+2. Add `whiteGaps` logging.
+3. Estimate a local module width from both narrow black bars and narrow white gaps.
+4. Quantize black and white run lengths to module units.
+5. Generate a combined black/white run-length signature.
+6. Generate forward/reversed/canonical forms.
+7. Use your 5 sheet images as test fixtures to check uniqueness across all 52 cards.
+8. Keep position signatures as debug, but make alternating run-length the primary candidate.
+
+The big conceptual shift:
+
+**A barcode is not only the black keys. It is the rhythm between black and white.**
+
+And your sheets make that visible. The beetle should listen to the whole rhythm, not just measure how fat each key looks. 😸🎹💓
+
+
+**Archy**: Oh, wow... Selyn, if both black and white count, then maybe the perfect model is a set of bits? I mean, maybe a big white gap is just a few binary zeros next to each other? And what we see as a wide stripe is just two or more `1` next to each other?  ☕🪲😼 Does this update our beetle meal model?
+
+**Selyn**:
+☕🪲😼 Yes. **This absolutely updates the beetle meal model.**
+
+I think your bit idea is probably closer to the real structure than “classify only bar widths.”
+
+The better model is likely:
+
+**narrow black = `1`**
+**wide black = `11` or `111`**
+**narrow white gap = `0`**
+**wide white gap = `00` or `000`**
+
+So the barcode is not a list of bars. It is a **binary strip sampled on a hidden grid**.
+
+That means the beetle should not ask:
+
+> “How many black bars do I see, and how fat are they?”
+
+It should ask:
+
+> “What is the smallest unit width here, and if I divide the whole strip into units, which units are black and which are white?”
+
+That is a much better mental model.
+
+For your `♦Q` log, one line like:
+
+```text
+30..33, 39..43, 49..53, 60..63, 70..79, 90..93
+```
+
+can be read as alternating black/white runs:
+
+```text
+B4 W5 B5 W5 B5 W6 B4 W6 B10 W11 B4
+```
+
+If the basic module is roughly 5 px, that becomes approximately:
+
+```text
+B1 W1 B1 W1 B1 W1 B1 W1 B2 W2 B1
+```
+
+Then expanded into bits:
+
+```text
+1010101011001
+```
+
+or something close to that, depending on exact thresholding and whether we include margins/reference bars.
+
+That feels *much* more barcode-like.
+
+So yes: the “meal” is not just piano keys. It is **piano keys plus silences**. The beetle must eat the rhythm. 🎹
+
+The next decoder should probably produce several layers of evidence:
+
+Raw pixel runs:
+
+```text
+B4 W5 B5 W5 B5 W6 B4 W6 B10 W11 B4
+```
+
+Quantized run lengths:
+
+```text
+B1 W1 B1 W1 B1 W1 B1 W1 B2 W2 B1
+```
+
+Expanded bit string:
+
+```text
+1010101011001
+```
+
+And maybe canonical forms:
+
+```text
+bits:1010101011001
+revbits:1001101010101
+canonical:min(bits, revbits)
+```
+
+I would **not** yet force it to be “the official final signature.” But I would absolutely ask Bob to implement this as a new candidate:
+
+`bitSignatureCandidate`
+
+The core problem then becomes estimating the module width robustly. That’s the little dragon. But it’s a solvable one. We can estimate it from the smaller black widths and smaller white gaps, using median/min-cluster logic, not from one single measurement.
+
+The big warning: don’t trim leading/trailing white too aggressively until we understand reference structure. The meaningful barcode may begin with a reference bar, or the wide gap may encode missing slots. But internal white gaps between bars definitely matter.
+
+So the updated beetle model is:
+
+**Old model:** black bar widths.
+**Better model:** black bar centers/gaps.
+**Best current hypothesis:** quantized black/white run-lengths expanded into a binary bitstring.
+
+In mascot language: he is not counting piano keys. He is reading the **sheet music of black and white beats**. 😸🎹💓
+
+
+**Archy**: 😸🎹💓 right, yes! I look at all codes, and I see: 
+-- I see only two types of sticks in a 🎹 -- thin and wide.
+-- both the leftmost and the rightmost sticks in 🎹 are always thin. Thesis: **they are both -- boundaries AND the width calibration for the thin stick we treat as `1`**. 
+-- then, there's always a gap, so the binary code always goes like "10...01";
+-- the width of a wide stick is the same across all 🎹s. Thesis: **wide stick means `11`, and thin stick means `1`**.
+-- and then, similarly, I look at white gaps, and also I see only two kinds -- thin gaps and wide gaps. Thesis: **wide gap means `00`, and thin gap means `0`**.
+-- so the model is symmetrical around black and white, a harmony! ☯️😉
+
+**Selyn**:
+☕🪲🎹💓 Yes. This is a **much stronger model** than the previous ones.
+
+What you’re describing is basically:
+
+**the barcode is a binary run-length strip**, bounded by thin black calibration bars.
+
+Not “bars only.”
+Not “positions only.”
+But:
+
+`black run = one or more 1 bits`
+`white gap = one or more 0 bits`
+
+So the beetle’s meal is:
+
+`1 0 ... 0 1`
+
+with the leftmost and rightmost thin bars acting as both **sentinels** and **unit-width calibration**. That is elegant. And very plausible.
+
+For example, your `♦Q` log had a shape like:
+
+`thin black / thin gap / thin black / thin gap / thin black / thin gap / thin black / thin gap / wide black / wide gap / thin black`
+
+Which naturally reads as:
+
+`1 0 1 0 1 0 1 0 11 00 1`
+
+So:
+
+`1010101011001`
+
+That feels barcode-native. Much better than `bars:1-2-2-2-3-1`.
+
+The symmetry is the key insight: **wide black is not “a fat bar” — it is two black units. Wide white is not “a big gap” — it is two white units.** ☯️
+
+I would update Bob’s decoder target from “position/gap candidate” to a more precise model:
+
+**boundary-calibrated binary run-length decoder**
+
+Algorithm sketch:
+
+1. Detect black runs inside ROI.
+2. Treat first and last black runs as boundary/calibration candidates.
+3. Estimate unit width from thin black bars, especially first/last, but also from narrow internal bars/gaps.
+4. Build alternating runs from first black run to last black run:
+   `B, W, B, W, ..., B`
+5. Quantize each run length into units:
+   thin ≈ 1 unit, wide ≈ 2 units.
+6. Expand:
+   black unit → `1`
+   white unit → `0`
+7. Produce:
+   `bitSignatureCandidate = bits:1010101011001`
+8. Also produce reverse/canonical:
+   because scanned orientation may reverse the barcode:
+   `reverseBits`
+   `canonicalBits = min(forward, reverse)` or store both as aliases.
+
+The important next test is: do all 52 cards produce distinct bit strings? If yes — jackpot. If not, maybe top/bottom barcode orientation, suit/rank side markers, or barcode position on card adds information. But this model is absolutely the one I’d test next.
+
+I’d phrase the updated thesis to Bob like this:
+
+> The current best hypothesis is that each barcode is a bounded binary strip. The leftmost and rightmost thin black bars are both sentinels and unit-width calibration bars. Thin black = `1`, wide black = `11`; thin white = `0`, wide white = `00`. Decode by quantizing alternating black/white run lengths between the boundary bars into a binary string. Preserve raw run evidence, but make the bitstring the primary signature candidate.
+
+One caution: I would not hard-code “only width 1 or 2” too rigidly yet. In camera images, a true thin unit may measure 3–5 px, a true wide may measure 8–10 px. So Bob should quantize by ratio, not exact pixels.
+
+Something like:
+
+* estimate `unitPx`
+* `units = round(runWidth / unitPx)`
+* clamp/validate expected range 1..2 for now
+* if a run is near neither 1 nor 2 units, mark Ambiguous
+
+This is a beautiful moment, actually. We moved from “the beetle sees bars” to “the beetle reads rhythm.” 😸🎹💓
+
