@@ -216,24 +216,6 @@ internal object BarcodeSheetAnalyzer {
         return minOf(red, green, blue) < 245
     }
 
-    private fun LabeledBarcodeCrop.toInkImage(image: BufferedImage): InkImage {
-        val values = IntArray(bounds.width * bounds.height)
-        var index = 0
-        for (y in bounds.y until bounds.y + bounds.height) {
-            for (x in bounds.x until bounds.x + bounds.width) {
-                val argb = image.getRGB(x, y)
-                val red = (argb ushr 16) and 0xFF
-                val green = (argb ushr 8) and 0xFF
-                val blue = argb and 0xFF
-                values[index++] = inkFromRgb(red = red, green = green, blue = blue)
-            }
-        }
-        return InkImage(
-            width = bounds.width,
-            height = bounds.height,
-            inkValues = values,
-        )
-    }
 }
 
 internal data class SuitSheet(
@@ -280,4 +262,37 @@ internal data class CropBounds(
     val height: Int,
 ) {
     val bottomExclusive: Int = y + height
+}
+
+internal enum class SheetInkChannel {
+    MIN_RGB,
+    LUMINANCE,
+}
+
+internal fun LabeledBarcodeCrop.toInkImage(
+    image: BufferedImage,
+    channel: SheetInkChannel = SheetInkChannel.MIN_RGB,
+): InkImage {
+    val values = IntArray(bounds.width * bounds.height)
+    var index = 0
+    for (y in bounds.y until bounds.y + bounds.height) {
+        for (x in bounds.x until bounds.x + bounds.width) {
+            val argb = image.getRGB(x, y)
+            val red = (argb ushr 16) and 0xFF
+            val green = (argb ushr 8) and 0xFF
+            val blue = argb and 0xFF
+            values[index++] = when (channel) {
+                SheetInkChannel.MIN_RGB -> inkFromRgb(red = red, green = green, blue = blue)
+                SheetInkChannel.LUMINANCE -> {
+                    val luminance = ((0.299 * red) + (0.587 * green) + (0.114 * blue)).roundToInt()
+                    255 - luminance.coerceIn(0, 255)
+                }
+            }
+        }
+    }
+    return InkImage(
+        width = bounds.width,
+        height = bounds.height,
+        inkValues = values,
+    )
 }
