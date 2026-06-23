@@ -1,19 +1,25 @@
 package org.itroboc.app
 
+import android.content.Context
+import android.content.Intent
 import androidx.camera.core.ImageProxy
+import androidx.core.content.FileProvider
 import org.itroboc.vision.BarcodeDecodeResult
+import org.itroboc.vision.BarcodeDebugInfo
 import org.itroboc.vision.BarcodeDecoder
 import org.itroboc.vision.BarcodeRoi
+import org.itroboc.vision.DetectedSignature
 import org.itroboc.vision.GrayImage
 import org.itroboc.vision.SimpleBarRunBarcodeDecoder
+import java.io.File
 import kotlin.math.roundToInt
 
-internal val adminEditGuideRectSpec = GuideRectSpec(
-    widthFraction = 0.8f,
-    heightFraction = 0.15f,
+internal val adminScanGuideSpec = AdminScanGuideSpec(
+    widthFraction = 0.25f,
+    heightFraction = 0.10f,
 )
 
-internal data class GuideRectSpec(
+internal data class AdminScanGuideSpec(
     val widthFraction: Float,
     val heightFraction: Float,
 ) {
@@ -40,32 +46,34 @@ internal data class FrameDebugInfo(
 
 internal sealed interface CameraScanOutcome {
     val frameDebugInfo: FrameDebugInfo
+    val roi: BarcodeRoi?
 
     data class Decoded(
         override val frameDebugInfo: FrameDebugInfo,
-        val roi: BarcodeRoi,
+        override val roi: BarcodeRoi,
         val decodeResult: BarcodeDecodeResult,
     ) : CameraScanOutcome
 
     data class ConversionFailed(
         override val frameDebugInfo: FrameDebugInfo,
+        override val roi: BarcodeRoi?,
         val reason: String,
     ) : CameraScanOutcome
 }
 
 internal class AdminEditCameraFrameDecoder(
     private val decoder: BarcodeDecoder = SimpleBarRunBarcodeDecoder(),
-    private val guideRectSpec: GuideRectSpec = adminEditGuideRectSpec,
+    private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
 ) {
     fun decode(imageProxy: ImageProxy): CameraScanOutcome {
         val frameDebugInfo = imageProxy.toFrameDebugInfo()
+        val roi = centeredBarcodeRoi(
+            imageWidth = imageProxy.width,
+            imageHeight = imageProxy.height,
+            guideSpec = guideSpec,
+        )
 
         return try {
-            val roi = centeredBarcodeRoi(
-                imageWidth = imageProxy.width,
-                imageHeight = imageProxy.height,
-                guideRectSpec = guideRectSpec,
-            )
             val grayImage = imageProxy.toGrayImage(roi)
             CameraScanOutcome.Decoded(
                 frameDebugInfo = frameDebugInfo,
@@ -75,6 +83,7 @@ internal class AdminEditCameraFrameDecoder(
         } catch (error: Exception) {
             CameraScanOutcome.ConversionFailed(
                 frameDebugInfo = frameDebugInfo,
+                roi = roi,
                 reason = error.message ?: "Failed to extract guide ROI",
             )
         }
@@ -84,15 +93,15 @@ internal class AdminEditCameraFrameDecoder(
 internal fun centeredBarcodeRoi(
     imageWidth: Int,
     imageHeight: Int,
-    guideRectSpec: GuideRectSpec,
+    guideSpec: AdminScanGuideSpec,
 ): BarcodeRoi {
     require(imageWidth > 0) { "imageWidth must be positive" }
     require(imageHeight > 0) { "imageHeight must be positive" }
 
-    val roiWidth = (imageWidth * guideRectSpec.widthFraction)
+    val roiWidth = (imageWidth * guideSpec.widthFraction)
         .roundToInt()
         .coerceIn(1, imageWidth)
-    val roiHeight = (imageHeight * guideRectSpec.heightFraction)
+    val roiHeight = (imageHeight * guideSpec.heightFraction)
         .roundToInt()
         .coerceIn(1, imageHeight)
     val x = ((imageWidth - roiWidth) / 2).coerceAtLeast(0)
@@ -109,10 +118,10 @@ internal fun centeredBarcodeRoi(
 internal fun centeredGuideRectBounds(
     containerWidth: Float,
     containerHeight: Float,
-    guideRectSpec: GuideRectSpec,
+    guideSpec: AdminScanGuideSpec,
 ): GuideRectBounds {
-    val width = containerWidth * guideRectSpec.widthFraction
-    val height = containerHeight * guideRectSpec.heightFraction
+    val width = containerWidth * guideSpec.widthFraction
+    val height = containerHeight * guideSpec.heightFraction
     return GuideRectBounds(
         left = (containerWidth - width) / 2f,
         top = (containerHeight - height) / 2f,
@@ -211,3 +220,195 @@ internal fun CameraScanOutcome.describe(): String = when (this) {
 }
 
 private fun Double.formatConfidence(): String = "%.2f".format(this)
+
+internal data class AdminEditScanDebugRecord(
+    val timestampMillis: Long,
+    val selectedCard: String,
+    val frameWidth: Int,
+    val frameHeight: Int,
+    val frameRotation: Int,
+    val frameTimestampNanos: Long,
+    val roi: BarcodeRoi?,
+    val decodeResultType: String,
+    val rawSignature: String? = null,
+    val confidence: Double? = null,
+    val failureReason: String? = null,
+    val normalizedPattern: String? = null,
+    val blackRuns: List<String> = emptyList(),
+    val ambiguousCandidates: List<String> = emptyList(),
+) {
+    fun toJsonLine(): String {
+        val fields = mutableListOf<String>()
+        fields += jsonField("timestampMillis", timestampMillis.toString(), raw = true)
+        fields += jsonField("selectedCard", selectedCard)
+        fields += jsonField("frameWidth", frameWidth.toString(), raw = true)
+        fields += jsonField("frameHeight", frameHeight.toString(), raw = true)
+        fields += jsonField("frameRotation", frameRotation.toString(), raw = true)
+        fields += jsonField("frameTimestampNanos", frameTimestampNanos.toString(), raw = true)
+        fields += jsonField("decodeResultType", decodeResultType)
+        roi?.let {
+            fields += "\"roi\":{" +
+                listOf(
+                    jsonField("x", it.x.toString(), raw = true),
+                    jsonField("y", it.y.toString(), raw = true),
+                    jsonField("width", it.width.toString(), raw = true),
+                    jsonField("height", it.height.toString(), raw = true),
+                ).joinToString(",") +
+                "}"
+        }
+        rawSignature?.let { fields += jsonField("rawSignature", it) }
+        confidence?.let { fields += jsonField("confidence", formatConfidenceForJson(it), raw = true) }
+        failureReason?.let { fields += jsonField("failureReason", it) }
+        normalizedPattern?.let { fields += jsonField("normalizedPattern", it) }
+        if (blackRuns.isNotEmpty()) {
+            fields += "\"blackRuns\":" + blackRuns.toJsonArray()
+        }
+        if (ambiguousCandidates.isNotEmpty()) {
+            fields += "\"ambiguousCandidates\":" + ambiguousCandidates.toJsonArray()
+        }
+        return "{${fields.joinToString(",")}}"
+    }
+}
+
+internal class AdminEditScanDebugLogManager(private val context: Context) {
+    val logFile: File by lazy {
+        val baseDir = context.getExternalFilesDir("debug") ?: File(context.filesDir, "debug")
+        if (!baseDir.exists()) {
+            baseDir.mkdirs()
+        }
+        File(baseDir, "admin-edit-scan-log.jsonl")
+    }
+
+    fun appendScanRecord(
+        selectedCard: String,
+        outcome: CameraScanOutcome,
+    ) {
+        val record = outcome.toDebugRecord(
+            selectedCard = selectedCard,
+            timestampMillis = System.currentTimeMillis(),
+        )
+        logFile.appendText(record.toJsonLine() + "\n")
+    }
+
+    fun createShareIntent(): Intent? {
+        if (!logFile.exists() || logFile.length() == 0L) {
+            return null
+        }
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            logFile,
+        )
+        return Intent(Intent.ACTION_SEND).apply {
+            type = "application/x-ndjson"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "ITROBOC Admin::Edit scan debug log")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+}
+
+internal fun CameraScanOutcome.toDebugRecord(
+    selectedCard: String,
+    timestampMillis: Long,
+): AdminEditScanDebugRecord = when (this) {
+    is CameraScanOutcome.Decoded -> when (val result = decodeResult) {
+        is BarcodeDecodeResult.Found -> result.signature.toDebugRecord(
+            timestampMillis = timestampMillis,
+            selectedCard = selectedCard,
+            frameDebugInfo = frameDebugInfo,
+            roi = roi,
+        )
+        is BarcodeDecodeResult.NotFound -> AdminEditScanDebugRecord(
+            timestampMillis = timestampMillis,
+            selectedCard = selectedCard,
+            frameWidth = frameDebugInfo.width,
+            frameHeight = frameDebugInfo.height,
+            frameRotation = frameDebugInfo.rotationDegrees,
+            frameTimestampNanos = frameDebugInfo.timestampNanos,
+            roi = roi,
+            decodeResultType = "NotFound",
+            failureReason = result.reason,
+            normalizedPattern = result.debug?.normalizedPattern,
+            blackRuns = result.debug.toBlackRunStrings(),
+        )
+        is BarcodeDecodeResult.Ambiguous -> AdminEditScanDebugRecord(
+            timestampMillis = timestampMillis,
+            selectedCard = selectedCard,
+            frameWidth = frameDebugInfo.width,
+            frameHeight = frameDebugInfo.height,
+            frameRotation = frameDebugInfo.rotationDegrees,
+            frameTimestampNanos = frameDebugInfo.timestampNanos,
+            roi = roi,
+            decodeResultType = "Ambiguous",
+            failureReason = result.reason,
+            normalizedPattern = result.debug?.normalizedPattern,
+            blackRuns = result.debug.toBlackRunStrings(),
+            ambiguousCandidates = result.candidates.map { it.rawSignature },
+        )
+    }
+    is CameraScanOutcome.ConversionFailed -> AdminEditScanDebugRecord(
+        timestampMillis = timestampMillis,
+        selectedCard = selectedCard,
+        frameWidth = frameDebugInfo.width,
+        frameHeight = frameDebugInfo.height,
+        frameRotation = frameDebugInfo.rotationDegrees,
+        frameTimestampNanos = frameDebugInfo.timestampNanos,
+        roi = roi,
+        decodeResultType = "ConversionFailed",
+        failureReason = reason,
+    )
+}
+
+private fun DetectedSignature.toDebugRecord(
+    timestampMillis: Long,
+    selectedCard: String,
+    frameDebugInfo: FrameDebugInfo,
+    roi: BarcodeRoi,
+): AdminEditScanDebugRecord = AdminEditScanDebugRecord(
+    timestampMillis = timestampMillis,
+    selectedCard = selectedCard,
+    frameWidth = frameDebugInfo.width,
+    frameHeight = frameDebugInfo.height,
+    frameRotation = frameDebugInfo.rotationDegrees,
+    frameTimestampNanos = frameDebugInfo.timestampNanos,
+    roi = roi,
+    decodeResultType = "Found",
+    rawSignature = rawSignature,
+    confidence = confidence,
+    normalizedPattern = debug?.normalizedPattern,
+    blackRuns = debug.toBlackRunStrings(),
+)
+
+private fun BarcodeDebugInfo?.toBlackRunStrings(): List<String> =
+    this?.blackRuns?.map { "${it.first}..${it.last}" }.orEmpty()
+
+private fun List<String>.toJsonArray(): String =
+    joinToString(prefix = "[", postfix = "]", separator = ",") { value ->
+        "\"${value.escapeJson()}\""
+    }
+
+private fun jsonField(
+    name: String,
+    value: String,
+    raw: Boolean = false,
+): String = if (raw) {
+    "\"${name.escapeJson()}\":$value"
+} else {
+    "\"${name.escapeJson()}\":\"${value.escapeJson()}\""
+}
+
+private fun formatConfidenceForJson(value: Double): String = "%.4f".format(value)
+
+private fun String.escapeJson(): String = buildString(length) {
+    for (char in this@escapeJson) {
+        when (char) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(char)
+        }
+    }
+}

@@ -1,6 +1,8 @@
 package org.itroboc.app
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,6 +31,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -59,6 +62,8 @@ fun AdminEditScreen(
     var frameDebugInfo by remember { mutableStateOf<FrameDebugInfo?>(null) }
     var cameraDecodeInfo by remember { mutableStateOf<String?>(null) }
     var scanRequested by remember { mutableStateOf(false) }
+    var pendingScanCard by remember { mutableStateOf<CardId?>(null) }
+    var debugLogStatus by remember { mutableStateOf<String?>(null) }
     val pendingScanRequest = remember { AtomicBoolean(false) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder() }
     
@@ -66,6 +71,7 @@ fun AdminEditScreen(
     var updateTrigger by remember { mutableIntStateOf(0) }
 
     val context = LocalContext.current
+    val debugLogManager = remember(context) { AdminEditScanDebugLogManager(context) }
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -101,13 +107,13 @@ fun AdminEditScreen(
         }
     }
 
-    fun applySignature(rawSignature: String, detectionLabel: String) {
-        val result = editor.assign(rawSignature, selectedCard)
+    fun applySignature(targetCard: CardId, rawSignature: String, detectionLabel: String) {
+        val result = editor.assign(rawSignature, targetCard)
         lastResultMessage = when (result) {
             is DeckProfileEditResult.Assigned ->
-                "$detectionLabel assigned to ${selectedCard.prettyString}"
+                "$detectionLabel assigned to ${targetCard.prettyString}"
             is DeckProfileEditResult.AlreadyAssignedToSelected ->
-                "$detectionLabel already exists for ${selectedCard.prettyString}"
+                "$detectionLabel already exists for ${targetCard.prettyString}"
             is DeckProfileEditResult.SignatureConflict ->
                 "$detectionLabel CONFLICT: already mapped to ${result.existingCard.prettyString}"
             else -> "No card selected"
@@ -202,16 +208,26 @@ fun AdminEditScreen(
                         consumeScanRequest = { pendingScanRequest.compareAndSet(true, false) },
                         frameDecoder = frameDecoder,
                         onScanProcessed = { scanOutcome ->
+                            val scanCard = pendingScanCard ?: selectedCard
                             frameDebugInfo = scanOutcome.frameDebugInfo
                             cameraDecodeInfo = scanOutcome.describe()
                             scanRequested = false
+                            pendingScanCard = null
+                            debugLogManager.appendScanRecord(
+                                selectedCard = scanCard.prettyString,
+                                outcome = scanOutcome,
+                            )
 
                             when (scanOutcome) {
                                 is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
                                     is BarcodeDecodeResult.Found -> {
                                         val signature = decodeResult.signature
                                         val detectionLabel = "Detected ${signature.rawSignature} (${signature.confidence.formatAsUiConfidence()})"
-                                        applySignature(signature.rawSignature, detectionLabel)
+                                        applySignature(
+                                            targetCard = scanCard,
+                                            rawSignature = signature.rawSignature,
+                                            detectionLabel = detectionLabel,
+                                        )
                                     }
                                     is BarcodeDecodeResult.NotFound -> {
                                         lastResultMessage = decodeResult.reason
@@ -226,7 +242,7 @@ fun AdminEditScreen(
                             }
                         }
                     )
-                    BarcodeGuideOverlay(guideRectSpec = adminEditGuideRectSpec)
+                    BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
                 } else {
                     Text(
                         text = "Camera permission is required for scanning.",
@@ -254,7 +270,11 @@ fun AdminEditScreen(
                     onClick = {
                         val mockSig = "0x${(1000..9999).random().toString(16).uppercase()}"
                         cameraDecodeInfo = "Mock fallback used"
-                        applySignature(mockSig, "Mock signature $mockSig")
+                        applySignature(
+                            targetCard = selectedCard,
+                            rawSignature = mockSig,
+                            detectionLabel = "Mock signature $mockSig",
+                        )
                     },
                     modifier = Modifier.height(32.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
@@ -309,6 +329,22 @@ fun AdminEditScreen(
             lastResultMessage?.let {
                 Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
+            Text(
+                text = "Log: ${debugLogManager.logFile.absolutePath}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+            debugLogStatus?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = autoAdvance, onCheckedChange = { autoAdvance = it })
@@ -323,6 +359,7 @@ fun AdminEditScreen(
                     onClick = {
                         pendingScanRequest.set(true)
                         scanRequested = true
+                        pendingScanCard = selectedCard
                         cameraDecodeInfo = null
                         lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
@@ -352,6 +389,24 @@ fun AdminEditScreen(
                 ) {
                     Text("Back")
                 }
+            }
+            OutlinedButton(
+                onClick = {
+                    val shareIntent = debugLogManager.createShareIntent()
+                    if (shareIntent == null) {
+                        debugLogStatus = "No debug log to share yet."
+                    } else {
+                        try {
+                            context.startActivity(Intent.createChooser(shareIntent, "Share scan debug log"))
+                            debugLogStatus = "Opened Android share sheet for scan debug log."
+                        } catch (_: ActivityNotFoundException) {
+                            debugLogStatus = "No app available to share the scan debug log."
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Share Debug Log")
             }
         }
     }
@@ -479,13 +534,13 @@ private fun CameraPreview(
 }
 
 @Composable
-private fun BarcodeGuideOverlay(guideRectSpec: GuideRectSpec) {
+private fun BarcodeGuideOverlay(guideSpec: AdminScanGuideSpec) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val strokeWidth = 2.dp.toPx()
         val guideBounds = centeredGuideRectBounds(
             containerWidth = size.width,
             containerHeight = size.height,
-            guideRectSpec = guideRectSpec,
+            guideSpec = guideSpec,
         )
 
         drawRoundRect(
