@@ -98,10 +98,10 @@
     },
     {
       "cardId": "ST",
-      "rawSignature": "bfm0659",
-      "reverseSignature": "brm134C",
-      "grid13FwdBits": "0011001011001",
-      "grid13RevBits": "1001101001100",
+      "rawSignature": "bfm1659",
+      "reverseSignature": "brm134D",
+      "grid13FwdBits": "1011001011001",
+      "grid13RevBits": "1001101001101",
       "rl2": "B1-W1-B2-W2-B1-W1-B2-W2-B1",
       "blackRunsPx": [
         5,
@@ -490,7 +490,7 @@
       "reverseSignature": "brm1531",
       "grid13FwdBits": "1000110010101",
       "grid13RevBits": "1010100110001",
-      "rl2": "B1-W2-B2-W2-B1-W1-B1-W1-B1",
+      "rl2": "B1-W3-B2-W2-B1-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         10,
@@ -976,7 +976,7 @@
       "reverseSignature": "brm1635",
       "grid13FwdBits": "1010110001101",
       "grid13RevBits": "1011000110101",
-      "rl2": "B1-W1-B1-W1-B2-W2-B2-W1-B1",
+      "rl2": "B1-W1-B1-W1-B2-W3-B2-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -1038,10 +1038,10 @@
     },
     {
       "cardId": "C8",
-      "rawSignature": "bfm02CD",
-      "reverseSignature": "brm1668",
-      "grid13FwdBits": "0001011001101",
-      "grid13RevBits": "1011001101000",
+      "rawSignature": "bfm12CD",
+      "reverseSignature": "brm1669",
+      "grid13FwdBits": "1001011001101",
+      "grid13RevBits": "1011001101001",
       "rl2": "B1-W2-B1-W1-B2-W2-B2-W1-B1",
       "blackRunsPx": [
         6,
@@ -1108,7 +1108,7 @@
       "reverseSignature": "brm1331",
       "grid13FwdBits": "1000110011001",
       "grid13RevBits": "1001100110001",
-      "rl2": "B1-W2-B2-W1-B2-W1-B1",
+      "rl2": "B1-W3-B2-W1-B2-W1-B1",
       "blackRunsPx": [
         5,
         12,
