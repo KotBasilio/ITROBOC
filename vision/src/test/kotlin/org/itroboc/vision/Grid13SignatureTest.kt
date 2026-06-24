@@ -95,4 +95,12 @@ class Grid13SignatureTest {
             normalizeGrid13Sentinels("0110101010110"),
         )
     }
+
+    @Test
+    fun `builds exact cell run signature including white run of three`() {
+        assertEquals(
+            "B1-W1-B2-W3-B2-W1-B1-W1-B1",
+            grid13RunLengthSignature("1011000110101"),
+        )
+    }
 }

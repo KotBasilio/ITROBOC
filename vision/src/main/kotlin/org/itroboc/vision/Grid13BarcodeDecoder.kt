@@ -56,6 +56,7 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
         normalizeGrid13Sentinels(grid13FwdBits)
     }
     val correctedRevBits = reverseBits(correctedFwdBits)
+    val correctedRl2 = grid13RunLengthSignature(correctedFwdBits)
     val repairReason = sentinelCheck.issues
         .takeIf { it.isNotEmpty() }
         ?.joinToString(prefix = "Normalized Grid13 control bits: ")
@@ -72,7 +73,7 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
         debug = BarcodeDebugInfo(
             threshold = threshold,
             blackRuns = blackRunEdges,
-            normalizedPattern = rl2,
+            normalizedPattern = correctedRl2,
             signatureModel = GRID13_SIGNATURE_MODEL,
             reverseSignature = reverseMealSignature(correctedRevBits),
             grid13FwdBitsPreSentinel = grid13FwdBits,
@@ -80,7 +81,7 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
             grid13RevBits = correctedRevBits,
             grid13FwdHex = grid13BitsToHex(correctedFwdBits),
             grid13RevHex = grid13BitsToHex(correctedRevBits),
-            rl2 = rl2,
+            rl2 = correctedRl2,
             blackRunsPx = blackRunsPx,
             whiteGapsPx = whiteGapsPx,
             blackRunCentersPx = blackRunCentersPx,

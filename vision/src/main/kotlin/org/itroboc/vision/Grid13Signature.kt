@@ -56,6 +56,25 @@ fun normalizeGrid13Sentinels(bits13: String): String {
     }
 }
 
+fun grid13RunLengthSignature(bits13: String): String {
+    validateGrid13Bits(bits13)
+    val runs = mutableListOf<String>()
+    var currentBit = bits13.first()
+    var currentLength = 1
+
+    for (bit in bits13.drop(1)) {
+        if (bit == currentBit) {
+            currentLength += 1
+        } else {
+            runs += "${if (currentBit == '1') 'B' else 'W'}$currentLength"
+            currentBit = bit
+            currentLength = 1
+        }
+    }
+    runs += "${if (currentBit == '1') 'B' else 'W'}$currentLength"
+    return runs.joinToString("-")
+}
+
 fun grid13BitsToHex(bits13: String): String {
     validateGrid13Bits(bits13)
     val paddedBits = bits13.padStart(length = 16, padChar = '0')

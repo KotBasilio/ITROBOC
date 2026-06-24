@@ -32,10 +32,16 @@ Early decoding based only on visible black-bar widths was too fragile:
 
 * visible black runs are useful, but thresholding and crop variation change exact widths;
 * red-suit marks can be weaker under grayscale/luma-only input;
-* the `RL2` run-length explanation had an observed collision on the 52-card sheet set;
+* the historical two-class pixel-width `RL2` explanation had an observed collision on the 52-card sheet set;
 * static sheet analysis showed that normalized 13-cell occupancy produced 52 unique forward signatures.
 
 So ITROBOC keeps black/white runs as diagnostic evidence, but stores the normalized Grid13 token as the primary alias.
+
+The current golden manifest's `rl2` field is derived from exact runs in
+`grid13FwdBits`, not from pixel-width clustering. It therefore permits `W3`,
+has no observed `B3`, and is collision-free for the 52 forward signatures.
+Measured widths remain available independently as `blackRunsPx` and
+`whiteGapsPx`.
 
 ## Grid13 Procedure
 
