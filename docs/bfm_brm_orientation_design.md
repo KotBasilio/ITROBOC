@@ -111,7 +111,13 @@ Expanded:
 (value and 0x0001) != 0 // bit0 must be 1
 ```
 
-This is a strong mistake detector. A token failing this rule should not be treated as a reliable `grid13-v1` signature.
+This is both a mistake detector and a control-bit rule. When measurement
+violates it, the four control cells are normalized to `10.........01` before
+the signature is produced. The original bits and repair reason remain in debug
+evidence.
+
+`sentinelValid` describes the measured pre-normalization bits. Therefore it can
+be `false` while the emitted signature contains the corrected control bits.
 
 ## Important: do not canonicalize orientation
 
@@ -233,6 +239,8 @@ activeSpanPx
 confidence
 warnings
 sentinelCheck
+sentinelRepairApplied
+sentinelRepairReason
 ```
 
 The UI alias chip should remain compact:
@@ -253,8 +261,11 @@ Add tests for:
 6. Decoder output failing the sentinel rule returns `Ambiguous` or `NotFound`, not a confident alias.
 7. Any repair/snap behavior is documented and logged with warnings.
 
-The current implementation uses a hard gate rather than repair. Invalid
-sentinels produce an `Ambiguous` result with explicit debug issues.
+The current implementation normalizes the four control cells before producing
+the signature. It records the pre-normalization bits, issues, and repair reason.
+Confidence is checked afterward, so a corrected low-confidence measurement
+still produces `Ambiguous`; a corrected sufficiently confident measurement can
+produce `Found`.
 
 ## Design motto
 
