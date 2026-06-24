@@ -61,8 +61,10 @@ Top area: camera preview, about 66% of the right part.
 Read-only mode is enabled by default. It keeps CameraX unbound and replaces the
 camera preview with a visual inspection card when the selected card has Grid13
 aliases. The card shows upright and 180-degree corner marks plus `bfm` and
-`brm` aliases rendered as 13-cell black/white barcodes. This supports manual
-comparison against the physical deck without changing profile data.
+`brm` aliases rendered as tall 13-cell black/white barcodes. Their physical
+positions communicate orientation, so the inspection card omits redundant
+text labels and compact tokens. This supports manual comparison against the
+physical deck without changing profile data.
 
 The current prototype now uses a real CameraX preview for Admin-side calibration.
 
