@@ -75,6 +75,8 @@ class AdminEditCameraSupportTest {
             activeStartX = 1,
             activeEndX = 7,
             activeSpanPx = 7,
+            sentinelValid = false,
+            sentinelIssues = listOf("bit11 must be white"),
             ambiguous = false,
             warnings = listOf("debug warning"),
             deckProfileMatchCount = 1,
@@ -107,6 +109,8 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"activeStartX\":1")
         assertContains(jsonLine, "\"activeEndX\":7")
         assertContains(jsonLine, "\"activeSpanPx\":7")
+        assertContains(jsonLine, "\"sentinelValid\":false")
+        assertContains(jsonLine, "\"sentinelIssues\":[\"bit11 must be white\"]")
         assertContains(jsonLine, "\"scanlineAgreement\":null")
         assertContains(jsonLine, "\"ambiguous\":false")
         assertContains(jsonLine, "\"warnings\":[\"debug warning\"]")

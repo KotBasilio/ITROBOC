@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.itroboc.vision.DetectedSignature
 
 enum class BarcodeOrientationMode(
     val label: String,
@@ -19,13 +20,19 @@ enum class BarcodeOrientationMode(
     AUTO("auto"),
 }
 
+internal fun DetectedSignature.signatureFor(mode: BarcodeOrientationMode): String? = when (mode) {
+    BarcodeOrientationMode.BFM -> rawSignature
+    BarcodeOrientationMode.BRM -> debug?.reverseSignature
+    BarcodeOrientationMode.AUTO -> null
+}
+
 @Composable
 fun BoardScanScreen(
     boardNumber: Int,
+    orientationMode: BarcodeOrientationMode,
+    onOrientationModeChange: (BarcodeOrientationMode) -> Unit,
     onBack: () -> Unit
 ) {
-    var orientationMode by remember { mutableStateOf(BarcodeOrientationMode.BFM) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,7 +65,7 @@ fun BoardScanScreen(
                 Row(
                     modifier = Modifier.selectable(
                         selected = orientationMode == mode,
-                        onClick = { orientationMode = mode },
+                        onClick = { onOrientationModeChange(mode) },
                         role = Role.RadioButton,
                     ),
                     verticalAlignment = Alignment.CenterVertically,

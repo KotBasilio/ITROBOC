@@ -256,6 +256,8 @@ internal data class AdminEditScanDebugRecord(
     val activeStartX: Int? = null,
     val activeEndX: Int? = null,
     val activeSpanPx: Int? = null,
+    val sentinelValid: Boolean? = null,
+    val sentinelIssues: List<String> = emptyList(),
     val scanlineAgreement: Double? = null,
     val ambiguous: Boolean = false,
     val warnings: List<String> = emptyList(),
@@ -299,6 +301,7 @@ internal data class AdminEditScanDebugRecord(
         activeStartX?.let { fields += jsonField("activeStartX", it.toString(), raw = true) }
         activeEndX?.let { fields += jsonField("activeEndX", it.toString(), raw = true) }
         activeSpanPx?.let { fields += jsonField("activeSpanPx", it.toString(), raw = true) }
+        sentinelValid?.let { fields += jsonField("sentinelValid", it.toString(), raw = true) }
         fields += scanlineAgreement?.let {
             jsonField("scanlineAgreement", formatConfidenceForJson(it), raw = true)
         } ?: jsonNullField("scanlineAgreement")
@@ -320,6 +323,9 @@ internal data class AdminEditScanDebugRecord(
         }
         if (ambiguousCandidates.isNotEmpty()) {
             fields += "\"ambiguousCandidates\":" + ambiguousCandidates.toJsonArray()
+        }
+        if (sentinelIssues.isNotEmpty()) {
+            fields += "\"sentinelIssues\":" + sentinelIssues.toJsonArray()
         }
         if (warnings.isNotEmpty()) {
             fields += "\"warnings\":" + warnings.toJsonArray()
@@ -425,6 +431,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeStartX = result.debug?.activeStartX,
             activeEndX = result.debug?.activeEndX,
             activeSpanPx = result.debug?.activeSpanPx,
+            sentinelValid = result.debug?.sentinelValid,
+            sentinelIssues = result.debug?.sentinelIssues.orEmpty(),
             ambiguous = false,
             warnings = result.debug?.warnings.orEmpty(),
             deckProfileMatchCount = deckProfileMatchCount,
@@ -457,6 +465,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeStartX = result.debug?.activeStartX,
             activeEndX = result.debug?.activeEndX,
             activeSpanPx = result.debug?.activeSpanPx,
+            sentinelValid = result.debug?.sentinelValid,
+            sentinelIssues = result.debug?.sentinelIssues.orEmpty(),
             ambiguous = true,
             warnings = result.debug?.warnings.orEmpty(),
             deckProfileMatchCount = deckProfileMatchCount,
@@ -511,6 +521,8 @@ private fun DetectedSignature.toDebugRecord(
     activeStartX = debug?.activeStartX,
     activeEndX = debug?.activeEndX,
     activeSpanPx = debug?.activeSpanPx,
+    sentinelValid = debug?.sentinelValid,
+    sentinelIssues = debug?.sentinelIssues.orEmpty(),
     ambiguous = false,
     warnings = debug?.warnings.orEmpty(),
     deckProfileMatchCount = deckProfileMatchCount,

@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.MainMenu) }
+    var barcodeOrientationMode by remember { mutableStateOf(BarcodeOrientationMode.BFM) }
     
     val builtInDefault = remember { BuiltInDeckProfiles.defaultProfile() }
     val builtInDefaultMetadata = remember { builtInDefault.metadata.toProfileListItem() }
@@ -74,6 +75,8 @@ fun AppNavigation() {
         is Screen.BoardScan -> {
             BoardScanScreen(
                 boardNumber = screen.boardNumber,
+                orientationMode = barcodeOrientationMode,
+                onOrientationModeChange = { barcodeOrientationMode = it },
                 onBack = { currentScreen = Screen.TdActions }
             )
         }
