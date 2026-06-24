@@ -111,3 +111,24 @@ The raw signature should remain available in scan reports/logs where useful. Thi
 10. Admin calibration UI.
 
 Camera and Android UI should wait until the core workflow is stable and tested.
+
+## Current frontier
+
+The earlier development order has now advanced through the first Android,
+camera, Admin calibration, and Grid13 milestones.
+
+Current grounded state:
+
+* the app has Main, TD, Admin, and Mock entry surfaces;
+* Admin::Edit can calibrate profiles from a CameraX frame;
+* `grid13-v1` preserves `bfm`/`brm` physical orientation;
+* the built-in observed profile has complete 52-card coverage;
+* its orientation was visually checked against the physical deck;
+* the golden manifest follows the observed profile and derives bits/run form
+  consistently;
+* Admin::Edit read-only mode provides a visual barcode inspection card.
+
+The next major implementation frontier is `TD::EditBoard`: replacing the
+current Board Scan placeholder with a real board/hand editing and scanning
+workflow that consumes the active Deck Profile and existing pure-core scan
+models.
