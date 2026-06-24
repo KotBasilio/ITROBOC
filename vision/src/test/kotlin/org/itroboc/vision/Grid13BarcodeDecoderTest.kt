@@ -65,6 +65,7 @@ class Grid13BarcodeDecoderTest {
         assertEquals("bfm1001", found.signature.rawSignature)
         assertEquals("1100000000001", debug.grid13FwdBitsPreSentinel)
         assertEquals("1000000000001", debug.grid13FwdBits)
+        assertEquals("B1-W11-B1", debug.rl2)
         assertEquals(false, debug.sentinelValid)
         assertEquals(listOf("bit11 must be white"), debug.sentinelIssues)
         assertEquals(true, debug.sentinelRepairApplied)

@@ -225,7 +225,7 @@ Values above are illustrative; use Bob’s analyzer output.
 - all `rawSignature` values match `^bfm[0-9A-F]{4}$`;
 - all `reverseSignature` values match `^brm[0-9A-F]{4}$`;
 - forward/reverse canonicalization is explicitly not used;
-- known RL2 collision `D2` / `C8` is documented if reproduced.
+- historical two-class pixel-width RL2 collision `D2` / `C8` is documented if reproduced.
 
 ### Acceptance
 

@@ -58,7 +58,7 @@ fun measureGrid13BarcodeProjection(
         activeStartX = activeSpan.first,
         activeEndX = activeSpan.last,
         activeSpanPx = activeSpan.width,
-        rl2 = rl2Signature(blackRuns, whiteGaps),
+        rl2 = grid13RunLengthSignature(fwdBits),
         grid13FwdBits = fwdBits,
         grid13RevBits = revBits,
         grid13FwdHex = grid13BitsToHex(fwdBits),
@@ -89,43 +89,6 @@ fun grid13BitsFromProjection(
             val meanInk = projection.sliceMean(cellStart until safeEndExclusive)
             append(if (meanInk >= threshold) '1' else '0')
         }
-    }
-}
-
-private fun rl2Signature(
-    blackRuns: List<IntRange>,
-    whiteGaps: List<IntRange>,
-): String {
-    val blackLabels = quantizeRunWidths(
-        widths = blackRuns.map { it.width },
-        prefix = "B",
-    )
-    val whiteLabels = quantizeRunWidths(
-        widths = whiteGaps.map { it.width },
-        prefix = "W",
-    )
-
-    return buildList {
-        blackLabels.forEachIndexed { index, label ->
-            add(label)
-            whiteLabels.getOrNull(index)?.let(::add)
-        }
-    }.joinToString(separator = "-")
-}
-
-private fun quantizeRunWidths(
-    widths: List<Int>,
-    prefix: String,
-): List<String> {
-    if (widths.isEmpty()) {
-        return emptyList()
-    }
-    val minWidth = widths.minOrNull() ?: 1
-    val maxWidth = widths.maxOrNull() ?: minWidth
-    val threshold = (minWidth + maxWidth) / 2.0
-    return widths.map { width ->
-        val unit = if (width <= threshold) 1 else 2
-        "$prefix$unit"
     }
 }
 

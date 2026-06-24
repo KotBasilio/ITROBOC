@@ -123,9 +123,10 @@ ink = 255 - min(R, G, B)
 
 This is preferable to plain luminance because red-suit barcodes may appear reddish/brown and weaker in grayscale.
 
-### 5.3 RL2
+### 5.3 Grid13 run form (`rl2`)
 
-Human-readable alternating run-length debug model.
+Human-readable alternating run-length form derived exactly from the normalized
+13 Grid13 cells.
 
 Example:
 
@@ -135,12 +136,19 @@ B1-W1-B1-W1-B2-W2-B1
 
 Meaning:
 
-- `B1`: narrow black run;
-- `B2`: wide black run;
-- `W1`: narrow white gap;
-- `W2`: wide white gap.
+- `Bn`: `n` adjacent black cells;
+- `Wn`: `n` adjacent white cells.
 
-Important: `RL2` is useful for explanation and diagnostics, but it is not sufficient as the sole raw signature because it had one observed collision on the 52-card sheet set.
+The observed deck's golden manifest contains black runs only through `B2` and
+no `B3`; `W3` is valid and occurs. The generic formatter preserves any exact
+run length measured from a 13-cell candidate. Historical research used a
+separate two-class pixel-width RL2
+quantizer and found a `D2`/`C8` collision. That result remains useful research
+history, but the current manifest `rl2` field is the exact Grid13-cell run form
+and is collision-free across the 52 forward signatures.
+
+The field keeps the historical name `rl2` for file/log compatibility even
+though its current values are exact cell counts rather than two-class labels.
 
 ### 5.4 Grid13
 
@@ -335,11 +343,11 @@ blackRunCentersPx = [...]
 
 The first and last black runs are expected to be narrow. If an endpoint is wide or unstable, confidence should fall sharply.
 
-### 7.7 RL2 quantization
+### 7.7 Grid13 run form
 
-Compute RL2 as a debug/explanation layer.
-
-Use endpoint bars and smaller internal bars/gaps to estimate narrow units. Do not force exact pixel widths. Keep an ambiguity marker when a run is close to a threshold.
+Compute `rl2` from the final forward Grid13 bits by counting exact adjacent
+black and white cells. Keep measured pixel widths separately in
+`blackRunsPx` and `whiteGapsPx`; they must not redefine the logical run form.
 
 ### 7.8 Grid13 normalization
 
@@ -518,7 +526,8 @@ Possible format:
 - suit sheets segment into exactly 13 barcode rows;
 - bottom suit pips are not mistaken for barcode rows;
 - `grid13Fwd` has 52 unique values on the golden sheet set;
-- RL2 collision `D2`/`C8` is known and documented unless quantizer changes;
+- historical pixel-width RL2 collision `D2`/`C8` remains documented;
+- current manifest `rl2` exactly matches `grid13FwdBits`;
 - forward/reverse canonicalization is not used;
 - bit-to-hex formatting produces exact four uppercase hex digits;
 - degradation tests cover blur, exposure, JPEG artifacts, small crop shifts, and mild skew;

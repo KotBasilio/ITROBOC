@@ -2,7 +2,6 @@ package org.itroboc.vision
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class Grid13GoldenManifestTest {
@@ -33,15 +32,15 @@ class Grid13GoldenManifestTest {
             assertEquals(reverseBits(card.grid13FwdBits), card.grid13RevBits, card.cardId)
             assertEquals(forwardMealSignature(card.grid13FwdBits), card.rawSignature, card.cardId)
             assertEquals(reverseMealSignature(card.grid13RevBits), card.reverseSignature, card.cardId)
+            assertEquals(grid13RunLengthSignature(card.grid13FwdBits), card.rl2, card.cardId)
         }
     }
 
     @Test
-    fun `golden manifest preserves known RL2 collision`() {
-        val byCard = manifest.cards.associateBy { it.cardId }
-
-        assertEquals(byCard.getValue("D2").rl2, byCard.getValue("C8").rl2)
-        assertNotEquals(byCard.getValue("D2").grid13FwdBits, byCard.getValue("C8").grid13FwdBits)
+    fun `golden manifest run signatures are exact and collision free`() {
+        assertEquals(52, manifest.cards.map { it.rl2 }.toSet().size)
+        assertTrue(manifest.cards.any { "-W3-" in "-${it.rl2}-" })
+        assertTrue(manifest.cards.none { Regex("(^|-)B3($|-)").containsMatchIn(it.rl2) })
     }
 
     @Test

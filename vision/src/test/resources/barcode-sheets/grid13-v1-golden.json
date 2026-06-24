@@ -1,6 +1,6 @@
 {
   "signatureModel": "grid13-v1",
-  "source": "docs/barcode-sheets/deep-research-report.md Table of the 52 cards and proposed signatures",
+  "source": "BuiltInDeckProfiles.observedV1(), physically orientation-checked; pixel measurements retained from the static barcode sheets",
   "cards": [
     {
       "cardId": "SA",
@@ -8,7 +8,7 @@
       "reverseSignature": "brm1255",
       "grid13FwdBits": "1010101001001",
       "grid13RevBits": "1001001010101",
-      "rl2": "B1-W1-B1-W1-B2-W1-B2-W2-B2-W2-B1",
+      "rl2": "B1-W1-B1-W1-B1-W1-B1-W2-B1-W2-B1",
       "blackRunsPx": [
         3,
         4,
@@ -32,7 +32,7 @@
       "reverseSignature": "brm12A5",
       "grid13FwdBits": "1010010101001",
       "grid13RevBits": "1001010100101",
-      "rl2": "B1-W1-B2-W2-B2-W1-B2-W1-B2-W2-B1",
+      "rl2": "B1-W1-B1-W2-B1-W1-B1-W1-B1-W2-B1",
       "blackRunsPx": [
         4,
         5,
@@ -124,7 +124,7 @@
       "reverseSignature": "brm12A9",
       "grid13FwdBits": "1001010101001",
       "grid13RevBits": "1001010101001",
-      "rl2": "B1-W2-B2-W1-B2-W1-B2-W1-B2-W2-B1",
+      "rl2": "B1-W2-B1-W1-B1-W1-B1-W1-B1-W2-B1",
       "blackRunsPx": [
         5,
         6,
@@ -148,7 +148,7 @@
       "reverseSignature": "brm1295",
       "grid13FwdBits": "1010100101001",
       "grid13RevBits": "1001010010101",
-      "rl2": "B1-W1-B2-W1-B2-W2-B2-W1-B2-W2-B1",
+      "rl2": "B1-W1-B1-W1-B1-W2-B1-W1-B1-W2-B1",
       "blackRunsPx": [
         5,
         6,
@@ -304,7 +304,7 @@
       "reverseSignature": "brm1249",
       "grid13FwdBits": "1001001001001",
       "grid13RevBits": "1001001001001",
-      "rl2": "B1-W1-B2-W1-B2-W1-B2-W1-B1",
+      "rl2": "B1-W2-B1-W2-B1-W2-B1-W2-B1",
       "blackRunsPx": [
         4,
         5,
@@ -326,7 +326,7 @@
       "reverseSignature": "brm15B5",
       "grid13FwdBits": "1010110110101",
       "grid13RevBits": "1010110110101",
-      "rl2": "B1-W1-B1-W2-B2-W1-B2-W1-B1-W2-B1",
+      "rl2": "B1-W1-B1-W1-B2-W1-B2-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -444,7 +444,7 @@
       "reverseSignature": "brm158D",
       "grid13FwdBits": "1011000110101",
       "grid13RevBits": "1010110001101",
-      "rl2": "B1-W1-B2-W2-B2-W1-B1-W1-B1",
+      "rl2": "B1-W1-B2-W3-B2-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         11,
@@ -512,7 +512,7 @@
       "reverseSignature": "brm1525",
       "grid13FwdBits": "1010010010101",
       "grid13RevBits": "1010100100101",
-      "rl2": "B1-W1-B2-W2-B2-W2-B2-W1-B2-W1-B1",
+      "rl2": "B1-W1-B1-W2-B1-W2-B1-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -536,7 +536,7 @@
       "reverseSignature": "brm1529",
       "grid13FwdBits": "1001010010101",
       "grid13RevBits": "1010100101001",
-      "rl2": "B1-W2-B1-W1-B1-W2-B2-W1-B1-W1-B1",
+      "rl2": "B1-W2-B1-W1-B1-W2-B1-W1-B1-W1-B1",
       "blackRunsPx": [
         6,
         6,
@@ -560,7 +560,7 @@
       "reverseSignature": "brm1589",
       "grid13FwdBits": "1001000110101",
       "grid13RevBits": "1010110001001",
-      "rl2": "B1-W2-B1-W2-B2-W1-B1-W1-B1",
+      "rl2": "B1-W2-B1-W3-B2-W1-B1-W1-B1",
       "blackRunsPx": [
         6,
         6,
@@ -582,7 +582,7 @@
       "reverseSignature": "brm15B1",
       "grid13FwdBits": "1000110110101",
       "grid13RevBits": "1010110110001",
-      "rl2": "B1-W2-B2-W1-B2-W1-B1-W1-B1",
+      "rl2": "B1-W3-B2-W1-B2-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         12,
@@ -626,7 +626,7 @@
       "reverseSignature": "brm1555",
       "grid13FwdBits": "1010101010101",
       "grid13RevBits": "1010101010101",
-      "rl2": "B1-W1-B2-W1-B2-W1-B2-W2-B1-W2-B1-W2-B1",
+      "rl2": "B1-W1-B1-W1-B1-W1-B1-W1-B1-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -700,7 +700,7 @@
       "reverseSignature": "brm1549",
       "grid13FwdBits": "1001001010101",
       "grid13RevBits": "1010101001001",
-      "rl2": "B1-W2-B2-W2-B2-W1-B2-W1-B1-W1-B1",
+      "rl2": "B1-W2-B1-W2-B1-W1-B1-W1-B1-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -748,7 +748,7 @@
       "reverseSignature": "brm14B1",
       "grid13FwdBits": "1000110100101",
       "grid13RevBits": "1010010110001",
-      "rl2": "B1-W2-B2-W1-B1-W2-B1-W1-B1",
+      "rl2": "B1-W3-B2-W1-B1-W2-B1-W1-B1",
       "blackRunsPx": [
         4,
         10,
@@ -770,7 +770,7 @@
       "reverseSignature": "brm14A5",
       "grid13FwdBits": "1010010100101",
       "grid13RevBits": "1010010100101",
-      "rl2": "B1-W1-B2-W2-B1-W1-B2-W2-B2-W1-B1",
+      "rl2": "B1-W1-B1-W2-B1-W1-B1-W2-B1-W1-B1",
       "blackRunsPx": [
         4,
         6,
@@ -794,7 +794,7 @@
       "reverseSignature": "brm14A9",
       "grid13FwdBits": "1001010100101",
       "grid13RevBits": "1010010101001",
-      "rl2": "B1-W2-B2-W1-B2-W1-B1-W2-B2-W1-B1",
+      "rl2": "B1-W2-B1-W1-B1-W1-B1-W2-B1-W1-B1",
       "blackRunsPx": [
         4,
         6,
@@ -888,7 +888,7 @@
       "reverseSignature": "brm1649",
       "grid13FwdBits": "1001001001101",
       "grid13RevBits": "1011001001001",
-      "rl2": "B1-W2-B1-W1-B2-W2-B2-W1-B1",
+      "rl2": "B1-W2-B1-W2-B1-W2-B2-W1-B1",
       "blackRunsPx": [
         5,
         6,
@@ -1108,7 +1108,7 @@
       "reverseSignature": "brm1331",
       "grid13FwdBits": "1000110011001",
       "grid13RevBits": "1001100110001",
-      "rl2": "B1-W3-B2-W1-B2-W1-B1",
+      "rl2": "B1-W3-B2-W2-B2-W2-B1",
       "blackRunsPx": [
         5,
         12,
