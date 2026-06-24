@@ -58,6 +58,12 @@ The right part is split vertically.
 
 Top area: camera preview, about 66% of the right part.
 
+Read-only mode is enabled by default. It keeps CameraX unbound and replaces the
+camera preview with a visual inspection card when the selected card has Grid13
+aliases. The card shows upright and 180-degree corner marks plus `bfm` and
+`brm` aliases rendered as 13-cell black/white barcodes. This supports manual
+comparison against the physical deck without changing profile data.
+
 The current prototype now uses a real CameraX preview for Admin-side calibration.
 
 A small centered scan guide rectangle is drawn over the preview. The same guide spec is used for the visible overlay and the actual ROI crop sent to the decoder, so the "mouth" the user sees and the crop the app analyzes stay aligned.
@@ -77,13 +83,14 @@ Required buttons:
 * `Back`
 * `Share Debug Log`
 
-Required option:
+Required options:
 
+* `Read only` toggle
 * `Auto-advance` toggle
 
 Current UI placement:
 
-* `Auto-advance` sits beside the `Card Mapping` title on the left pane.
+* `Read only` and `Auto-advance` sit beside the `Card Mapping` title on the left pane.
 * `Scan` sits near `Selected: <card>` and is visually stronger than `Mock`.
 * `Mock` remains available as a fallback/debug path.
 

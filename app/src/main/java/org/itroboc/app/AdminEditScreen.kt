@@ -135,6 +135,8 @@ fun AdminEditScreen(
         updateTrigger++
     }
 
+    val selectedCardAliases = editor.getAliases(selectedCard)
+
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Part: 52-card mapping grid (Stretched to fill height)
         Column(
@@ -273,11 +275,9 @@ fun AdminEditScreen(
                     )
                     BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
                 } else if (isReadOnly) {
-                    Text(
-                        text = "Camera is off in read-only mode.",
-                        color = Color.LightGray,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center,
+                    AdminReadOnlyCardPreview(
+                        card = selectedCard,
+                        aliases = selectedCardAliases,
                     )
                 } else {
                     Text(
@@ -334,7 +334,7 @@ fun AdminEditScreen(
                     Text("Mock", style = MaterialTheme.typography.labelSmall)
                 }
             }
-            val aliases = editor.getAliases(selectedCard)
+            val aliases = selectedCardAliases
             Text(
                 text = if (aliases.isEmpty()) {
                     "Unmapped • Aliases: none"
