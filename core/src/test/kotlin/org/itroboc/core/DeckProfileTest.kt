@@ -97,6 +97,7 @@ class DeckProfileTest {
         assertEquals(false, profile.metadata.isDemo)
         assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
         assertTrue(profile.metadata.notes?.contains("S6/C6 resolved") == true)
+        assertTrue(profile.metadata.notes?.contains("orientation visually verified") == true)
     }
 
     @Test
@@ -107,8 +108,8 @@ class DeckProfileTest {
         assertEquals(52, profile.cardIds().size)
         assertEquals(profile.mappingCount(), profile.rawSignatures().size)
 
-        assertEquals(CardId.parse("SA"), profile.lookup("bfm1255"))
-        assertEquals(CardId.parse("SA"), profile.lookup("brm1549"))
+        assertEquals(CardId.parse("SA"), profile.lookup("bfm1549"))
+        assertEquals(CardId.parse("SA"), profile.lookup("brm1255"))
         assertEquals(CardId.parse("S6"), profile.lookup("bfm1669"))
         assertEquals(CardId.parse("S6"), profile.lookup("brm12CD"))
         assertEquals(CardId.parse("C6"), profile.lookup("bfm164D"))
@@ -121,10 +122,10 @@ class DeckProfileTest {
     fun `observed profile keeps cross orientation payloads as distinct aliases`() {
         val profile = BuiltInDeckProfiles.observedV1()
 
-        assertEquals(CardId.parse("SA"), profile.lookup("bfm1255"))
-        assertEquals(CardId.parse("DT"), profile.lookup("brm1255"))
-        assertEquals(CardId.parse("DT"), profile.lookup("bfm1549"))
-        assertEquals(CardId.parse("SA"), profile.lookup("brm1549"))
+        assertEquals(CardId.parse("SA"), profile.lookup("bfm1549"))
+        assertEquals(CardId.parse("DT"), profile.lookup("brm1549"))
+        assertEquals(CardId.parse("DT"), profile.lookup("bfm1255"))
+        assertEquals(CardId.parse("SA"), profile.lookup("brm1255"))
     }
 
     @Test

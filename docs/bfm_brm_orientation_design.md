@@ -221,6 +221,14 @@ When updating the built-in observed profile:
 5. If a corrected row collides with an existing valid row, flip only the corrected row if that resolves the collision and preserves the full-token uniqueness invariant.
 6. Keep `grid13-v1-golden.json` as evidence/reference, but do not assume it knows physical `bfm` versus `brm` orientation unless it records that source explicitly.
 
+The built-in observed profile's orientation was subsequently checked visually
+against the physical cards. That pass flipped the `bfm`/`brm` labels, without
+changing payload pairs, for:
+
+```text
+H3 H4 H7 HQ SA S8 D3 D5 DT DJ C2
+```
+
 ## Recommended debug fields
 
 Debug logs should continue to include verbose evidence:
