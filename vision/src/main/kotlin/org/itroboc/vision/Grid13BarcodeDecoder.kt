@@ -28,6 +28,15 @@ class Grid13BarcodeDecoder(
             imageHeight = image.height,
             threshold = threshold,
         )
+        val sentinelCheck = checkGrid13Sentinels(measurement.grid13FwdBits)
+
+        if (!sentinelCheck.isValid) {
+            return BarcodeDecodeResult.Ambiguous(
+                candidates = listOf(signature),
+                reason = "Invalid grid13-v1 sentinel pattern: ${sentinelCheck.issues.joinToString()}",
+                debug = signature.debug,
+            )
+        }
 
         if (measurement.confidence < minimumFoundConfidence) {
             return BarcodeDecodeResult.Ambiguous(
@@ -46,8 +55,9 @@ const val GRID13_SIGNATURE_MODEL: String = "grid13-v1"
 private fun Grid13BarcodeMeasurement.toDetectedSignature(
     imageHeight: Int,
     threshold: Int,
-): DetectedSignature =
-    DetectedSignature(
+): DetectedSignature {
+    val sentinelCheck = checkGrid13Sentinels(grid13FwdBits)
+    return DetectedSignature(
         rawSignature = rawSignature,
         confidence = confidence,
         bounds = BarcodeBounds(
@@ -73,6 +83,9 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
             activeStartX = activeStartX,
             activeEndX = activeEndX,
             activeSpanPx = activeSpanPx,
-            warnings = warnings,
+            sentinelValid = sentinelCheck.isValid,
+            sentinelIssues = sentinelCheck.issues,
+            warnings = warnings + sentinelCheck.issues.map { "Grid13 sentinel: $it" },
         ),
     )
+}

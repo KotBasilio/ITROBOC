@@ -128,6 +128,20 @@ class DeckProfileTest {
     }
 
     @Test
+    fun `observed profile aliases are formatted unique and sentinel valid`() {
+        val aliases = BuiltInDeckProfiles.observedV1().rawSignatures()
+
+        assertEquals(104, aliases.size)
+        aliases.forEach { alias ->
+            assertTrue(alias.matches(Regex("^(bfm|brm)[0-9A-F]{4}$")), alias)
+            val payload = alias.drop(3).toInt(radix = 16)
+            assertEquals(0x1001, payload and 0x1803, alias)
+        }
+        assertTrue(aliases.any { it.startsWith("bfm") })
+        assertTrue(aliases.any { it.startsWith("brm") })
+    }
+
+    @Test
     fun `default built in profile is observed profile`() {
         assertEquals("builtin-observed-v1", BuiltInDeckProfiles.defaultProfile().metadata.profileId)
     }

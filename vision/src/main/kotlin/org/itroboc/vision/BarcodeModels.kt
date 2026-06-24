@@ -31,6 +31,8 @@ data class BarcodeDebugInfo(
     val activeStartX: Int? = null,
     val activeEndX: Int? = null,
     val activeSpanPx: Int? = null,
+    val sentinelValid: Boolean? = null,
+    val sentinelIssues: List<String> = emptyList(),
     val warnings: List<String> = emptyList(),
 )
 

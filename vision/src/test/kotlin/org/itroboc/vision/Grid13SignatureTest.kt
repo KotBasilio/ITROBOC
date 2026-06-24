@@ -4,6 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class Grid13SignatureTest {
     @Test
@@ -55,6 +57,34 @@ class Grid13SignatureTest {
         assertNotEquals(
             forwardMealSignature(forwardBits).removePrefix("bfm"),
             reverseMealSignature(reverseBitsValue).removePrefix("brm"),
+        )
+    }
+
+    @Test
+    fun `accepts valid outer sentinel cells`() {
+        val check = checkGrid13Sentinels("1010101001001")
+
+        assertTrue(check.isValid)
+        assertTrue(check.bit12)
+        assertFalse(check.bit11)
+        assertFalse(check.bit1)
+        assertTrue(check.bit0)
+        assertEquals(emptyList(), check.issues)
+    }
+
+    @Test
+    fun `reports every invalid outer sentinel cell`() {
+        val check = checkGrid13Sentinels("0100000000010")
+
+        assertFalse(check.isValid)
+        assertEquals(
+            listOf(
+                "bit12 must be black",
+                "bit11 must be white",
+                "bit1 must be white",
+                "bit0 must be black",
+            ),
+            check.issues,
         )
     }
 }
