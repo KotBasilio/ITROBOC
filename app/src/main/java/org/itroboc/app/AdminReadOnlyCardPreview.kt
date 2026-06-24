@@ -91,7 +91,6 @@ internal fun AdminReadOnlyCardPreview(
             modifier = Modifier.align(Alignment.TopStart),
         )
         BarcodeInspection(
-            label = "bfm",
             token = grid13Aliases.bfm,
             modifier = Modifier.align(Alignment.TopEnd),
         )
@@ -105,7 +104,6 @@ internal fun AdminReadOnlyCardPreview(
         )
 
         BarcodeInspection(
-            label = "brm",
             token = grid13Aliases.brm,
             modifier = Modifier.align(Alignment.BottomStart),
         )
@@ -144,7 +142,6 @@ private fun CardCorner(
 
 @Composable
 private fun BarcodeInspection(
-    label: String,
     token: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -153,17 +150,11 @@ private fun BarcodeInspection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-        )
         if (token == null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(5f)
+                    .aspectRatio(BARCODE_ASPECT_RATIO)
                     .border(1.dp, Color.Gray),
                 contentAlignment = Alignment.Center,
             ) {
@@ -173,11 +164,6 @@ private fun BarcodeInspection(
             Grid13Barcode(
                 bits = requireNotNull(grid13BitsFromToken(token)),
                 modifier = Modifier.fillMaxWidth(),
-            )
-            Text(
-                text = token,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.DarkGray,
             )
         }
     }
@@ -190,7 +176,7 @@ private fun Grid13Barcode(
 ) {
     Canvas(
         modifier = modifier
-            .aspectRatio(5f)
+            .aspectRatio(BARCODE_ASPECT_RATIO)
             .background(Color.White),
     ) {
         val cellWidth = size.width / bits.length
@@ -209,6 +195,8 @@ private fun Grid13Barcode(
         )
     }
 }
+
+private const val BARCODE_ASPECT_RATIO = 5f / 3f
 
 private val CardId.prettyCardLabel: String
     get() = "${suit.prettySymbol}${rank.symbol}"
