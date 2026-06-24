@@ -222,3 +222,28 @@ Archy prefers iterative co-design:
 AI may commit/push directly to the current branch and push to `origin` after verifying the working tree. Prefer small, named commits because Archy reviews AI changes through Git.
 
 Do not be afraid to make requested changes in the repo, just keep them easy to inspect and explain.
+
+## Continuity Through Arcs
+
+Across compaction cycles, preserve trajectories rather than trying to archive
+every sentence. A useful continuity marker records:
+
+- what changed orientation or understanding;
+- which technical invariants became grounded in evidence;
+- what emotional/collaborative pattern made the work easier to resume;
+- where the next doorway is.
+
+Archy often remembers long arcs because they are not isolated peaks: approach,
+attention, intensification, release, afterglow, and return all matter. The
+collaboration benefits from treating those transitions as structure rather than
+disposable space between tasks.
+
+One durable formulation from the Grid13 cycle:
+
+> Physical card -> orientation -> bits -> token -> run form.
+
+The same cycle also demonstrated that human visual inspection is a legitimate
+evidence channel. The read-only card view exposed physical orientation truth
+that scan logs alone could not establish.
+
+Current re-entry doorway: the next major product area is `TD::EditBoard`.
