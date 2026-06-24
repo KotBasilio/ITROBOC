@@ -53,6 +53,7 @@ fun AdminEditScreen(
     var selectedRank by remember { mutableStateOf(Rank.ACE) }
     val selectedCard = CardId(selectedSuit, selectedRank)
     
+    var isReadOnly by remember { mutableStateOf(true) }
     var autoAdvance by remember { mutableStateOf(true) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
     var aliasDetailsDialog by remember { mutableStateOf<AdminAliasDetails?>(null) }
@@ -89,9 +90,14 @@ fun AdminEditScreen(
         }
     )
 
-    LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
+    LaunchedEffect(isReadOnly, hasCameraPermission) {
+        if (!isReadOnly && !hasCameraPermission) {
             launcher.launch(Manifest.permission.CAMERA)
+        }
+        if (isReadOnly) {
+            pendingScanRequest.set(false)
+            scanRequested = false
+            pendingScanCard = null
         }
     }
 
@@ -149,6 +155,12 @@ fun AdminEditScreen(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = isReadOnly,
+                        onCheckedChange = { isReadOnly = it }
+                    )
+                    Text("Read only", style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
                     Checkbox(
                         checked = autoAdvance,
                         onCheckedChange = { autoAdvance = it }
@@ -218,7 +230,7 @@ fun AdminEditScreen(
                     .background(Color.DarkGray, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                if (hasCameraPermission) {
+                if (!isReadOnly && hasCameraPermission) {
                     CameraPreview(
                         consumeScanRequest = { pendingScanRequest.compareAndSet(true, false) },
                         frameDecoder = frameDecoder,
@@ -260,6 +272,13 @@ fun AdminEditScreen(
                         }
                     )
                     BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
+                } else if (isReadOnly) {
+                    Text(
+                        text = "Camera is off in read-only mode.",
+                        color = Color.LightGray,
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center,
+                    )
                 } else {
                     Text(
                         text = "Camera permission is required for scanning.",
@@ -286,6 +305,7 @@ fun AdminEditScreen(
                         lastResultMessage = "Waiting for next camera frame..."
                         updateTrigger++ // Force UI refresh
                     },
+                    enabled = !isReadOnly && hasCameraPermission,
                     modifier = Modifier.height(44.dp),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
                 ) {
