@@ -45,6 +45,17 @@ fun checkGrid13Sentinels(bits13: String): Grid13SentinelCheck {
     return checkGrid13Sentinels(bits13.toInt(radix = 2))
 }
 
+fun normalizeGrid13Sentinels(bits13: String): String {
+    validateGrid13Bits(bits13)
+    return buildString(capacity = GRID13_BIT_COUNT) {
+        append('1')
+        append('0')
+        append(bits13.substring(2, 11))
+        append('0')
+        append('1')
+    }
+}
+
 fun grid13BitsToHex(bits13: String): String {
     validateGrid13Bits(bits13)
     val paddedBits = bits13.padStart(length = 16, padChar = '0')

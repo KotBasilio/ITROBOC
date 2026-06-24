@@ -87,4 +87,12 @@ class Grid13SignatureTest {
             check.issues,
         )
     }
+
+    @Test
+    fun `normalizes only the four control cells`() {
+        assertEquals(
+            "1010101010101",
+            normalizeGrid13Sentinels("0110101010110"),
+        )
+    }
 }

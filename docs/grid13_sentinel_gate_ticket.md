@@ -2,8 +2,9 @@
 
 ## Status
 
-Implemented on the `dev/vision` branch. The implementation uses a conservative
-hard gate; no sentinel repair or snapping is performed.
+Implemented on the `dev/vision` branch. The final policy treats the outer four
+cells as control bits and normalizes them to `10.........01`. Debug evidence
+retains the measured bits and records the correction.
 
 ## Goal
 
@@ -75,19 +76,11 @@ When the decoder produces a candidate Grid13 payload:
 
 Do not silently emit invalid aliases.
 
-### 3. Optional snap/repair policy
+### 3. Control-bit normalization policy
 
-If the implementation already has clear cell-confidence values, it may optionally snap the four sentinel cells only when evidence strongly supports a boundary interpretation.
-
-But this must be conservative:
-
-Allowed:
-- endpoint cell is borderline, detected black run starts/ends at active span, snap with warning.
-
-Not allowed:
-- blindly forcing `bit12/bit0` to `1` and `bit11/bit1` to `0` for every bad candidate.
-
-If repair is implemented, log it explicitly:
+The four outer sentinel cells are treated as control bits and normalized to
+`10.........01` before signature production. The measured bits remain evidence,
+and normalization is logged explicitly:
 
 ```text
 sentinelRepairApplied = true
@@ -96,7 +89,8 @@ preRepairBits = ...
 postRepairBits = ...
 ```
 
-If repair is not implemented now, a hard sentinel gate is acceptable.
+Confidence is checked after normalization. A corrected candidate may therefore
+still return `Ambiguous` when confidence is insufficient.
 
 ### 4. Add debug fields
 

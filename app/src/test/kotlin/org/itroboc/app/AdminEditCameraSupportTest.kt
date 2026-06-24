@@ -64,6 +64,7 @@ class AdminEditCameraSupportTest {
             blackRuns = listOf("1..3", "5..7"),
             signatureModel = "grid13-v1",
             reverseSignature = "brm1255",
+            grid13FwdBitsPreSentinel = "1110101001011",
             grid13FwdBits = "1010101001001",
             grid13RevBits = "1001001010101",
             grid13FwdHex = "1549",
@@ -77,6 +78,8 @@ class AdminEditCameraSupportTest {
             activeSpanPx = 7,
             sentinelValid = false,
             sentinelIssues = listOf("bit11 must be white"),
+            sentinelRepairApplied = true,
+            sentinelRepairReason = "Normalized Grid13 control bits: bit11 must be white",
             ambiguous = false,
             warnings = listOf("debug warning"),
             deckProfileMatchCount = 1,
@@ -98,6 +101,7 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"blackRuns\":[\"1..3\",\"5..7\"]")
         assertContains(jsonLine, "\"signatureModel\":\"grid13-v1\"")
         assertContains(jsonLine, "\"reverseSignature\":\"brm1255\"")
+        assertContains(jsonLine, "\"grid13FwdBitsPreSentinel\":\"1110101001011\"")
         assertContains(jsonLine, "\"grid13FwdBits\":\"1010101001001\"")
         assertContains(jsonLine, "\"grid13RevBits\":\"1001001010101\"")
         assertContains(jsonLine, "\"grid13FwdHex\":\"1549\"")
@@ -111,6 +115,8 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"activeSpanPx\":7")
         assertContains(jsonLine, "\"sentinelValid\":false")
         assertContains(jsonLine, "\"sentinelIssues\":[\"bit11 must be white\"]")
+        assertContains(jsonLine, "\"sentinelRepairApplied\":true")
+        assertContains(jsonLine, "\"sentinelRepairReason\":\"Normalized Grid13 control bits: bit11 must be white\"")
         assertContains(jsonLine, "\"scanlineAgreement\":null")
         assertContains(jsonLine, "\"ambiguous\":false")
         assertContains(jsonLine, "\"warnings\":[\"debug warning\"]")

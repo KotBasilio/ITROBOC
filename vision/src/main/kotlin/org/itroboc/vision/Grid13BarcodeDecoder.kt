@@ -24,19 +24,12 @@ class Grid13BarcodeDecoder(
             ),
         )
 
+        val sentinelCheck = checkGrid13Sentinels(measurement.grid13FwdBits)
         val signature = measurement.toDetectedSignature(
             imageHeight = image.height,
             threshold = threshold,
+            sentinelCheck = sentinelCheck,
         )
-        val sentinelCheck = checkGrid13Sentinels(measurement.grid13FwdBits)
-
-        if (!sentinelCheck.isValid) {
-            return BarcodeDecodeResult.Ambiguous(
-                candidates = listOf(signature),
-                reason = "Invalid grid13-v1 sentinel pattern: ${sentinelCheck.issues.joinToString()}",
-                debug = signature.debug,
-            )
-        }
 
         if (measurement.confidence < minimumFoundConfidence) {
             return BarcodeDecodeResult.Ambiguous(
@@ -55,10 +48,20 @@ const val GRID13_SIGNATURE_MODEL: String = "grid13-v1"
 private fun Grid13BarcodeMeasurement.toDetectedSignature(
     imageHeight: Int,
     threshold: Int,
+    sentinelCheck: Grid13SentinelCheck,
 ): DetectedSignature {
-    val sentinelCheck = checkGrid13Sentinels(grid13FwdBits)
+    val correctedFwdBits = if (sentinelCheck.isValid) {
+        grid13FwdBits
+    } else {
+        normalizeGrid13Sentinels(grid13FwdBits)
+    }
+    val correctedRevBits = reverseBits(correctedFwdBits)
+    val repairReason = sentinelCheck.issues
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(prefix = "Normalized Grid13 control bits: ")
+
     return DetectedSignature(
-        rawSignature = rawSignature,
+        rawSignature = forwardMealSignature(correctedFwdBits),
         confidence = confidence,
         bounds = BarcodeBounds(
             x = activeStartX,
@@ -71,11 +74,12 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
             blackRuns = blackRunEdges,
             normalizedPattern = rl2,
             signatureModel = GRID13_SIGNATURE_MODEL,
-            reverseSignature = reverseSignature,
-            grid13FwdBits = grid13FwdBits,
-            grid13RevBits = grid13RevBits,
-            grid13FwdHex = grid13FwdHex,
-            grid13RevHex = grid13RevHex,
+            reverseSignature = reverseMealSignature(correctedRevBits),
+            grid13FwdBitsPreSentinel = grid13FwdBits,
+            grid13FwdBits = correctedFwdBits,
+            grid13RevBits = correctedRevBits,
+            grid13FwdHex = grid13BitsToHex(correctedFwdBits),
+            grid13RevHex = grid13BitsToHex(correctedRevBits),
             rl2 = rl2,
             blackRunsPx = blackRunsPx,
             whiteGapsPx = whiteGapsPx,
@@ -85,7 +89,9 @@ private fun Grid13BarcodeMeasurement.toDetectedSignature(
             activeSpanPx = activeSpanPx,
             sentinelValid = sentinelCheck.isValid,
             sentinelIssues = sentinelCheck.issues,
-            warnings = warnings + sentinelCheck.issues.map { "Grid13 sentinel: $it" },
+            sentinelRepairApplied = !sentinelCheck.isValid,
+            sentinelRepairReason = repairReason,
+            warnings = warnings + listOfNotNull(repairReason),
         ),
     )
 }

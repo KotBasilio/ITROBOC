@@ -20,6 +20,7 @@ data class BarcodeDebugInfo(
     val normalizedPattern: String? = null,
     val signatureModel: String? = null,
     val reverseSignature: String? = null,
+    val grid13FwdBitsPreSentinel: String? = null,
     val grid13FwdBits: String? = null,
     val grid13RevBits: String? = null,
     val grid13FwdHex: String? = null,
@@ -33,6 +34,8 @@ data class BarcodeDebugInfo(
     val activeSpanPx: Int? = null,
     val sentinelValid: Boolean? = null,
     val sentinelIssues: List<String> = emptyList(),
+    val sentinelRepairApplied: Boolean = false,
+    val sentinelRepairReason: String? = null,
     val warnings: List<String> = emptyList(),
 )
 

@@ -245,6 +245,7 @@ internal data class AdminEditScanDebugRecord(
     val ambiguousCandidates: List<String> = emptyList(),
     val signatureModel: String? = null,
     val reverseSignature: String? = null,
+    val grid13FwdBitsPreSentinel: String? = null,
     val grid13FwdBits: String? = null,
     val grid13RevBits: String? = null,
     val grid13FwdHex: String? = null,
@@ -258,6 +259,8 @@ internal data class AdminEditScanDebugRecord(
     val activeSpanPx: Int? = null,
     val sentinelValid: Boolean? = null,
     val sentinelIssues: List<String> = emptyList(),
+    val sentinelRepairApplied: Boolean = false,
+    val sentinelRepairReason: String? = null,
     val scanlineAgreement: Double? = null,
     val ambiguous: Boolean = false,
     val warnings: List<String> = emptyList(),
@@ -293,6 +296,7 @@ internal data class AdminEditScanDebugRecord(
         normalizedPattern?.let { fields += jsonField("normalizedPattern", it) }
         signatureModel?.let { fields += jsonField("signatureModel", it) }
         reverseSignature?.let { fields += jsonField("reverseSignature", it) }
+        grid13FwdBitsPreSentinel?.let { fields += jsonField("grid13FwdBitsPreSentinel", it) }
         grid13FwdBits?.let { fields += jsonField("grid13FwdBits", it) }
         grid13RevBits?.let { fields += jsonField("grid13RevBits", it) }
         grid13FwdHex?.let { fields += jsonField("grid13FwdHex", it) }
@@ -302,6 +306,8 @@ internal data class AdminEditScanDebugRecord(
         activeEndX?.let { fields += jsonField("activeEndX", it.toString(), raw = true) }
         activeSpanPx?.let { fields += jsonField("activeSpanPx", it.toString(), raw = true) }
         sentinelValid?.let { fields += jsonField("sentinelValid", it.toString(), raw = true) }
+        fields += jsonField("sentinelRepairApplied", sentinelRepairApplied.toString(), raw = true)
+        sentinelRepairReason?.let { fields += jsonField("sentinelRepairReason", it) }
         fields += scanlineAgreement?.let {
             jsonField("scanlineAgreement", formatConfidenceForJson(it), raw = true)
         } ?: jsonNullField("scanlineAgreement")
@@ -420,6 +426,7 @@ internal fun CameraScanOutcome.toDebugRecord(
             blackRuns = result.debug.toBlackRunStrings(),
             signatureModel = result.debug?.signatureModel,
             reverseSignature = result.debug?.reverseSignature,
+            grid13FwdBitsPreSentinel = result.debug?.grid13FwdBitsPreSentinel,
             grid13FwdBits = result.debug?.grid13FwdBits,
             grid13RevBits = result.debug?.grid13RevBits,
             grid13FwdHex = result.debug?.grid13FwdHex,
@@ -433,6 +440,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeSpanPx = result.debug?.activeSpanPx,
             sentinelValid = result.debug?.sentinelValid,
             sentinelIssues = result.debug?.sentinelIssues.orEmpty(),
+            sentinelRepairApplied = result.debug?.sentinelRepairApplied == true,
+            sentinelRepairReason = result.debug?.sentinelRepairReason,
             ambiguous = false,
             warnings = result.debug?.warnings.orEmpty(),
             deckProfileMatchCount = deckProfileMatchCount,
@@ -454,6 +463,7 @@ internal fun CameraScanOutcome.toDebugRecord(
             ambiguousCandidates = result.candidates.map { it.rawSignature },
             signatureModel = result.debug?.signatureModel,
             reverseSignature = result.debug?.reverseSignature,
+            grid13FwdBitsPreSentinel = result.debug?.grid13FwdBitsPreSentinel,
             grid13FwdBits = result.debug?.grid13FwdBits,
             grid13RevBits = result.debug?.grid13RevBits,
             grid13FwdHex = result.debug?.grid13FwdHex,
@@ -467,6 +477,8 @@ internal fun CameraScanOutcome.toDebugRecord(
             activeSpanPx = result.debug?.activeSpanPx,
             sentinelValid = result.debug?.sentinelValid,
             sentinelIssues = result.debug?.sentinelIssues.orEmpty(),
+            sentinelRepairApplied = result.debug?.sentinelRepairApplied == true,
+            sentinelRepairReason = result.debug?.sentinelRepairReason,
             ambiguous = true,
             warnings = result.debug?.warnings.orEmpty(),
             deckProfileMatchCount = deckProfileMatchCount,
@@ -510,6 +522,7 @@ private fun DetectedSignature.toDebugRecord(
     blackRuns = debug.toBlackRunStrings(),
     signatureModel = debug?.signatureModel,
     reverseSignature = debug?.reverseSignature,
+    grid13FwdBitsPreSentinel = debug?.grid13FwdBitsPreSentinel,
     grid13FwdBits = debug?.grid13FwdBits,
     grid13RevBits = debug?.grid13RevBits,
     grid13FwdHex = debug?.grid13FwdHex,
@@ -523,6 +536,8 @@ private fun DetectedSignature.toDebugRecord(
     activeSpanPx = debug?.activeSpanPx,
     sentinelValid = debug?.sentinelValid,
     sentinelIssues = debug?.sentinelIssues.orEmpty(),
+    sentinelRepairApplied = debug?.sentinelRepairApplied == true,
+    sentinelRepairReason = debug?.sentinelRepairReason,
     ambiguous = false,
     warnings = debug?.warnings.orEmpty(),
     deckProfileMatchCount = deckProfileMatchCount,
