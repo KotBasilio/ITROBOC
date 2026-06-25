@@ -66,7 +66,7 @@ positions communicate orientation, so the inspection card omits redundant
 text labels and compact tokens. This supports manual comparison against the
 physical deck without changing profile data.
 
-The current prototype now uses a real CameraX preview for Admin-side calibration.
+The screen uses a real CameraX preview for Admin-side calibration.
 
 A small centered scan guide rectangle is drawn over the preview. The same guide spec is used for the visible overlay and the actual ROI crop sent to the decoder, so the "mouth" the user sees and the crop the app analyzes stay aligned.
 
@@ -106,7 +106,7 @@ If the selected card already has mappings, the scanned signature is added as an 
 
 There is no separate `Assign` button and no separate `Add alias` button.
 
-Current prototype behavior:
+Current behavior:
 
 * one button press requests one camera frame
 * the app crops the centered guide ROI from the frame
@@ -140,7 +140,7 @@ If `Auto-advance` is enabled, after a successful new assignment the selected car
 
 If no unmapped cards remain, selection stays or moves to a sensible final state.
 
-Current prototype note:
+Note:
 
 * Known issue: the current mock implementation jumps to the first unmapped card in deck order, not yet the next unmapped card relative to the current selection.
 
@@ -183,7 +183,7 @@ There is no separate `Clear selected mapping` button.
 
 ## Debug feedback and logging
 
-The current prototype keeps lightweight debug feedback visible on screen:
+The screen keeps lightweight debug feedback visible on screen:
 
 * frame width / height / rotation / timestamp
 * latest decoder outcome
@@ -300,7 +300,7 @@ Do not implement yet:
 * full rotation/perspective correction
 * production-grade barcode decoding tuned to real deck physics
 
-The current build already includes early CameraX integration and an experimental pure decoder path. Those are still exploratory calibration tools, not finished production scanning.
+The current build includes CameraX integration and a functional pure decoder path. Those are still calibration tools, not finished production scanning.
 
 ## Acceptance behavior
 
