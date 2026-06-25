@@ -52,7 +52,31 @@ fun EditBoardScreen(
     var lastScannedCard by remember { mutableStateOf<CardId?>(null) }
 
     fun onSeatClick(seat: Seat) {
-        onBoardEditStateChange(boardEditState.copy(selectedSeat = seat))
+        val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
+        
+        // Auto-fill logic
+        val boardState = nextBoardEditState.boardState
+        val selectedHand = boardState.handOf(seat)
+        val otherSeats = Seat.entries.filter { it != seat }
+        val otherHandsComplete = otherSeats.all { boardState.handOf(it).isComplete() }
+        
+        if (selectedHand.count() == 0 && otherHandsComplete) {
+            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }.toSet()
+            val assignedCards = boardState.allCards()
+            val remainingCards = allCards - assignedCards
+            
+            if (remainingCards.size == 13) {
+                var autoFilledBoard = boardState
+                remainingCards.forEach { card ->
+                    autoFilledBoard = autoFilledBoard.addCard(seat, card)
+                }
+                onBoardEditStateChange(nextBoardEditState.copy(boardState = autoFilledBoard))
+                lastResultMessage = "${seat.displayName} auto-filled from remaining 13 cards. Board complete."
+                return
+            }
+        }
+        
+        onBoardEditStateChange(nextBoardEditState)
     }
 
     fun handleScan(signature: String) {
