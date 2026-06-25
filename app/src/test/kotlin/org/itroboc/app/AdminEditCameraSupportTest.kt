@@ -62,7 +62,7 @@ class AdminEditCameraSupportTest {
             thresholdValue = 127,
             normalizedPattern = "1-1-1",
             blackRuns = listOf("1..3", "5..7"),
-            signatureModel = "grid13-v1",
+            signatureModel = "grid13-v2",
             reverseSignature = "brm1255",
             grid13FwdBitsPreSentinel = "1110101001011",
             grid13FwdBits = "1010101001001",
@@ -99,7 +99,7 @@ class AdminEditCameraSupportTest {
         assertContains(jsonLine, "\"thresholdMode\":\"adaptive-ink-midrange\"")
         assertContains(jsonLine, "\"thresholdValue\":127")
         assertContains(jsonLine, "\"blackRuns\":[\"1..3\",\"5..7\"]")
-        assertContains(jsonLine, "\"signatureModel\":\"grid13-v1\"")
+        assertContains(jsonLine, "\"signatureModel\":\"grid13-v2\"")
         assertContains(jsonLine, "\"reverseSignature\":\"brm1255\"")
         assertContains(jsonLine, "\"grid13FwdBitsPreSentinel\":\"1110101001011\"")
         assertContains(jsonLine, "\"grid13FwdBits\":\"1010101001001\"")

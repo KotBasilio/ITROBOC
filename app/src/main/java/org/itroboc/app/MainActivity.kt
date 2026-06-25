@@ -92,7 +92,7 @@ fun AppNavigation() {
                         displayName = profileName,
                         isBuiltIn = false,
                         isDemo = false,
-                        signatureModel = DeckProfileSignatureModels.GRID13_V1,
+                        signatureModel = DeckProfileSignatureModels.GRID13_V2,
                     )
                     profileState = profileState.copy(
                         profiles = profileState.profiles + newProfile,

@@ -17,7 +17,7 @@ class Grid13BarcodeDecoderTest {
 
         assertEquals("bfm1549", found.signature.rawSignature)
         assertEquals("brm1255", debug.reverseSignature)
-        assertEquals("grid13-v1", debug.signatureModel)
+        assertEquals("grid13-v2", debug.signatureModel)
         assertEquals("1010101001001", debug.grid13FwdBits)
         assertEquals("1001001010101", debug.grid13RevBits)
         assertEquals("1549", debug.grid13FwdHex)
@@ -40,8 +40,8 @@ class Grid13BarcodeDecoderTest {
         )
         val notFound = assertIs<BarcodeDecodeResult.NotFound>(result)
 
-        assertEquals("No grid13-v1 barcode measurement produced", notFound.reason)
-        assertEquals("grid13-v1", notFound.debug?.signatureModel)
+        assertEquals("No grid13-v2 barcode measurement produced", notFound.reason)
+        assertEquals("grid13-v2", notFound.debug?.signatureModel)
     }
 
     @Test
@@ -49,9 +49,9 @@ class Grid13BarcodeDecoderTest {
         val result = decoder.decode(grid13Image("1000000000001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 
-        assertEquals("Low-confidence grid13-v1 measurement", ambiguous.reason)
+        assertEquals("Low-confidence grid13-v2 measurement", ambiguous.reason)
         assertEquals(listOf("bfm1001"), ambiguous.candidates.map { it.rawSignature })
-        assertEquals("grid13-v1", ambiguous.debug?.signatureModel)
+        assertEquals("grid13-v2", ambiguous.debug?.signatureModel)
         assertEquals(true, ambiguous.debug?.sentinelValid)
     }
 
@@ -78,7 +78,7 @@ class Grid13BarcodeDecoderTest {
             .decode(grid13Image("1100000000001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 
-        assertEquals("Low-confidence grid13-v1 measurement", ambiguous.reason)
+        assertEquals("Low-confidence grid13-v2 measurement", ambiguous.reason)
         assertEquals(listOf("bfm1001"), ambiguous.candidates.map { it.rawSignature })
         assertEquals(true, ambiguous.debug?.sentinelRepairApplied)
     }

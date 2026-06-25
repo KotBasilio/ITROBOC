@@ -2,7 +2,7 @@
 
 ## Status
 
-This document records the current working design for the `grid13-v1` barcode signature model used by ITROBOC.
+This document records the current working design for the `grid13-v2` barcode signature model used by ITROBOC.
 
 The central point is:
 
@@ -21,7 +21,7 @@ ITROBOC reads barcode-like marks printed on physical playing cards. The scanner 
 
 The scanner must not directly know card meaning. Card meaning belongs to Deck Profiles.
 
-The current working model is `grid13-v1`:
+The current working model is `grid13-v2`:
 
 1. Locate the barcode strip.
 2. Collapse the crop into a 1D ink signal.
@@ -58,7 +58,7 @@ Full details belong in debug logs, not in alias chips.
 
 ## Token format
 
-Raw signatures under `grid13-v1` use:
+Raw signatures under `grid13-v2` use:
 
 ```text
 bfmHHHH
@@ -219,7 +219,7 @@ When updating the built-in observed profile:
 3. `bfm` / `brm` orientation should not be swapped casually.
 4. If a previous table has a valid `bfmX / brmY` orientation and a generated table says `bfmY / brmX`, keep the previous orientation unless there is physical evidence to change it.
 5. If a corrected row collides with an existing valid row, flip only the corrected row if that resolves the collision and preserves the full-token uniqueness invariant.
-6. Keep `grid13-v1-golden.json` as evidence/reference, but do not assume it knows physical `bfm` versus `brm` orientation unless it records that source explicitly.
+6. Keep `grid13-v2-golden.json` as evidence/reference, but do not assume it knows physical `bfm` versus `brm` orientation unless it records that source explicitly.
 
 The built-in observed profile's orientation was subsequently checked visually
 against the physical cards. That pass flipped the `bfm`/`brm` labels, without

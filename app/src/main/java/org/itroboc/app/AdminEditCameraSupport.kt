@@ -549,7 +549,7 @@ private fun BarcodeDebugInfo?.toBlackRunStrings(): List<String> =
 private fun BarcodeDebugInfo?.toThresholdMode(): String? =
     this?.let { debug ->
         debug.threshold ?: return@let null
-        if (debug.signatureModel == "grid13-v1") {
+        if (debug.signatureModel == "grid13-v2") {
             "adaptive-ink-midrange"
         } else {
             "intensity-midrange"

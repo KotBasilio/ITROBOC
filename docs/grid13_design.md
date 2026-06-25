@@ -1,4 +1,4 @@
-# ITROBOC Barcode Signature Design: `grid13-v1`
+# ITROBOC Barcode Signature Design: `grid13-v2`
 
 Status: proposed design for Bob/Codex implementation  
 Project: ITROBOC — Independent Tool for Reading Observed Barcodes On Cards  
@@ -89,7 +89,7 @@ Interpretation:
 ### 3.2 Research/validation goals
 
 - Reproduce the static-sheet results inside the repo with deterministic tests/tools.
-- Verify that `grid13-v1` gives 52 unique forward signatures on the provided sheets.
+- Verify that `grid13-v2` gives 52 unique forward signatures on the provided sheets.
 - Verify known `RL2` limitations instead of hiding them.
 - Test degradation: blur, exposure, JPEG artifacts, small crop shifts, mild skew.
 
@@ -237,7 +237,7 @@ Deck Profiles store raw signatures as opaque strings. Core should not parse `bfm
 Recommended Deck Profile metadata:
 
 ```text
-signatureModel = "grid13-v1"
+signatureModel = "grid13-v2"
 ```
 
 Each alias remains compact:
@@ -374,7 +374,7 @@ Keep names flexible, but the model should include this information.
 data class BarcodeMeasurement(
     val rawSignature: String,          // e.g. "bfm1549"
     val reverseSignature: String,      // e.g. "brm1295"
-    val signatureModel: String,        // "grid13-v1"
+    val signatureModel: String,        // "grid13-v2"
 
     val grid13FwdBits: String,
     val grid13RevBits: String,
@@ -476,7 +476,7 @@ bfm1549
 Optional chip click/details panel can show:
 
 ```text
-Model: grid13-v1
+Model: grid13-v2
 Forward bits: 1010101001001
 Reverse: brm1295
 RL2: B1-W1-B1-W1-B2-W2-B1
@@ -510,7 +510,7 @@ Possible format:
 
 ```json
 {
-  "signatureModel": "grid13-v1",
+  "signatureModel": "grid13-v2",
   "cards": {
     "SA": {
       "grid13FwdBits": "1010101001001",
@@ -562,19 +562,19 @@ Possible format:
 
 ## 14. Migration note
 
-Existing demo signatures may remain synthetic. Do not break the built-in demo profile just to introduce `grid13-v1`.
+Existing demo signatures may remain synthetic. Do not break the built-in demo profile just to introduce `grid13-v2`.
 
 Real calibrated profiles should carry metadata:
 
 ```text
-signatureModel = "grid13-v1"
+signatureModel = "grid13-v2"
 ```
 
 Future signature models can coexist by using different prefixes/metadata.
 
 ## 15. Final recommendation
 
-Implement `grid13-v1` as the next ITROBOC barcode signature model.
+Implement `grid13-v2` as the next ITROBOC barcode signature model.
 
 Use:
 
