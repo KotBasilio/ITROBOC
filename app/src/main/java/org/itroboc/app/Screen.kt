@@ -5,6 +5,6 @@ sealed class Screen {
     object TdActions : Screen()
     object AdminActions : Screen()
     object MockActions : Screen()
-    data class BoardScan(val boardNumber: Int) : Screen()
+    data class EditBoard(val boardNumber: Int) : Screen()
     object AdminEdit : Screen()
 }

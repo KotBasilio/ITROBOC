@@ -45,6 +45,9 @@ fun AppNavigation() {
             )
         )
     }
+
+    // In-memory TD session state
+    var sessionState by remember { mutableStateOf(TdSessionState()) }
     
     // Map profile IDs to their in-memory edited versions
     var editedProfiles by remember {
@@ -67,16 +70,20 @@ fun AppNavigation() {
             TdOverviewScreen(
                 activeProfile = activeProfileItem,
                 onNavigateToBoard = { boardNumber ->
-                    currentScreen = Screen.BoardScan(boardNumber)
+                    currentScreen = Screen.EditBoard(boardNumber)
                 },
                 onBack = { currentScreen = Screen.MainMenu }
             )
         }
-        is Screen.BoardScan -> {
-            BoardScanScreen(
-                boardNumber = screen.boardNumber,
+        is Screen.EditBoard -> {
+            val boardEditState = sessionState.getOrInitBoard(screen.boardNumber)
+            EditBoardScreen(
+                boardEditState = boardEditState,
                 orientationMode = barcodeOrientationMode,
                 onOrientationModeChange = { barcodeOrientationMode = it },
+                onBoardEditStateChange = { updatedState ->
+                    sessionState = sessionState.updateBoard(updatedState)
+                },
                 onBack = { currentScreen = Screen.TdActions }
             )
         }
