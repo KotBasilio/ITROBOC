@@ -1,3 +1,10 @@
+## Progress
+
+- Ticket 1: Done 
+- Ticket 2: Done 
+- Ticket 3: Done 
+
+
 Ticket 1 — Add editable deck-profile core model
 
 Goal:

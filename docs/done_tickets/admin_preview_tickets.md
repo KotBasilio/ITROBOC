@@ -4,6 +4,13 @@ These are follow-up tickets from the `fe03f24` review. They are not urgent block
 
 ---
 
+## Progress
+
+- Ticket 1: Done 
+- Ticket 2: Done 
+- Ticket 3: Done 
+- Ticket 4: Done 
+
 ## Ticket 1 — Make Admin::Edit read-only mode truly non-mutating
 
 ### Context

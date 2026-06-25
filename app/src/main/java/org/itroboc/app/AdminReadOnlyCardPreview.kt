@@ -26,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.CardId
 import org.itroboc.core.Suit
+import org.itroboc.vision.checkGrid13Sentinels
 
 private val inspectionGreen = Color(0xFF2E7D32)
+private val sentinelWarningPink = Color(0xFFFCE4EC)
 
 internal data class Grid13CardAliases(
     val bfm: String?,
@@ -145,12 +147,16 @@ private fun BarcodeInspection(
     token: String?,
     modifier: Modifier = Modifier,
 ) {
+    val bits = token?.let { grid13BitsFromToken(it) }
+    val sentinelCheck = bits?.let { checkGrid13Sentinels(it) }
+    val isValid = sentinelCheck?.isValid ?: true
+
     Column(
         modifier = modifier.width(160.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        if (token == null) {
+        if (token == null || bits == null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -162,9 +168,18 @@ private fun BarcodeInspection(
             }
         } else {
             Grid13Barcode(
-                bits = requireNotNull(grid13BitsFromToken(token)),
+                bits = bits,
+                isValid = isValid,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (!isValid) {
+                Text(
+                    text = "fails border sentinel check",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -172,12 +187,14 @@ private fun BarcodeInspection(
 @Composable
 private fun Grid13Barcode(
     bits: String,
+    isValid: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val backgroundColor = if (isValid) Color.White else sentinelWarningPink
     Canvas(
         modifier = modifier
             .aspectRatio(BARCODE_ASPECT_RATIO)
-            .background(Color.White),
+            .background(backgroundColor),
     ) {
         val cellWidth = size.width / bits.length
         bits.forEachIndexed { index, bit ->
