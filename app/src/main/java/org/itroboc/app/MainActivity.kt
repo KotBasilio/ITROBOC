@@ -68,6 +68,7 @@ fun AppNavigation() {
         }
         is Screen.TdActions -> {
             TdOverviewScreen(
+                sessionState = sessionState,
                 activeProfile = activeProfileItem,
                 onNavigateToBoard = { boardNumber ->
                     currentScreen = Screen.EditBoard(boardNumber)
