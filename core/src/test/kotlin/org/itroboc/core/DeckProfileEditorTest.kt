@@ -83,6 +83,7 @@ class DeckProfileEditorTest {
     fun `completeness check`() {
         val editor = DeckProfileEditor(emptyMap(), metadata)
         assertFalse(editor.isComplete())
+        assertFalse(editor.hasAliasesForEveryCard())
         
         // Fill all 52 cards
         Suit.entries.forEach { suit ->
@@ -94,6 +95,7 @@ class DeckProfileEditorTest {
         
         assertEquals(52, editor.mappedCardCount())
         assertTrue(editor.isComplete())
+        assertTrue(editor.hasAliasesForEveryCard())
     }
 
     @Test
@@ -101,5 +103,22 @@ class DeckProfileEditorTest {
         val editor = DeckProfileEditor(emptyMap(), metadata)
         val result = editor.assign("0x1", null)
         assertTrue(result is DeckProfileEditResult.NoCardSelected)
+    }
+
+    @Test
+    fun `profile is not ready for read only when any card has no alias`() {
+        val editor = DeckProfileEditor(emptyMap(), metadata)
+
+        Suit.entries.forEach { suit ->
+            Rank.entries.forEach { rank ->
+                val card = CardId(suit, rank)
+                if (card != sk) {
+                    editor.assign("sig-${suit.symbol}-${rank.symbol}", card)
+                }
+            }
+        }
+
+        assertFalse(editor.isComplete())
+        assertFalse(editor.hasAliasesForEveryCard())
     }
 }
