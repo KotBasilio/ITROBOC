@@ -115,6 +115,7 @@ fun AdminEditScreen(
     }
 
     fun applySignature(targetCard: CardId, rawSignature: String, detectionLabel: String) {
+        if (isReadOnly) return
         val result = editor.assign(rawSignature, targetCard)
         lastResultMessage = when (result) {
             is DeckProfileEditResult.Assigned ->
@@ -328,6 +329,7 @@ fun AdminEditScreen(
                             detectionLabel = "Mock signature $mockSig",
                         )
                     },
+                    enabled = !isReadOnly,
                     modifier = Modifier.height(32.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                 ) {
@@ -411,13 +413,14 @@ fun AdminEditScreen(
                         onSave(editor.toDeckProfile())
                         isDirty = false
                     },
+                    enabled = !isReadOnly,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Save")
                 }
                 Button(
                     onClick = {
-                        if (isDirty) {
+                        if (isDirty && !isReadOnly) {
                             showUnsavedChangesDialog = true
                         } else {
                             onBack()
@@ -464,15 +467,17 @@ fun AdminEditScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    val alias = details.rawSignature
-                    editor.remove(alias)
-                    lastResultMessage = "Removed alias $alias"
-                    isDirty = true
-                    aliasDetailsDialog = null
-                    updateTrigger++
-                }) {
-                    Text("Remove")
+                if (!isReadOnly) {
+                    TextButton(onClick = {
+                        val alias = details.rawSignature
+                        editor.remove(alias)
+                        lastResultMessage = "Removed alias $alias"
+                        isDirty = true
+                        aliasDetailsDialog = null
+                        updateTrigger++
+                    }) {
+                        Text("Remove")
+                    }
                 }
             },
             dismissButton = {

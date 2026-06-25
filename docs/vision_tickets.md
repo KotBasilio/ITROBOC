@@ -4,6 +4,14 @@ These tickets are intentionally small. Do not combine them into one heroic commi
 
 The goal is to introduce camera and decoding in layers while keeping `:core`, `:vision`, and `:app` responsibilities clean.
 
+## Progress
+
+- Ticket 1: Done 
+- Ticket 2: Done 
+- Ticket 3: Done 
+- Ticket 4: Done 
+- Ticket 5: Deferred
+
 ## Ticket 1 — Add CameraX preview shell to Admin::Edit
 
 ### Goal

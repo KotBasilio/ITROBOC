@@ -266,8 +266,8 @@ Add tests for:
 3. `bfm` and `brm` prefixes are preserved as part of identity.
 4. Reverse/canonical collapsing is not used for DeckProfile lookup.
 5. Known criss-cross pairs remain distinct.
-6. Decoder output failing the sentinel rule returns `Ambiguous` or `NotFound`, not a confident alias.
-7. Any repair/snap behavior is documented and logged with warnings.
+6. Decoder output failing the sentinel rule produces a `Found` result after intentional control-bit normalization, provided confidence remains high.
+7. Any repair/snap behavior is documented and logged with warnings. Pre-normalization bits must be retained in debug evidence.
 
 The current implementation normalizes the four control cells before producing
 the signature. It records the pre-normalization bits, issues, and repair reason.

@@ -245,8 +245,8 @@ Known seams:
 * `roiAngleDeg` is a placeholder.
 * TD multi-card scanning is not implemented yet.
 * Real profile persistence/import/export is not implemented yet.
-* The C8 static analyzer mismatch remains documented in `docs/grid13_tickets.md`.
-* The decoder should not auto-store reverse aliases.
+* The C8 static analyzer mismatch was a historical artifact of early pixel-width clustering; the current Grid13 model is collision-free on the 52-card set.
+* The decoder should not auto-store reverse aliases during live calibration, but the built-in observed profile may contain both `bfm` and `brm` if they were physically verified.
 
 ## Next Likely Work
 
