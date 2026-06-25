@@ -132,9 +132,8 @@ signatureModel = "grid13-v2"
 Current profile model notes:
 
 * Custom calibration profiles default to `grid13-v2`.
-* The default built-in profile is currently `builtin-observed-v1`, generated from `scanned_attempt1.jsonl` plus a focused `S6`/`C6` rescan.
+* The default built-in profile is currently `builtin-observed-v1`.
 * `builtin-observed-v1` contains `bfm...` forward aliases and `brm...` reverse aliases for retained cards.
-* The initial `S6`/`C6` collision was resolved by `6S-and-6C.jsonl`: `S6` is retained as `bfm1669` / `brm12CD`, and `C6` is retained as the palindrome pair `bfm164D` / `brm164D`.
 * The built-in demo profile is explicitly synthetic: `synthetic-demo-bridge52-v1`.
 * The built-in demo profile's `0x1001`-style signatures are not real physical deck mappings.
 

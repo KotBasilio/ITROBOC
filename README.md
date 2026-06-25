@@ -59,7 +59,7 @@ For the current barcode signature model and Grid13 implementation handoff, see [
 
 The app currently ships with two built-in profiles:
 
-- `builtin-observed-v1` is the default active profile. It was generated from Admin::Edit scan logs and uses `grid13-v2` aliases such as `bfm1255` plus retained `brm...` reverse aliases. The initial `S6`/`C6` collision was resolved by a focused rescan.
+- `builtin-observed-v1` is the default active profile. It was generated from Admin::Edit scan logs and uses `grid13-v2` aliases. 
 - `builtin-demo-bridge52-v1` is a synthetic demo/reference mapping only. It uses opaque raw signatures such as `0x1001 -> SA`, carries explicit synthetic signature-model metadata, and remains useful for tests plus the fake Android TD shell.
 
 Neither built-in profile is a claim about official WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to come from admin-side calibration and observation.

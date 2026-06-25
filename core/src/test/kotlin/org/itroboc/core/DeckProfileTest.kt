@@ -96,7 +96,6 @@ class DeckProfileTest {
         assertEquals(true, profile.metadata.isBuiltIn)
         assertEquals(false, profile.metadata.isDemo)
         assertEquals(DeckProfileSignatureModels.GRID13_V2, profile.metadata.signatureModel)
-        assertTrue(profile.metadata.notes?.contains("S6/C6 resolved") == true)
         assertTrue(profile.metadata.notes?.contains("orientation visually verified") == true)
     }
 
