@@ -47,8 +47,47 @@ fun EditBoardScreen(
     val boardState = boardEditState.boardState
     val selectedSeat = boardEditState.selectedSeat
 
+    var showClearBoardDialog by remember { mutableStateOf(false) }
+
     fun onSeatClick(seat: Seat) {
         onBoardEditStateChange(boardEditState.copy(selectedSeat = seat))
+    }
+
+    fun onClearClick() {
+        val selectedHand = boardState.handOf(selectedSeat)
+        if (selectedHand.count() > 0) {
+            // Clear only hand
+            val newHands = Seat.entries.associateWith { seat ->
+                if (seat == selectedSeat) org.itroboc.core.HandState() else boardState.handOf(seat)
+            }
+            onBoardEditStateChange(boardEditState.copy(boardState = org.itroboc.core.BoardState(newHands)))
+        } else {
+            // Show clear board dialog
+            showClearBoardDialog = true
+        }
+    }
+
+    if (showClearBoardDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearBoardDialog = false },
+            title = { Text("Clear entire board?") },
+            text = { Text("This removes all cards from Board $boardNumber.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onBoardEditStateChange(boardEditState.copy(boardState = org.itroboc.core.BoardState()))
+                        showClearBoardDialog = false
+                    }
+                ) {
+                    Text("Clear board")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearBoardDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     // 3x3 Cockpit Layout using Row/Column
@@ -57,7 +96,9 @@ fun EditBoardScreen(
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             BoardControlsArea(
                 boardNumber = boardNumber,
-                onBack = onBack,
+                selectedSeat = selectedSeat,
+                boardState = boardState,
+                onClear = { onClearClick() },
                 modifier = Modifier.weight(1f)
             )
             HandArea(
@@ -123,9 +164,14 @@ fun EditBoardScreen(
 @Composable
 fun BoardControlsArea(
     boardNumber: Int,
-    onBack: () -> Unit,
+    selectedSeat: Seat,
+    boardState: org.itroboc.core.BoardState,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
+    val clearLabel = if (isHandEmpty) "Clear board" else "Clear hand"
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -139,11 +185,11 @@ fun BoardControlsArea(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { /* TODO: Ticket 4 */ },
+            onClick = onClear,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Text("Clear")
+            Text(clearLabel)
         }
     }
 }
