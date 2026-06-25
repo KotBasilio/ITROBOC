@@ -6,6 +6,14 @@ enum class Suit(val symbol: Char) {
     DIAMONDS('D'),
     CLUBS('C');
 
+    val prettySymbol: String
+        get() = when (this) {
+            SPADES -> "♠"
+            HEARTS -> "♥"
+            DIAMONDS -> "♦"
+            CLUBS -> "♣"
+        }
+
     companion object {
         fun fromSymbol(symbol: Char): Suit =
             entries.firstOrNull { it.symbol == symbol }

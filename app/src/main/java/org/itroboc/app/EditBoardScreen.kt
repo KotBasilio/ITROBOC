@@ -1,5 +1,6 @@
 package org.itroboc.app
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices
+import org.itroboc.core.HandState
+import org.itroboc.core.Seat
+import org.itroboc.core.Suit
 
 @Preview(device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 600, showBackground = true)
 @Composable
@@ -40,52 +44,77 @@ fun EditBoardScreen(
     onBack: () -> Unit
 ) {
     val boardNumber = boardEditState.boardNumber
+    val boardState = boardEditState.boardState
+    val selectedSeat = boardEditState.selectedSeat
+
+    fun onSeatClick(seat: Seat) {
+        onBoardEditStateChange(boardEditState.copy(selectedSeat = seat))
+    }
+
     // 3x3 Cockpit Layout using Row/Column
     Column(modifier = Modifier.fillMaxSize()) {
-        // Top Row: Board controls | North hand | Status
+        // Top Row: Board controls | North hand | Last Scanned | Status
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             BoardControlsArea(
                 boardNumber = boardNumber,
                 onBack = onBack,
                 modifier = Modifier.weight(1f)
             )
-            HandAreaPlaceholder(
-                seatName = "North",
-                modifier = Modifier.weight(1.5f)
+            HandArea(
+                seat = Seat.NORTH,
+                handState = boardState.handOf(Seat.NORTH),
+                isSelected = selectedSeat == Seat.NORTH,
+                onClick = { onSeatClick(Seat.NORTH) },
+                modifier = Modifier.weight(1f)
+            )
+            LastScannedCardAreaPlaceholder(
+                modifier = Modifier.weight(1f)
             )
             StatusAreaPlaceholder(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(2f)
             )
         }
 
         // Middle Row: West hand | Camera Area | East hand
-        Row(modifier = Modifier.weight(1.5f).fillMaxWidth()) {
-            HandAreaPlaceholder(
-                seatName = "West",
+        Row(modifier = Modifier.weight(3f).fillMaxWidth()) {
+            WestArea(
+                handState = boardState.handOf(Seat.WEST),
+                isSelected = selectedSeat == Seat.WEST,
+                onClick = { onSeatClick(Seat.WEST) },
+                onBack = onBack,
                 modifier = Modifier.weight(1f)
             )
             CameraAreaPlaceholder(
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(3f)
             )
-            HandAreaPlaceholder(
-                seatName = "East",
+            HandArea(
+                seat = Seat.EAST,
+                handState = boardState.handOf(Seat.EAST),
+                isSelected = selectedSeat == Seat.EAST,
+                onClick = { onSeatClick(Seat.EAST) },
                 modifier = Modifier.weight(1f)
             )
         }
 
-        // Bottom Row: Orientation | South hand | Feed mode
+        // Bottom Row: Feed Mode | South hand | Orientation | PBN
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            FeedModeArea(
+                modifier = Modifier.weight(1f)
+            )
+            HandArea(
+                seat = Seat.SOUTH,
+                handState = boardState.handOf(Seat.SOUTH),
+                isSelected = selectedSeat == Seat.SOUTH,
+                onClick = { onSeatClick(Seat.SOUTH) },
+                modifier = Modifier.weight(1f)
+            )
             OrientationArea(
                 currentMode = orientationMode,
                 onModeChange = onOrientationModeChange,
                 modifier = Modifier.weight(1f)
             )
-            HandAreaPlaceholder(
-                seatName = "South",
-                modifier = Modifier.weight(1.5f)
-            )
-            FeedModeArea(
-                modifier = Modifier.weight(1f)
+            PBNAreaPlaceholder(
+                modifier = Modifier.weight(2f)
             )
         }
     }
@@ -108,6 +137,7 @@ fun BoardControlsArea(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = { /* TODO: Ticket 4 */ },
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -115,38 +145,122 @@ fun BoardControlsArea(
         ) {
             Text("Clear")
         }
-        Button(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-        ) {
-            Text("Back")
-        }
     }
 }
 
 @Composable
-fun HandAreaPlaceholder(
-    seatName: String,
+fun BoardBackButtonArea(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Button(
+        onClick = onBack,
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+    ) {
+        Text("Back")
+    }
+}
+
+
+@Composable
+fun WestArea(
+    handState: HandState,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (handState.isComplete()) Color(0xFFC8E6C9) else Color(0xFFFFF9C4)
+    val borderColor = if (isSelected) Color(0xFF2196F3) else Color.LightGray
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(4.dp)
-            .background(Color(0xFFE0E0E0))
-            .border(1.dp, Color.LightGray),
+            .background(backgroundColor)
+            .border(borderWidth, borderColor)
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(seatName, style = MaterialTheme.typography.labelLarge)
-            Text("Hand Placeholder", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            // Visual stacked suits from sketch
-            Column(modifier = Modifier.padding(top = 4.dp)) {
-                Text("♠", color = Color.Black, fontSize = 12.sp)
-                Text("♥", color = Color.Red, fontSize = 12.sp)
-                Text("♦", color = Color.Red, fontSize = 12.sp)
-                Text("♣", color = Color.Black, fontSize = 12.sp)
+            BoardBackButtonArea(
+                onBack = onBack,
+                modifier = Modifier.padding(8.dp)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = suitCards.suit.prettySymbol,
+                            color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.width(18.dp)
+                        )
+                        Text(
+                            text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+
+@Composable
+fun HandArea(
+    seat: Seat,
+    handState: HandState,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (handState.isComplete()) Color(0xFFC8E6C9) else Color(0xFFFFF9C4)
+    val borderColor = if (isSelected) Color(0xFF2196F3) else Color.LightGray
+    val borderWidth = if (isSelected) 3.dp else 1.dp
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(4.dp)
+            .background(backgroundColor)
+            .border(borderWidth, borderColor)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = suitCards.suit.prettySymbol,
+                        color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.width(18.dp)
+                    )
+                    Text(
+                        text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                }
             }
         }
     }
@@ -162,6 +276,42 @@ fun StatusAreaPlaceholder(modifier: Modifier = Modifier) {
     ) {
         Text(
             "Status area",
+            color = Color(0xFF4CAF50),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
+@Composable
+fun LastScannedCardAreaPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        Text(
+            "Last scanned card",
+            color = Color(0xFF4CAF50),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
+@Composable
+fun PBNAreaPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        Text(
+            "PBN area",
             color = Color(0xFF4CAF50),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
@@ -200,8 +350,8 @@ fun OrientationArea(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            "Barcode orientation",
-            style = MaterialTheme.typography.titleSmall,
+            "Barcode",
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Row(modifier = Modifier.selectableGroup()) {

@@ -29,7 +29,7 @@ data class HandState(private val cards: Set<CardId> = emptySet()) {
                 .joinToString(separator = "") { it.rank.symbol.toString() }
         }
 
-    internal fun cardsBySuitInBridgeOrder(): List<SuitCards> =
+    fun cardsBySuitInBridgeOrder(): List<SuitCards> =
         Suit.entries.map { suit ->
             SuitCards(
                 suit = suit,
