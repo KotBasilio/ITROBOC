@@ -177,6 +177,7 @@ fun EditBoardScreen(
                 modifier = Modifier.weight(1f)
             )
             StatusArea(
+                boardState = boardState,
                 message = lastResultMessage,
                 modifier = Modifier.weight(2f)
             )
@@ -230,7 +231,9 @@ fun EditBoardScreen(
                 onModeChange = onOrientationModeChange,
                 modifier = Modifier.weight(1f)
             )
-            PBNAreaPlaceholder(
+            PBNArea(
+                boardState = boardState,
+                boardNumber = boardNumber,
                 modifier = Modifier.weight(2f)
             )
         }
@@ -389,7 +392,11 @@ fun HandArea(
 }
 
 @Composable
-fun StatusArea(message: String?, modifier: Modifier = Modifier) {
+fun StatusArea(
+    boardState: BoardState,
+    message: String?,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -398,16 +405,67 @@ fun StatusArea(message: String?, modifier: Modifier = Modifier) {
     ) {
         Column {
             Text(
-                "Status area",
+                "Status",
                 color = Color(0xFF4CAF50),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
+            
+            val totalCount = boardState.totalCardCount()
+            Text(
+                text = "Board progress: $totalCount/52",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+
             if (message != null) {
                 Text(
                     text = message,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color.Black,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun PBNArea(
+    boardState: BoardState,
+    boardNumber: Int,
+    modifier: Modifier = Modifier
+) {
+    val isComplete = boardState.totalCardCount() == 52
+    
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        Column {
+            Text(
+                "PBN Preview",
+                color = Color(0xFF4CAF50),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            
+            if (isComplete) {
+                val pbn = PbnExporter.export(boardState, PbnExportOptions(boardNumber = boardNumber))
+                Text(
+                    text = pbn,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            } else {
+                Text(
+                    text = "Complete board to see PBN.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
