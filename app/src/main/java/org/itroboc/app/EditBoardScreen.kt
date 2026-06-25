@@ -59,12 +59,26 @@ fun EditBoardScreen(
         val accumulator = TdScanAccumulator(deckProfile, boardState)
         val report = accumulator.scan(selectedSeat, signature)
         
-        onBoardEditStateChange(boardEditState.copy(boardState = report.accumulator.boardState))
+        val newBoardState = report.accumulator.boardState
+        val isHandCompleteNow = newBoardState.handOf(selectedSeat).isComplete()
+        
+        var nextSeat = selectedSeat
+        var autoAdvanceMessage = ""
+        
+        if (isHandCompleteNow && (report.result is TdScanResult.Added || report.result is TdScanResult.HandAlreadyComplete)) {
+            nextSeat = selectedSeat.next()
+            autoAdvanceMessage = " Auto-advancing to ${nextSeat.displayName}."
+        }
+
+        onBoardEditStateChange(boardEditState.copy(
+            boardState = newBoardState,
+            selectedSeat = nextSeat
+        ))
         
         lastResultMessage = when (val result = report.result) {
             is TdScanResult.Added -> {
                 lastScannedCard = result.card
-                "Added ${result.card} to ${selectedSeat.displayName}."
+                "Added ${result.card} to ${selectedSeat.displayName}.$autoAdvanceMessage"
             }
             is TdScanResult.AlreadyInThisHand -> {
                 lastScannedCard = result.card
@@ -75,7 +89,7 @@ fun EditBoardScreen(
                 "Already in ${result.existingSeat.displayName}: ${result.card}. No change."
             }
             is TdScanResult.UnknownSignature -> "Unknown signature: ${result.signature}."
-            is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete."
+            is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete.$autoAdvanceMessage"
         }
     }
 
