@@ -196,7 +196,7 @@ Transient share/export status text may be hidden in the UI when space is tight. 
 
 The debug log is cleared once when the app process starts, so a manual testing session begins with a fresh file instead of accumulating old scans across launches.
 
-Current camera scan attempts use the `grid13-v1` decoder and produce compact forward raw signatures such as `bfm1549`. The reverse/debug token such as `brm1255` is logged for diagnosis, but it is not automatically added as a profile alias.
+Current camera scan attempts use the `grid13-v2` decoder and produce compact forward raw signatures such as `bfm1549`. The reverse/debug token such as `brm1255` is logged for diagnosis, but it is not automatically added as a profile alias.
 
 The current live camera path derives its ink signal from the luma ROI already supplied to `:vision`. The static research path prefers min-RGB ink, so red-suit instability may point to a future RGB/YUV-aware extraction seam.
 

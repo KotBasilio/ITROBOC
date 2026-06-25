@@ -17,7 +17,7 @@ class Grid13BarcodeDecoder(
             projection = projection,
             threshold = threshold,
         ) ?: return BarcodeDecodeResult.NotFound(
-            reason = "No grid13-v1 barcode measurement produced",
+            reason = "No grid13-v2 barcode measurement produced",
             debug = BarcodeDebugInfo(
                 threshold = threshold,
                 signatureModel = GRID13_SIGNATURE_MODEL,
@@ -34,7 +34,7 @@ class Grid13BarcodeDecoder(
         if (measurement.confidence < minimumFoundConfidence) {
             return BarcodeDecodeResult.Ambiguous(
                 candidates = listOf(signature),
-                reason = "Low-confidence grid13-v1 measurement",
+                reason = "Low-confidence grid13-v2 measurement",
                 debug = signature.debug,
             )
         }
@@ -43,7 +43,7 @@ class Grid13BarcodeDecoder(
     }
 }
 
-const val GRID13_SIGNATURE_MODEL: String = "grid13-v1"
+const val GRID13_SIGNATURE_MODEL: String = "grid13-v2"
 
 private fun Grid13BarcodeMeasurement.toDetectedSignature(
     imageHeight: Int,

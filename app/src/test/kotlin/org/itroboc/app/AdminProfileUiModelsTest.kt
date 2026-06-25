@@ -23,7 +23,7 @@ class AdminProfileUiModelsTest {
         assertEquals("Fresh calibration", profile.metadata.displayName)
         assertFalse(profile.metadata.isBuiltIn)
         assertFalse(profile.metadata.isDemo)
-        assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
+        assertEquals(DeckProfileSignatureModels.GRID13_V2, profile.metadata.signatureModel)
     }
 
     @Test

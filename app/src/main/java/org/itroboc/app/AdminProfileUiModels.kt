@@ -53,7 +53,7 @@ fun ProfileListItem.toDeckProfileMetadata(): DeckProfileMetadata =
         displayName = displayName,
         isBuiltIn = isBuiltIn,
         isDemo = isDemo,
-        signatureModel = signatureModel ?: DeckProfileSignatureModels.GRID13_V1,
+        signatureModel = signatureModel ?: DeckProfileSignatureModels.GRID13_V2,
     )
 
 fun ProfileListItem.toEmptyDeckProfile(): DeckProfile =

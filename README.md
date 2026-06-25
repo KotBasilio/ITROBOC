@@ -30,7 +30,7 @@ The repository currently contains:
       - 4x13 mapping grid with status coloring
       - real CameraX preview plus one-frame scan attempts for Admin calibration
       - shared scan guide / ROI crop aimed at one barcode strip
-      - experimental `grid13-v1` barcode signatures such as `bfm1549`
+      - experimental `grid13-v2` barcode signatures such as `bfm1549`
       - mock scanner fallback with conflict detection
       - support for aliases (multiple signatures per card)
       - auto-advance calibration flow
@@ -53,13 +53,13 @@ Broader product direction and workflow notes live in [docs/product_context.md](d
 
 For details on the signature mapping scheme used in the fake shell, see [md-files/signatures.md](md-files/signatures.md).
 
-For the current barcode signature model and Grid13 implementation handoff, see [md-files/grid13-v1-barcode-model.md](md-files/grid13-v1-barcode-model.md).
+For the current barcode signature model and Grid13 implementation handoff, see [md-files/grid13-v2-barcode-model.md](md-files/grid13-v2-barcode-model.md).
 
 ## Built-in deck profiles
 
 The app currently ships with two built-in profiles:
 
-- `builtin-observed-v1` is the default active profile. It was generated from Admin::Edit scan logs and uses `grid13-v1` aliases such as `bfm1255` plus retained `brm...` reverse aliases. The initial `S6`/`C6` collision was resolved by a focused rescan.
+- `builtin-observed-v1` is the default active profile. It was generated from Admin::Edit scan logs and uses `grid13-v2` aliases such as `bfm1255` plus retained `brm...` reverse aliases. The initial `S6`/`C6` collision was resolved by a focused rescan.
 - `builtin-demo-bridge52-v1` is a synthetic demo/reference mapping only. It uses opaque raw signatures such as `0x1001 -> SA`, carries explicit synthetic signature-model metadata, and remains useful for tests plus the fake Android TD shell.
 
 Neither built-in profile is a claim about official WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to come from admin-side calibration and observation.
@@ -76,4 +76,4 @@ Run tests from the repository root with:
 
 This milestone still does not add TD multi-card scanning, OpenCV, production-grade barcode decoding, rotation/perspective handling, persistent profile storage, or device-wide session persistence.
 
-The Android app now includes early Admin-side camera capture and a pure `:vision` `grid13-v1` decoder prototype, but the broader TD workflow still uses fake signatures and the current camera path should be treated as an experimental calibration loop rather than finished scanning.
+The Android app now includes early Admin-side camera capture and a pure `:vision` `grid13-v2` decoder prototype, but the broader TD workflow still uses fake signatures and the current camera path should be treated as an experimental calibration loop rather than finished scanning.

@@ -28,6 +28,6 @@ data class DeckProfileMetadata(
 )
 
 object DeckProfileSignatureModels {
-    const val GRID13_V1: String = "grid13-v1"
+    const val GRID13_V2: String = "grid13-v2"
     const val SYNTHETIC_DEMO_BRIDGE_52_V1: String = "synthetic-demo-bridge52-v1"
 }

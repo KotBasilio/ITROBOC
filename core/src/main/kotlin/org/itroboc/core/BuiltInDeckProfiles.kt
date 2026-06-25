@@ -92,8 +92,8 @@ object BuiltInDeckProfiles {
                 displayName = "Built-in Observed v1",
                 isBuiltIn = true,
                 isDemo = false,
-                notes = "Observed grid13-v1 profile from scan logs, with S6/C6 resolved by focused rescan and bfm/brm orientation visually verified against the physical deck.",
-                signatureModel = DeckProfileSignatureModels.GRID13_V1,
+                notes = "Observed grid13-v2 profile from scan logs, with S6/C6 resolved by focused rescan and bfm/brm orientation visually verified against the physical deck.",
+                signatureModel = DeckProfileSignatureModels.GRID13_V2,
             ),
         )
 

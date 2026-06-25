@@ -49,11 +49,11 @@ class DeckProfileTest {
             metadata = DeckProfileMetadata(
                 profileId = "club-calibration",
                 displayName = "Club calibration",
-                signatureModel = DeckProfileSignatureModels.GRID13_V1,
+                signatureModel = DeckProfileSignatureModels.GRID13_V2,
             ),
         )
 
-        assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
+        assertEquals(DeckProfileSignatureModels.GRID13_V2, profile.metadata.signatureModel)
         assertEquals(CardId.parse("SA"), profile.lookup("bfm1549"))
     }
 
@@ -95,7 +95,7 @@ class DeckProfileTest {
         assertEquals("Built-in Observed v1", profile.metadata.displayName)
         assertEquals(true, profile.metadata.isBuiltIn)
         assertEquals(false, profile.metadata.isDemo)
-        assertEquals(DeckProfileSignatureModels.GRID13_V1, profile.metadata.signatureModel)
+        assertEquals(DeckProfileSignatureModels.GRID13_V2, profile.metadata.signatureModel)
         assertTrue(profile.metadata.notes?.contains("S6/C6 resolved") == true)
         assertTrue(profile.metadata.notes?.contains("orientation visually verified") == true)
     }

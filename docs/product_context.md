@@ -49,7 +49,7 @@ sig-dq -> DQ
 
 Deck Profiles should allow future support for different physical deck types. If the club buys another deck with a different barcode scheme, the app should be able to learn or configure another profile rather than requiring app code changes.
 
-Deck Profile metadata also records the raw-signature model, for example `grid13-v1` for calibrated camera profiles. Built-in demo profiles may use synthetic signature models and must not be mistaken for real physical deck mappings.
+Deck Profile metadata also records the raw-signature model, for example `grid13-v2` for calibrated camera profiles. Built-in demo profiles may use synthetic signature models and must not be mistaken for real physical deck mappings.
 
 ### TD side
 
@@ -121,7 +121,7 @@ Current grounded state:
 
 * the app has Main, TD, Admin, and Mock entry surfaces;
 * Admin::Edit can calibrate profiles from a CameraX frame;
-* `grid13-v1` preserves `bfm`/`brm` physical orientation;
+* `grid13-v2` preserves `bfm`/`brm` physical orientation;
 * the built-in observed profile has complete 52-card coverage;
 * its orientation was visually checked against the physical deck;
 * the golden manifest follows the observed profile and derives bits/run form

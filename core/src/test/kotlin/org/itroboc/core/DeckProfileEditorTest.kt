@@ -12,7 +12,7 @@ class DeckProfileEditorTest {
         displayName = "Test Profile",
         isBuiltIn = false,
         isDemo = false,
-        signatureModel = DeckProfileSignatureModels.GRID13_V1,
+        signatureModel = DeckProfileSignatureModels.GRID13_V2,
     )
     private val sa = CardId.parse("SA")
     private val sk = CardId.parse("SK")
@@ -63,7 +63,7 @@ class DeckProfileEditorTest {
         // Mapping should not have changed
         assertEquals(sa, editor.toDeckProfile().lookup("0x1"))
         assertFalse(editor.isMapped(sk))
-        assertEquals(DeckProfileSignatureModels.GRID13_V1, editor.toDeckProfile().metadata.signatureModel)
+        assertEquals(DeckProfileSignatureModels.GRID13_V2, editor.toDeckProfile().metadata.signatureModel)
     }
 
     @Test

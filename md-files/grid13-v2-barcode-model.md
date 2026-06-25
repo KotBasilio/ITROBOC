@@ -1,17 +1,17 @@
-# Grid13-v1 Barcode Model
+# Grid13-v2 Barcode Model
 
 This note is the durable implementation handoff for ITROBOC's current barcode signature model.
 
 Related deeper docs:
 
 * `docs/grid13_design.md` — original design and rationale.
-* `docs/grid13_tickets.md` — implementation ticket trail.
+* `docs/grid13_v2_barcode_model.md` — active v2 design spec.
 * `docs/barcode-sheets/deep-research-report.md` — source research table and algorithm notes.
 * `docs/admin_edit.md` — Admin::Edit calibration workflow and debug-log behavior.
 
 ## Summary
 
-`grid13-v1` is ITROBOC's current practical raw-signature model for one cropped barcode strip.
+`grid13-v2` is ITROBOC's current practical raw-signature model for one cropped barcode strip.
 
 The central principle is:
 
@@ -126,12 +126,12 @@ Core does not parse barcode pixels and does not infer card meaning from `bfm...`
 Deck Profile metadata can declare the signature model:
 
 ```text
-signatureModel = "grid13-v1"
+signatureModel = "grid13-v2"
 ```
 
 Current profile model notes:
 
-* Custom calibration profiles default to `grid13-v1`.
+* Custom calibration profiles default to `grid13-v2`.
 * The default built-in profile is currently `builtin-observed-v1`, generated from `scanned_attempt1.jsonl` plus a focused `S6`/`C6` rescan.
 * `builtin-observed-v1` contains `bfm...` forward aliases and `brm...` reverse aliases for retained cards.
 * The initial `S6`/`C6` collision was resolved by `6S-and-6C.jsonl`: `S6` is retained as `bfm1669` / `brm12CD`, and `C6` is retained as the palindrome pair `bfm164D` / `brm164D`.
