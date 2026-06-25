@@ -70,7 +70,7 @@ private data class Grid13GoldenManifest(
             ) {
                 "Missing signatureModel"
             }
-            val cards = Regex("\\{\\n\\s+\"cardId\".*?\\n\\s+\\}", RegexOption.DOT_MATCHES_ALL)
+            val cards = Regex("\\{\\s*\"cardId\".*?\\}", RegexOption.DOT_MATCHES_ALL)
                 .findAll(text)
                 .map { match -> Grid13GoldenCard.fromJsonObject(match.value) }
                 .toList()
