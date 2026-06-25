@@ -79,6 +79,7 @@ fun AppNavigation() {
             val boardEditState = sessionState.getOrInitBoard(screen.boardNumber)
             EditBoardScreen(
                 boardEditState = boardEditState,
+                deckProfile = activeDeckProfile,
                 orientationMode = barcodeOrientationMode,
                 onOrientationModeChange = { barcodeOrientationMode = it },
                 onBoardEditStateChange = { updatedState ->

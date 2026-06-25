@@ -17,9 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices
-import org.itroboc.core.HandState
-import org.itroboc.core.Seat
-import org.itroboc.core.Suit
+import org.itroboc.core.*
 
 @Preview(device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 600, showBackground = true)
 @Composable
@@ -27,6 +25,7 @@ fun EditBoardScreenPreview() {
     MaterialTheme {
         EditBoardScreen(
             boardEditState = BoardEditState(boardNumber = 7),
+            deckProfile = BuiltInDeckProfiles.defaultProfile(),
             orientationMode = BarcodeOrientationMode.BFM,
             onOrientationModeChange = {},
             onBoardEditStateChange = {},
@@ -38,6 +37,7 @@ fun EditBoardScreenPreview() {
 @Composable
 fun EditBoardScreen(
     boardEditState: BoardEditState,
+    deckProfile: DeckProfile,
     orientationMode: BarcodeOrientationMode,
     onOrientationModeChange: (BarcodeOrientationMode) -> Unit,
     onBoardEditStateChange: (BoardEditState) -> Unit,
@@ -48,9 +48,35 @@ fun EditBoardScreen(
     val selectedSeat = boardEditState.selectedSeat
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
+    var lastResultMessage by remember { mutableStateOf<String?>(null) }
+    var lastScannedCard by remember { mutableStateOf<CardId?>(null) }
 
     fun onSeatClick(seat: Seat) {
         onBoardEditStateChange(boardEditState.copy(selectedSeat = seat))
+    }
+
+    fun handleScan(signature: String) {
+        val accumulator = TdScanAccumulator(deckProfile, boardState)
+        val report = accumulator.scan(selectedSeat, signature)
+        
+        onBoardEditStateChange(boardEditState.copy(boardState = report.accumulator.boardState))
+        
+        lastResultMessage = when (val result = report.result) {
+            is TdScanResult.Added -> {
+                lastScannedCard = result.card
+                "Added ${result.card} to ${selectedSeat.displayName}."
+            }
+            is TdScanResult.AlreadyInThisHand -> {
+                lastScannedCard = result.card
+                "Already in ${selectedSeat.displayName}: ${result.card}."
+            }
+            is TdScanResult.AlreadyOnBoard -> {
+                lastScannedCard = result.card
+                "Already in ${result.existingSeat.displayName}: ${result.card}. No change."
+            }
+            is TdScanResult.UnknownSignature -> "Unknown signature: ${result.signature}."
+            is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete."
+        }
     }
 
     fun onClearClick() {
@@ -108,10 +134,12 @@ fun EditBoardScreen(
                 onClick = { onSeatClick(Seat.NORTH) },
                 modifier = Modifier.weight(1f)
             )
-            LastScannedCardAreaPlaceholder(
+            LastScannedCardArea(
+                cardId = lastScannedCard,
                 modifier = Modifier.weight(1f)
             )
-            StatusAreaPlaceholder(
+            StatusArea(
+                message = lastResultMessage,
                 modifier = Modifier.weight(2f)
             )
         }
@@ -126,6 +154,16 @@ fun EditBoardScreen(
                 modifier = Modifier.weight(1f)
             )
             CameraAreaPlaceholder(
+                onMockScan = {
+                    // Pick a random card not on board if possible, or just a random card
+                    val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
+                    val available = allCards.filter { boardState.seatContaining(it) == null }
+                    val targetCard = available.randomOrNull() ?: allCards.random()
+                    // Find a signature for this card in the profile
+                    val signature = deckProfile.getAliases(targetCard).firstOrNull() 
+                        ?: "mock-${targetCard.suit.symbol}${targetCard.rank.symbol}"
+                    handleScan(signature)
+                },
                 modifier = Modifier.weight(3f)
             )
             HandArea(
@@ -313,36 +351,77 @@ fun HandArea(
 }
 
 @Composable
-fun StatusAreaPlaceholder(modifier: Modifier = Modifier) {
+fun StatusArea(message: String?, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
         contentAlignment = Alignment.TopStart
     ) {
-        Text(
-            "Status area",
-            color = Color(0xFF4CAF50),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
-        )
+        Column {
+            Text(
+                "Status area",
+                color = Color(0xFF4CAF50),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            if (message != null) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Black,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
     }
 }
 
 
 @Composable
-fun LastScannedCardAreaPlaceholder(modifier: Modifier = Modifier) {
+fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
         contentAlignment = Alignment.TopStart
     ) {
+        Column {
+            Text(
+                "Last scanned card",
+                color = Color(0xFF4CAF50),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            if (cardId != null) {
+                Text(
+                    text = "${cardId.suit.prettySymbol}${cardId.rank.symbol}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (cardId.suit == Suit.HEARTS || cardId.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CameraAreaPlaceholder(onMockScan: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .border(2.dp, Color(0xFF4CAF50))
+            .clickable { onMockScan() },
+        contentAlignment = Alignment.Center
+    ) {
         Text(
-            "Last scanned card",
+            "Camera area\n(Tap to mock scan)",
             color = Color(0xFF4CAF50),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -361,24 +440,6 @@ fun PBNAreaPlaceholder(modifier: Modifier = Modifier) {
             color = Color(0xFF4CAF50),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-fun CameraAreaPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp)
-            .border(2.dp, Color(0xFF4CAF50)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            "Camera area",
-            color = Color(0xFF4CAF50),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
         )
     }
 }
