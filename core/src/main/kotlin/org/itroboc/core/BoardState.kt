@@ -37,7 +37,7 @@ data class BoardState(
         return orderedSeats.map(::handOf)
     }
 
-    private fun allCards(): Set<CardId> = hands.values.flatMap { it.cards() }.toSet()
+    fun allCards(): Set<CardId> = hands.values.flatMap { it.cards() }.toSet()
 
     companion object {
         const val FULL_BOARD_SIZE: Int = 52
