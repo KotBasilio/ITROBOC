@@ -109,6 +109,22 @@ fun AppNavigation() {
                     )
                     editedProfiles = editedProfiles - toDelete
                 },
+                onExportActiveProfile = { activeDeckProfile },
+                onImportProfile = { importedProfile ->
+                    val metadataItem = importedProfile.metadata.toProfileListItem()
+                        .copy(
+                            id = profileState.nextCustomProfileId(),
+                            isBuiltIn = false,
+                            isDemo = false
+                        )
+                    val finalizedProfile = importedProfile.withMetadata(metadataItem.toDeckProfileMetadata())
+
+                    profileState = profileState.copy(
+                        profiles = profileState.profiles + metadataItem,
+                        activeProfileId = metadataItem.id,
+                    )
+                    editedProfiles = editedProfiles + (metadataItem.id to finalizedProfile)
+                },
                 onEdit = { currentScreen = Screen.AdminEdit },
                 onBack = { currentScreen = Screen.MainMenu },
             )

@@ -22,15 +22,15 @@ The repository currently contains:
 - a minimal Android `:app` shell with:
   - a main menu as the entry point
   - an Admin actions screen for Deck Profile management:
-    - profile listing with active selection
+    - functional profile listing with active selection
     - in-memory Add/Delete functionality
     - active profile retained while moving between app screens
-    - placeholders for profile export/import
+    - functional profile export/import (JSON)
     - a functional Admin::Edit calibration workshop:
       - 4x13 mapping grid with status coloring
       - real CameraX preview plus one-frame scan attempts for Admin calibration
       - shared scan guide / ROI crop aimed at one barcode strip
-      - experimental `grid13-v2` barcode signatures such as `bfm1549`
+      - `grid13-v2` barcode signatures such as `bfm1549`
       - mock scanner fallback with conflict detection
       - support for aliases (multiple signatures per card)
       - auto-advance calibration flow
@@ -76,4 +76,4 @@ Run tests from the repository root with:
 
 This milestone still does not add TD multi-card scanning, OpenCV, production-grade barcode decoding, rotation/perspective handling, persistent profile storage, or device-wide session persistence.
 
-The Android app now includes early Admin-side camera capture and a pure `:vision` `grid13-v2` decoder prototype, but the broader TD workflow still uses fake signatures and the current camera path should be treated as an experimental calibration loop rather than finished scanning.
+The Android app now includes Admin-side camera capture and a functional `:vision` `grid13-v2` decoder, but the broader TD workflow still uses fake signatures and the current camera path should be treated as a calibration loop rather than finished scanning.

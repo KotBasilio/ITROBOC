@@ -1,5 +1,7 @@
 package org.itroboc.app
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.itroboc.core.DeckProfile
 
 @Composable
 fun AdminActionsScreen(
@@ -22,12 +26,47 @@ fun AdminActionsScreen(
     onSelectProfile: (String) -> Unit,
     onAddProfile: (String) -> Unit,
     onDeleteActiveProfile: () -> Unit,
+    onExportActiveProfile: () -> DeckProfile,
+    onImportProfile: (DeckProfile) -> Unit,
     onEdit: () -> Unit,
     onBack: () -> Unit
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDisplay by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.openOutputStream(it)?.use { stream ->
+                    stream.write(onExportActiveProfile().toJson().toByteArray())
+                    messageToDisplay = "Profile exported successfully."
+                }
+            } catch (e: Exception) {
+                messageToDisplay = "Failed to export profile: ${e.message}"
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.openInputStream(it)?.use { stream ->
+                    val json = stream.bufferedReader().use { it.readText() }
+                    val profile = DeckProfile.fromJson(json)
+                    onImportProfile(profile)
+                    messageToDisplay = "Profile \"${profile.metadata.displayName}\" imported."
+                }
+            } catch (e: Exception) {
+                messageToDisplay = "Failed to import profile: ${e.message}"
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -42,8 +81,17 @@ fun AdminActionsScreen(
         },
         bottomBar = {
             AdminBottomBar(
-                onExport = { messageToDisplay = "Export: Not implemented yet." },
-                onImport = { messageToDisplay = "Import: Not implemented yet." },
+                onExport = {
+                    val active = uiState.activeProfile
+                    if (active != null) {
+                        exportLauncher.launch("${active.displayName.replace(" ", "_")}.json")
+                    } else {
+                        messageToDisplay = "No profile selected for export."
+                    }
+                },
+                onImport = {
+                    importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                },
                 onEdit = onEdit,
                 onDelete = {
                     val active = uiState.activeProfile
@@ -152,6 +200,8 @@ fun AdminActionsPreview() {
             onSelectProfile = {},
             onAddProfile = {},
             onDeleteActiveProfile = {},
+            onExportActiveProfile = { DeckProfile(emptyMap()) },
+            onImportProfile = {},
             onEdit = {},
             onBack = {}
         )
