@@ -40,6 +40,14 @@ class DeckProfileEditor(
         return mappedCardCount() == 52
     }
 
+    fun hasAliasesForEveryCard(): Boolean {
+        return Suit.entries.all { suit ->
+            Rank.entries.all { rank ->
+                getAliases(CardId(suit, rank)).isNotEmpty()
+            }
+        }
+    }
+
     fun toDeckProfile(): DeckProfile {
         return DeckProfile(
             signatureToCard = mutableMappings.toMap(),

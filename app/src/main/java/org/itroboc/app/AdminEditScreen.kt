@@ -52,8 +52,8 @@ fun AdminEditScreen(
     var selectedSuit by remember { mutableStateOf(Suit.SPADES) }
     var selectedRank by remember { mutableStateOf(Rank.ACE) }
     val selectedCard = CardId(selectedSuit, selectedRank)
-    
-    var isReadOnly by remember { mutableStateOf(true) }
+
+    var isReadOnly by remember(editor) { mutableStateOf(editor.hasAliasesForEveryCard()) }
     var autoAdvance by remember { mutableStateOf(true) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
     var aliasDetailsDialog by remember { mutableStateOf<AdminAliasDetails?>(null) }
@@ -137,6 +137,13 @@ fun AdminEditScreen(
     }
 
     val selectedCardAliases = editor.getAliases(selectedCard)
+    val readOnlyAvailable = editor.hasAliasesForEveryCard()
+
+    LaunchedEffect(readOnlyAvailable) {
+        if (!readOnlyAvailable && isReadOnly) {
+            isReadOnly = false
+        }
+    }
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Part: 52-card mapping grid (Stretched to fill height)
@@ -160,7 +167,8 @@ fun AdminEditScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
                         checked = isReadOnly,
-                        onCheckedChange = { isReadOnly = it }
+                        onCheckedChange = { isReadOnly = it },
+                        enabled = readOnlyAvailable
                     )
                     Text("Read only", style = MaterialTheme.typography.labelMedium)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -170,6 +178,15 @@ fun AdminEditScreen(
                     )
                     Text("Auto-advance", style = MaterialTheme.typography.labelMedium)
                 }
+            }
+            if (!readOnlyAvailable) {
+                Text(
+                    text = "Read only unlocks once all 52 cards have at least one alias.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                )
             }
 
             val suits = Suit.entries
