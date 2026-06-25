@@ -12,6 +12,9 @@ data class DeckProfile(
 
     fun cardIds(): Set<CardId> = signatureToCard.values.toSet()
 
+    fun getAliases(cardId: CardId): List<String> =
+        signatureToCard.filter { it.value == cardId }.keys.toList()
+
     fun toEditor(): DeckProfileEditor = DeckProfileEditor(signatureToCard, metadata)
 
     fun withMetadata(metadata: DeckProfileMetadata): DeckProfile =
