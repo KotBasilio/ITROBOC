@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -698,16 +699,26 @@ fun OrientationArea(
         )
         Row(modifier = Modifier.selectableGroup()) {
             BarcodeOrientationMode.entries.forEach { mode ->
+                val enabled = mode != BarcodeOrientationMode.AUTO
                 Row(
                     modifier = Modifier.selectable(
                         selected = currentMode == mode,
-                        onClick = { onModeChange(mode) },
+                        onClick = { if (enabled) onModeChange(mode) },
                         role = Role.RadioButton,
+                        enabled = enabled
                     ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    RadioButton(selected = currentMode == mode, onClick = null)
-                    Text(mode.label, style = MaterialTheme.typography.bodySmall)
+                    RadioButton(
+                        selected = currentMode == mode,
+                        onClick = null,
+                        enabled = enabled
+                    )
+                    Text(
+                        text = mode.label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (enabled) Color.Unspecified else Color.Gray
+                    )
                 }
             }
         }
@@ -733,9 +744,12 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
                 Text("stream", style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = false, onClick = null)
-                Text("snap", style = MaterialTheme.typography.bodyMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.alpha(0.5f)
+            ) {
+                RadioButton(selected = false, onClick = null, enabled = false)
+                Text("snap", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             }
         }
     }
