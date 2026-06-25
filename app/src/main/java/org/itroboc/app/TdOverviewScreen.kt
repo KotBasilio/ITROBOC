@@ -20,6 +20,7 @@ enum class BoardUiStatus {
 
 @Composable
 fun TdOverviewScreen(
+    sessionState: TdSessionState,
     activeProfile: ProfileListItem = BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem(),
     onNavigateToBoard: (Int) -> Unit,
     onBack: () -> Unit
@@ -57,10 +58,13 @@ fun TdOverviewScreen(
         ) {
             items(30) { index ->
                 val boardNumber = index + 1
-                // Mock logic: alternate colors for demonstration
+                val boardEditState = sessionState.boards[boardNumber]
+                val boardState = boardEditState?.boardState
+                
                 val status = when {
-                    boardNumber % 10 == 0 -> BoardUiStatus.Complete
-                    else -> BoardUiStatus.Empty
+                    boardState == null || boardState.totalCardCount() == 0 -> BoardUiStatus.Empty
+                    boardState.totalCardCount() == 52 -> BoardUiStatus.Complete
+                    else -> BoardUiStatus.Partial
                 }
                 
                 BoardButton(
@@ -73,9 +77,10 @@ fun TdOverviewScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mock status text area
+        // Session status text area
+        val filledCount = sessionState.boards.values.count { it.boardState.totalCardCount() == 52 }
         Text(
-            text = "Filled: 3/30",
+            text = "Filled: $filledCount/30",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
