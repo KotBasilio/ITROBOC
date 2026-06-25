@@ -1,8 +1,19 @@
 package org.itroboc.app
 
-import androidx.compose.foundation.clickable
+import android.Manifest
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -10,16 +21,27 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.tooling.preview.Devices
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.itroboc.core.*
+import org.itroboc.vision.BarcodeDecodeResult
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
-@Preview(device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 600, showBackground = true)
+@ComposePreview(device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 600, showBackground = true)
 @Composable
 fun EditBoardScreenPreview() {
     MaterialTheme {
@@ -50,6 +72,32 @@ fun EditBoardScreen(
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
     var lastScannedCard by remember { mutableStateOf<CardId?>(null) }
+
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            launcher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    val pendingScanRequest = remember { AtomicBoolean(true) }
+    val frameDecoder = remember { AdminEditCameraFrameDecoder() }
 
     fun onSeatClick(seat: Seat) {
         val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
@@ -192,19 +240,57 @@ fun EditBoardScreen(
                 onBack = onBack,
                 modifier = Modifier.weight(1f)
             )
-            CameraAreaPlaceholder(
-                onMockScan = {
-                    // Pick a random card not on board if possible, or just a random card
-                    val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
-                    val available = allCards.filter { boardState.seatContaining(it) == null }
-                    val targetCard = available.randomOrNull() ?: allCards.random()
-                    // Find a signature for this card in the profile
-                    val signature = deckProfile.getAliases(targetCard).firstOrNull() 
-                        ?: "mock-${targetCard.suit.symbol}${targetCard.rank.symbol}"
-                    handleScan(signature)
-                },
-                modifier = Modifier.weight(3f)
-            )
+            Box(
+                modifier = Modifier
+                    .weight(3f)
+                    .fillMaxHeight()
+                    .padding(8.dp)
+                    .background(Color.DarkGray),
+                contentAlignment = Alignment.Center
+            ) {
+                if (hasCameraPermission) {
+                    CameraPreview(
+                        consumeScanRequest = { pendingScanRequest.get() },
+                        frameDecoder = frameDecoder,
+                        onScanProcessed = { scanOutcome ->
+                            when (scanOutcome) {
+                                is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
+                                    is BarcodeDecodeResult.Found -> {
+                                        val signature = decodeResult.signature.signatureFor(orientationMode)
+                                        if (signature != null) {
+                                            handleScan(signature)
+                                        }
+                                    }
+                                    else -> {}
+                                }
+                                else -> {}
+                            }
+                        }
+                    )
+                    BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
+                } else {
+                    Text("Camera permission required", color = Color.White)
+                }
+
+                // Temporary Mock Overlay for easier testing without physical cards
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable {
+                            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
+                            val available = allCards.filter { boardState.seatContaining(it) == null }
+                            val targetCard = available.randomOrNull() ?: allCards.random()
+                            val signature = deckProfile.getAliases(targetCard).firstOrNull() 
+                                ?: "mock-${targetCard.suit.symbol}${targetCard.rank.symbol}"
+                            handleScan(signature)
+                        }
+                        .padding(8.dp)
+                ) {
+                    Text("Mock Scan", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                }
+            }
             HandArea(
                 seat = Seat.EAST,
                 handState = boardState.handOf(Seat.EAST),
@@ -432,6 +518,35 @@ fun StatusArea(
 
 
 @Composable
+fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentAlignment = Alignment.TopStart
+    ) {
+        Column {
+            Text(
+                "Last scanned card",
+                color = Color(0xFF4CAF50),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            if (cardId != null) {
+                Text(
+                    text = "${cardId.suit.prettySymbol}${cardId.rank.symbol}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (cardId.suit == Suit.HEARTS || cardId.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
 fun PBNArea(
     boardState: BoardState,
     boardNumber: Int,
@@ -475,67 +590,91 @@ fun PBNArea(
 
 
 @Composable
-fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        contentAlignment = Alignment.TopStart
-    ) {
-        Column {
-            Text(
-                "Last scanned card",
-                color = Color(0xFF4CAF50),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            if (cardId != null) {
-                Text(
-                    text = "${cardId.suit.prettySymbol}${cardId.rank.symbol}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (cardId.suit == Suit.HEARTS || cardId.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+private fun CameraPreview(
+    consumeScanRequest: () -> Boolean,
+    frameDecoder: AdminEditCameraFrameDecoder,
+    onScanProcessed: (CameraScanOutcome) -> Unit,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val previewView = remember { PreviewView(context) }
+    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor) {
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
             }
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+
+            imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                try {
+                    if (!consumeScanRequest()) {
+                        return@setAnalyzer
+                    }
+
+                    val scanOutcome = frameDecoder.decode(imageProxy)
+                    mainExecutor.execute {
+                        onScanProcessed(scanOutcome)
+                    }
+                } finally {
+                    imageProxy.close()
+                }
+            }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalysis
+                )
+            } catch (e: Exception) {
+                Log.e("CameraPreview", "Use case binding failed", e)
+            }
+        }, mainExecutor)
+
+        onDispose {
+            runCatching {
+                cameraProviderFuture.get().unbindAll()
+            }.onFailure { error ->
+                Log.w("CameraPreview", "Failed to unbind camera on dispose", error)
+            }
+            analysisExecutor.shutdown()
         }
     }
+
+    AndroidView(
+        factory = { previewView },
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable
-fun CameraAreaPlaceholder(onMockScan: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp)
-            .border(2.dp, Color(0xFF4CAF50))
-            .clickable { onMockScan() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            "Camera area\n(Tap to mock scan)",
-            color = Color(0xFF4CAF50),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+private fun BarcodeGuideOverlay(guideSpec: AdminScanGuideSpec) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val strokeWidth = 2.dp.toPx()
+        val guideBounds = centeredGuideRectBounds(
+            containerWidth = size.width,
+            containerHeight = size.height,
+            guideSpec = guideSpec,
         )
-    }
-}
 
-
-@Composable
-fun PBNAreaPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        contentAlignment = Alignment.TopStart
-    ) {
-        Text(
-            "PBN area",
-            color = Color(0xFF4CAF50),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
+        drawRoundRect(
+            color = Color.White,
+            topLeft = Offset(guideBounds.left, guideBounds.top),
+            size = Size(guideBounds.width, guideBounds.height),
+            cornerRadius = CornerRadius(8.dp.toPx()),
+            style = Stroke(width = strokeWidth)
         )
     }
 }
