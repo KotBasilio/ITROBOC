@@ -171,9 +171,9 @@ fun EditBoardScreen(
         if (selectedHand.count() > 0) {
             // Clear only hand
             val newHands = Seat.entries.associateWith { seat ->
-                if (seat == selectedSeat) org.itroboc.core.HandState() else boardState.handOf(seat)
+                if (seat == selectedSeat) HandState() else boardState.handOf(seat)
             }
-            onBoardEditStateChange(boardEditState.copy(boardState = org.itroboc.core.BoardState(newHands)))
+            onBoardEditStateChange(boardEditState.copy(boardState = BoardState(newHands)))
         } else {
             // Show clear board dialog
             showClearBoardDialog = true
@@ -188,7 +188,7 @@ fun EditBoardScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onBoardEditStateChange(boardEditState.copy(boardState = org.itroboc.core.BoardState()))
+                        onBoardEditStateChange(boardEditState.copy(boardState = BoardState()))
                         showClearBoardDialog = false
                     }
                 ) {
@@ -367,7 +367,7 @@ fun BoardBackButtonArea(
 ) {
     Button(
         onClick = onBack,
-        modifier = Modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier.fillMaxWidth().height(48.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
         Text("Back")
@@ -607,7 +607,7 @@ private fun CameraPreview(
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
+                it.surfaceProvider = previewView.surfaceProvider
             }
 
             val imageAnalysis = ImageAnalysis.Builder()
@@ -615,7 +615,7 @@ private fun CameraPreview(
                 .build()
 
             imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-                try {
+                imageProxy.use {
                     if (!consumeScanRequest()) {
                         return@setAnalyzer
                     }
@@ -624,8 +624,6 @@ private fun CameraPreview(
                     mainExecutor.execute {
                         onScanProcessed(scanOutcome)
                     }
-                } finally {
-                    imageProxy.close()
                 }
             }
 
