@@ -282,27 +282,6 @@ fun EditBoardScreen(
                 } else {
                     Text("Camera permission required", color = Color.White)
                 }
-
-                // Temporary Mock Overlay for easier testing without physical cards
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable {
-                            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
-                            val available = allCards.filter { boardState.seatContaining(it) == null }
-                            val targetCard = available.randomOrNull() ?: allCards.random()
-                            val signatures = deckProfile.getAliases(targetCard)
-                            val prefix = orientationMode.label // "bfm" or "brm"
-                            val signature = signatures.find { it.startsWith(prefix) } ?: signatures.firstOrNull()
-                                ?: "mock-$prefix-${targetCard.suit.symbol}${targetCard.rank.symbol}"
-                            handleScan(signature)
-                        }
-                        .padding(8.dp)
-                ) {
-                    Text("Mock Scan", color = Color.White, style = MaterialTheme.typography.labelSmall)
-                }
             }
             HandArea(
                 seat = Seat.EAST,
