@@ -15,3 +15,12 @@ internal fun DetectedSignature.signatureFor(mode: BarcodeOrientationMode): Strin
     BarcodeOrientationMode.BRM -> debug?.reverseSignature
     BarcodeOrientationMode.AUTO -> null
 }
+
+internal fun DetectedSignature.viewedAs(mode: BarcodeOrientationMode): String? = when (mode) {
+    BarcodeOrientationMode.BFM -> rawSignature
+    BarcodeOrientationMode.BRM -> {
+        // Keeps the same digits but swaps "bfm" for "brm"
+        rawSignature.replaceFirst("bfm", "brm")
+    }
+    BarcodeOrientationMode.AUTO -> null
+}
