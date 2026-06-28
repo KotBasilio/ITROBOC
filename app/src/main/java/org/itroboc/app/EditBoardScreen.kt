@@ -600,6 +600,10 @@ private fun CameraPreview(
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
+    // Use rememberUpdatedState to avoid stale closures in the analyzer
+    val currentConsumeScanRequest by rememberUpdatedState(consumeScanRequest)
+    val currentOnScanProcessed by rememberUpdatedState(onScanProcessed)
+
     DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor) {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -613,13 +617,13 @@ private fun CameraPreview(
 
             imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
                 imageProxy.use {
-                    if (!consumeScanRequest()) {
+                    if (!currentConsumeScanRequest()) {
                         return@setAnalyzer
                     }
 
                     val scanOutcome = frameDecoder.decode(imageProxy)
                     mainExecutor.execute {
-                        onScanProcessed(scanOutcome)
+                        currentOnScanProcessed(scanOutcome)
                     }
                 }
             }
