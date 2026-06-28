@@ -160,15 +160,15 @@ fun EditBoardScreen(
         lastResultMessage = when (val result = report.result) {
             is TdScanResult.Added -> {
                 lastScannedCard = result.card
-                "Added ${result.card} to ${selectedSeat.displayName}.$autoAdvanceMessage"
+                "Added ${result.card} to ${selectedSeat.displayName} via $signature.$autoAdvanceMessage"
             }
             is TdScanResult.AlreadyInThisHand -> {
                 lastScannedCard = result.card
-                "Already in ${selectedSeat.displayName}: ${result.card}."
+                "Already in ${selectedSeat.displayName}: ${result.card} (via $signature)."
             }
             is TdScanResult.AlreadyOnBoard -> {
                 lastScannedCard = result.card
-                "Already in ${result.existingSeat.displayName}: ${result.card}. No change."
+                "Already in ${result.existingSeat.displayName}: ${result.card} (via $signature). No change."
             }
             is TdScanResult.UnknownSignature -> "Unknown signature: ${result.signature}."
             is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete.$autoAdvanceMessage"
@@ -236,6 +236,7 @@ fun EditBoardScreen(
             )
             StatusArea(
                 boardState = boardState,
+                orientationMode = orientationMode,
                 message = lastResultMessage,
                 modifier = Modifier.weight(2f)
             )
@@ -292,8 +293,10 @@ fun EditBoardScreen(
                             val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }
                             val available = allCards.filter { boardState.seatContaining(it) == null }
                             val targetCard = available.randomOrNull() ?: allCards.random()
-                            val signature = deckProfile.getAliases(targetCard).firstOrNull() 
-                                ?: "mock-${targetCard.suit.symbol}${targetCard.rank.symbol}"
+                            val signatures = deckProfile.getAliases(targetCard)
+                            val prefix = orientationMode.label // "bfm" or "brm"
+                            val signature = signatures.find { it.startsWith(prefix) } ?: signatures.firstOrNull()
+                                ?: "mock-$prefix-${targetCard.suit.symbol}${targetCard.rank.symbol}"
                             handleScan(signature)
                         }
                         .padding(8.dp)
@@ -478,6 +481,7 @@ fun HandArea(
 @Composable
 fun StatusArea(
     boardState: BoardState,
+    orientationMode: BarcodeOrientationMode,
     message: String?,
     modifier: Modifier = Modifier
 ) {
@@ -497,7 +501,7 @@ fun StatusArea(
             
             val totalCount = boardState.totalCardCount()
             Text(
-                text = "Board progress: $totalCount/52",
+                text = "Board progress: $totalCount/52 | Mode: ${orientationMode.label}",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray
             )
