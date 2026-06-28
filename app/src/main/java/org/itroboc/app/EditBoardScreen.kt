@@ -346,7 +346,7 @@ fun BoardControlsArea(
             modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Text(clearLabel)
+            Text(clearLabel, fontSize = 24.sp)
         }
     }
 }
@@ -361,7 +361,7 @@ fun BoardBackButtonArea(
         modifier = modifier.fillMaxWidth().height(48.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
-        Text("Back")
+        Text("Back", fontSize = 24.sp)
     }
 }
 
@@ -381,13 +381,13 @@ fun HandContent(
                 Text(
                     text = suitCards.suit.prettySymbol,
                     color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                    fontSize = 14.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.width(18.dp)
+                    modifier = Modifier.width(22.dp)
                 )
                 Text(
                     text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
-                    fontSize = 14.sp,
+                    fontSize = 17.sp,
                     color = Color.Black
                 )
             }
