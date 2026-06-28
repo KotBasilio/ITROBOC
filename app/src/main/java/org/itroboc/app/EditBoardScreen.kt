@@ -100,32 +100,33 @@ fun EditBoardScreen(
     val pendingScanRequest = remember { AtomicBoolean(true) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder() }
 
-    fun onSeatClick(seat: Seat) {
-        val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
-        
-        // Auto-fill logic
-        val boardState = nextBoardEditState.boardState
+    fun performAutoFillIfPossible(boardEditState: BoardEditState, seat: Seat): BoardEditState {
+        val boardState = boardEditState.boardState
         val selectedHand = boardState.handOf(seat)
         val otherSeats = Seat.entries.filter { it != seat }
         val otherHandsComplete = otherSeats.all { boardState.handOf(it).isComplete() }
-        
+
         if (selectedHand.count() == 0 && otherHandsComplete) {
             val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }.toSet()
             val assignedCards = boardState.allCards()
             val remainingCards = allCards - assignedCards
-            
+
             if (remainingCards.size == 13) {
                 var autoFilledBoard = boardState
                 remainingCards.forEach { card ->
                     autoFilledBoard = autoFilledBoard.addCard(seat, card)
                 }
-                onBoardEditStateChange(nextBoardEditState.copy(boardState = autoFilledBoard))
                 lastResultMessage = "${seat.displayName} auto-filled from remaining 13 cards. Board complete."
-                return
+                return boardEditState.copy(boardState = autoFilledBoard)
             }
         }
-        
-        onBoardEditStateChange(nextBoardEditState)
+        return boardEditState
+    }
+
+    fun onSeatClick(seat: Seat) {
+        val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
+        val autoFilledState = performAutoFillIfPossible(nextBoardEditState, seat)
+        onBoardEditStateChange(autoFilledState)
     }
 
     fun handleScan(signature: String) {
@@ -143,10 +144,18 @@ fun EditBoardScreen(
             autoAdvanceMessage = " Auto-advancing to ${nextSeat.displayName}."
         }
 
-        onBoardEditStateChange(boardEditState.copy(
+        val updatedEditState = boardEditState.copy(
             boardState = newBoardState,
             selectedSeat = nextSeat
-        ))
+        )
+        
+        val finalizedState = if (nextSeat != selectedSeat) {
+            performAutoFillIfPossible(updatedEditState, nextSeat)
+        } else {
+            updatedEditState
+        }
+
+        onBoardEditStateChange(finalizedState)
         
         lastResultMessage = when (val result = report.result) {
             is TdScanResult.Added -> {
@@ -376,6 +385,35 @@ fun BoardBackButtonArea(
 
 
 @Composable
+fun HandContent(
+    handState: HandState,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(8.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.Start
+    ) {
+        handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = suitCards.suit.prettySymbol,
+                    color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.width(18.dp)
+                )
+                Text(
+                    text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun WestArea(
     handState: HandState,
     isSelected: Boolean,
@@ -404,28 +442,8 @@ fun WestArea(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Column(
-                modifier = Modifier.padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Start
-            ) {
-                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = suitCards.suit.prettySymbol,
-                            color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(18.dp)
-                        )
-                        Text(
-                            text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
-                            fontSize = 14.sp,
-                            color = Color.Black
-                        )
-                    }
-                }
-            }
+            HandContent(handState = handState)
+
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -453,28 +471,7 @@ fun HandArea(
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
-        ) {
-            handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = suitCards.suit.prettySymbol,
-                        color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.width(18.dp)
-                    )
-                    Text(
-                        text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
-                }
-            }
-        }
+        HandContent(handState = handState)
     }
 }
 
