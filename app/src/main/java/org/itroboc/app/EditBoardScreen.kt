@@ -267,7 +267,7 @@ fun EditBoardScreen(
                             when (scanOutcome) {
                                 is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
                                     is BarcodeDecodeResult.Found -> {
-                                        val signature = decodeResult.signature.signatureFor(orientationMode)
+                                        val signature = decodeResult.signature.viewedAs(orientationMode)
                                         if (signature != null) {
                                             handleScan(signature)
                                         }
