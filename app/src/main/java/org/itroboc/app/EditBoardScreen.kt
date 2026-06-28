@@ -100,27 +100,27 @@ fun EditBoardScreen(
     val pendingScanRequest = remember { AtomicBoolean(true) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder() }
 
-    fun performAutoFillIfPossible(boardEditState: BoardEditState, seat: Seat): BoardEditState {
-        val boardState = boardEditState.boardState
-        val selectedHand = boardState.handOf(seat)
+    fun performAutoFillIfPossible(currentEditState: BoardEditState, seat: Seat): BoardEditState {
+        val currentBoardState = currentEditState.boardState
+        val selectedHand = currentBoardState.handOf(seat)
         val otherSeats = Seat.entries.filter { it != seat }
-        val otherHandsComplete = otherSeats.all { boardState.handOf(it).isComplete() }
+        val otherHandsComplete = otherSeats.all { currentBoardState.handOf(it).isComplete() }
 
         if (selectedHand.count() == 0 && otherHandsComplete) {
             val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }.toSet()
-            val assignedCards = boardState.allCards()
+            val assignedCards = currentBoardState.allCards()
             val remainingCards = allCards - assignedCards
 
             if (remainingCards.size == 13) {
-                var autoFilledBoard = boardState
+                var autoFilledBoard = currentBoardState
                 remainingCards.forEach { card ->
                     autoFilledBoard = autoFilledBoard.addCard(seat, card)
                 }
                 lastResultMessage = "${seat.displayName} auto-filled from remaining 13 cards. Board complete."
-                return boardEditState.copy(boardState = autoFilledBoard)
+                return currentEditState.copy(boardState = autoFilledBoard)
             }
         }
-        return boardEditState
+        return currentEditState
     }
 
     fun onSeatClick(seat: Seat) {
