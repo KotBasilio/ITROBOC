@@ -170,7 +170,7 @@ fun EditBoardScreen(
                 lastScannedCard = result.card
                 "Already in ${result.existingSeat.displayName}: ${result.card} (via $signature). No change."
             }
-            is TdScanResult.UnknownSignature -> "Unknown signature: ${result.signature}."
+            is TdScanResult.UnknownSignature -> lastResultMessage
             is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete.$autoAdvanceMessage"
         }
     }
@@ -232,13 +232,13 @@ fun EditBoardScreen(
             )
             LastScannedCardArea(
                 cardId = lastScannedCard,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(0.5f)
             )
             StatusArea(
                 boardState = boardState,
                 orientationMode = orientationMode,
                 message = lastResultMessage,
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(2.5f)
             )
         }
 
@@ -307,12 +307,12 @@ fun EditBoardScreen(
             OrientationArea(
                 currentMode = orientationMode,
                 onModeChange = onOrientationModeChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(2f)
             )
             PBNArea(
                 boardState = boardState,
                 boardNumber = boardNumber,
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -480,15 +480,17 @@ fun StatusArea(
             
             val totalCount = boardState.totalCardCount()
             Text(
-                text = "Board progress: $totalCount/52 | Mode: ${orientationMode.label}",
-                style = MaterialTheme.typography.labelSmall,
+                text = "Cards: $totalCount/52 | Mode: ${orientationMode.label}",
+                fontSize = 24.sp,
+                style = MaterialTheme.typography.labelMedium,
                 color = Color.Gray
             )
 
             if (message != null) {
                 Text(
                     text = message,
-                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -508,7 +510,7 @@ fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
     ) {
         Column {
             Text(
-                "Last scanned card",
+                "Last scanned",
                 color = Color(0xFF4CAF50),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
@@ -698,6 +700,7 @@ fun OrientationArea(
                     )
                     Text(
                         text = mode.label,
+                        fontSize = 24.sp,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (enabled) Color.Unspecified else Color.Gray
                     )
