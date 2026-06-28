@@ -164,11 +164,11 @@ fun EditBoardScreen(
             }
             is TdScanResult.AlreadyInThisHand -> {
                 lastScannedCard = result.card
-                "Already in ${selectedSeat.displayName}: ${result.card} (via $signature)."
+                "OK in ${selectedSeat.displayName}: ${result.card}."
             }
             is TdScanResult.AlreadyOnBoard -> {
                 lastScannedCard = result.card
-                "Already in ${result.existingSeat.displayName}: ${result.card} (via $signature). No change."
+                "Skipped: ${result.card} -- ${result.existingSeat.displayName} has it."
             }
             is TdScanResult.UnknownSignature -> lastResultMessage
             is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete.$autoAdvanceMessage"
@@ -307,12 +307,12 @@ fun EditBoardScreen(
             OrientationArea(
                 currentMode = orientationMode,
                 onModeChange = onOrientationModeChange,
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(1.5f)
             )
             PBNArea(
                 boardState = boardState,
                 boardNumber = boardNumber,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.5f)
             )
         }
     }
@@ -518,7 +518,7 @@ fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
             if (cardId != null) {
                 Text(
                     text = "${cardId.suit.prettySymbol}${cardId.rank.symbol}",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (cardId.suit == Suit.HEARTS || cardId.suit == Suit.DIAMONDS) Color.Red else Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
@@ -726,7 +726,7 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
         Row {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = true, onClick = null)
-                Text("stream", style = MaterialTheme.typography.bodyMedium)
+                Text("stream", fontSize = 24.sp, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Row(
