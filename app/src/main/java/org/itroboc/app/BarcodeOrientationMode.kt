@@ -10,12 +10,14 @@ enum class BarcodeOrientationMode(
     AUTO("auto"),
 }
 
-internal fun DetectedSignature.signatureFor(mode: BarcodeOrientationMode): String? = when (mode) {
-    BarcodeOrientationMode.BFM -> rawSignature
-    BarcodeOrientationMode.BRM -> debug?.reverseSignature
-    BarcodeOrientationMode.AUTO -> null
-}
-
+/**
+ * Official TD lookup path for converting a detected signature into a deck-profile token.
+ *
+ * Current physical model:
+ * - BFM: use the raw detected signature (e.g. bfm15A9)
+ * - BRM: same visible payload but in the "brm" family (e.g. brm15A9)
+ * - AUTO: deliberately unresolved until vision logic can determine orientation
+ */
 internal fun DetectedSignature.viewedAs(mode: BarcodeOrientationMode): String? = when (mode) {
     BarcodeOrientationMode.BFM -> rawSignature
     BarcodeOrientationMode.BRM -> {
