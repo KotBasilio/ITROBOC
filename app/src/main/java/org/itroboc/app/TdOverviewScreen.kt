@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BuiltInDeckProfiles
 
 enum class BoardUiStatus {
@@ -63,7 +64,7 @@ fun TdOverviewScreen(
                 
                 val status = when {
                     boardState == null || boardState.totalCardCount() == 0 -> BoardUiStatus.Empty
-                    boardState.totalCardCount() == 52 -> BoardUiStatus.Complete
+                    BoardProgressSummary.from(boardState).boardComplete -> BoardUiStatus.Complete
                     else -> BoardUiStatus.Partial
                 }
                 
@@ -78,7 +79,7 @@ fun TdOverviewScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Session status text area
-        val filledCount = sessionState.boards.values.count { it.boardState.totalCardCount() == 52 }
+        val filledCount = sessionState.boards.values.count { BoardProgressSummary.from(it.boardState).boardComplete }
         Text(
             text = "Filled: $filledCount/30",
             style = MaterialTheme.typography.headlineMedium,

@@ -584,7 +584,7 @@ fun PBNArea(
     boardNumber: Int,
     modifier: Modifier = Modifier
 ) {
-    val isComplete = boardState.totalCardCount() == 52
+    val isComplete = BoardProgressSummary.from(boardState).boardComplete
     
     Box(
         modifier = modifier
