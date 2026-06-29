@@ -54,6 +54,14 @@ class Grid13GoldenManifestTest {
     }
 
     @Test
+    fun `golden manifest rl2 never contains b3 or w4 runs`() {
+        manifest.cards.forEach { card ->
+            assertTrue(Regex("(^|-)B3($|-)").containsMatchIn(card.rl2).not(), card.rl2)
+            assertTrue(Regex("(^|-)W4($|-)").containsMatchIn(card.rl2).not(), card.rl2)
+        }
+    }
+
+    @Test
     fun `golden manifest bitstrings keep the corset frame invariant`() {
         val allBitStrings = manifest.cards.flatMap { card ->
             listOf(card.grid13FwdBits, card.grid13RevBits)
