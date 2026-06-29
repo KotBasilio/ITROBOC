@@ -1,8 +1,8 @@
-# ITROBOC `grid13-v1` Tickets for Bob/Codex
+# ITROBOC `grid13` Tickets for Bob/Codex
 
 Status: proposed implementation sequence  
 Related design doc: `docs/grid13_design.md`  
-Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` raw signatures: `bfmHHHH` / `brmHHHH`.
+Goal: move barcode decoding from fragile width-only bars to compact `grid13` raw signatures: `bfmHHHH` / `brmHHHH`.
 
 ## Progress
 
@@ -11,18 +11,18 @@ Goal: move barcode decoding from fragile width-only bars to compact `grid13-v1` 
 - Fixture cleanup: Done in `5709062` — canonical PNG location is `vision/src/test/resources/barcode-sheets/`.
 - Ticket 3a: Done in `0516c89` — measurement primitives: ink channel, projection, thresholding, runs, active span.
 - Ticket 3b: Done in `deab98d` — compose primitives into static barcode measurements with RL2/Grid13 output.
-- Ticket 4: Done in `2e919a1` — golden manifest from `docs/barcode-sheets/deep-research-report.md`; analyzer-to-golden tuning remains explicit validation work.
+- Ticket 4: Done in `2e919a1` — golden manifest from `docs/dev_history/vision/barcodes/deep-research-report.md`; analyzer-to-golden tuning remains explicit validation work.
   The historical `C8` mismatch (from early pixel-width clustering) is resolved; the current Grid13 model is collision-free.
 - Ticket 5: Done in `63fe0d7` — degradation tests with report output at `vision/build/reports/grid13-degradation-report.txt`.
   Current report shows mild skew is unstable and needs later ROI/rectification work before live TD scanning.
-- Ticket 6: Done — Admin::Edit live scan integration now uses the `grid13-v1` decoder and emits `bfmHHHH` signatures with reverse token, bits, RL2, run, span, confidence, and warning evidence in debug output.
+- Ticket 6: Done — Admin::Edit live scan integration now uses the `grid13` decoder and emits `bfmHHHH` signatures with reverse token, bits, RL2, run, span, confidence, and warning evidence in debug output.
   Current live camera path still derives ink from luma-only `GrayImage`; min-RGB/YUV-aware extraction remains a later seam if red-suit scans prove unstable.
 - Ticket 7: Done — Admin::Edit alias chips stay compact and open a details dialog with retained session scan evidence plus a remove action.
-- Ticket 8: Done — Deck Profile metadata now carries a signature model; custom calibration profiles default to `grid13-v1`, while the built-in demo profile is explicitly marked as synthetic.
+- Ticket 8: Done — Deck Profile metadata now carries a signature model; custom calibration profiles default to `grid13`, while the built-in demo profile is explicitly marked as synthetic.
 - Ticket 9: Done — Admin::Edit JSONL logs now include compact signatures plus richer Grid13 evidence, ROI/crop fields, threshold fields, ambiguity flag, scanline-agreement placeholder, and deck-profile match count.
 - Ticket 10: Done — final Grid13 implementation handoff lives in `md-files/grid13-v1-barcode-model.md`.
 
-## Ticket 1 — Add `grid13-v1` signature formatting helpers
+## Ticket 1 — Add `grid13` signature formatting helpers
 
 ### Goal
 
@@ -187,7 +187,7 @@ warnings
 
 ### Goal
 
-Lock down the clean-sheet `grid13-v1` behavior with a golden manifest.
+Lock down the clean-sheet `grid13` behavior with a golden manifest.
 
 ### Scope
 
@@ -236,7 +236,7 @@ Values above are illustrative; use Bob’s analyzer output.
 
 ---
 
-## Ticket 5 — Add degradation tests for `grid13-v1`
+## Ticket 5 — Add degradation tests for `grid13`
 
 ### Goal
 
@@ -277,7 +277,7 @@ Do not overfit thresholds silently. If degraded scans fail, keep the report hone
 
 ---
 
-## Ticket 6 — Update live camera decoder to emit `grid13-v1` measurements
+## Ticket 6 — Update live camera decoder to emit `grid13` measurements
 
 ### Goal
 
@@ -383,13 +383,13 @@ signatureModel = "grid13-v1"
 Rules:
 
 - built-in demo profile may remain synthetic and should not be broken;
-- real calibrated profiles should use `grid13-v1`;
+- real calibrated profiles should use `grid13`;
 - raw signature strings remain opaque to core mapping logic;
 - no duplicate raw signature may map to multiple cards.
 
 ### Acceptance
 
-- Profile metadata can carry `grid13-v1`.
+- Profile metadata can carry `grid13`.
 - Conflict checks still work.
 - Existing core tests pass.
 - `./gradlew :core:test` passes.
@@ -457,7 +457,7 @@ deckProfileMatchCount
 
 ### Goal
 
-Document `grid13-v1` clearly enough that future Bob/Selyn/Architect can resume without rediscovering the model.
+Document `grid13` clearly enough that future Bob/Selyn/Architect can resume without rediscovering the model.
 
 ### Scope
 
@@ -521,5 +521,5 @@ Run as appropriate:
 - Do not canonicalize forward/reverse orientation.
 - Do not automatically add reverse aliases.
 - Do not teach `:core` barcode semantics.
-- Do not claim `grid13-v1` is the official manufacturer encoding.
+- Do not claim `grid13` is the official manufacturer encoding.
 - Keep the UI alias chip compact: `bfmHHHH`, not long binary strings.

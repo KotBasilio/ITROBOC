@@ -4,10 +4,10 @@ This note is the durable implementation handoff for ITROBOC's current barcode si
 
 Related deeper docs:
 
-* `docs/grid13_design.md` — original design and rationale.
-* `docs/grid13_v2_barcode_model.md` — active v2 design spec.
-* `docs/barcode-sheets/deep-research-report.md` — source research table and algorithm notes.
-* `docs/admin_edit.md` — Admin::Edit calibration workflow and debug-log behavior.
+* `docs/dev_history/vision/grid13_design.md` — original design and rationale.
+* `docs/dev_history/vision/grid13_v2_barcode_model.md` — active v2 design spec.
+* `docs/dev_history/vision/barcodes/deep-research-report.md` — source research table and algorithm notes.
+* `docs/dev_history/admin-edit/admin_edit.md` — Admin::Edit calibration workflow and debug-log behavior.
 
 ## Summary
 
@@ -218,7 +218,7 @@ vision/src/test/resources/barcode-sheets/
 The golden manifest lives at:
 
 ```text
-vision/src/test/resources/barcode-sheets/grid13-v1-golden.json
+vision/src/test/resources/barcode-sheets/grid13-v2-golden.json
 ```
 
 Current tests cover:

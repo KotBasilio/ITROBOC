@@ -8,7 +8,7 @@ retains the measured bits and records the correction.
 
 ## Goal
 
-Strengthen `grid13-v1` decoding and observed-profile validation by enforcing the outer sentinel structure:
+Strengthen `grid13` decoding and observed-profile validation by enforcing the outer sentinel structure:
 
 ```text
 10.........01
