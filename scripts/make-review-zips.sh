@@ -1,3 +1,8 @@
+# make-review-zips.sh
+# Purpose: Package curated repo snapshots for AI review.
+# Produces Core, Vision, App, and Project zips tied to a commit SHA.
+# Excludes build artifacts, caches, archives, and images.
+
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -45,6 +50,8 @@ zip_dir() {
             -x "build/*" \
             -x ".gradle/*" \
             -x ".kotlin/*" \
+            -x "*.png" \
+            -x "*.jpg" \
             -x "*.zip"
     )
     echo "Created archive: $zip_path"
