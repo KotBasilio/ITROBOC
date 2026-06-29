@@ -47,6 +47,13 @@ class Grid13GoldenManifestTest {
     }
 
     @Test
+    fun `golden manifest rl2 strings match grid13 forward bits exactly`() {
+        manifest.cards.forEach { card ->
+            assertEquals(grid13RunLengthSignature(card.grid13FwdBits), card.rl2, card.cardId)
+        }
+    }
+
+    @Test
     fun `golden manifest bitstrings keep the corset frame invariant`() {
         val allBitStrings = manifest.cards.flatMap { card ->
             listOf(card.grid13FwdBits, card.grid13RevBits)
