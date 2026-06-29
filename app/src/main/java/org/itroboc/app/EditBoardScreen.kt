@@ -149,9 +149,6 @@ fun EditBoardScreen(
         }
         lastRawSignature = signature
         lastScanTimeMillis = now
-        val oneSecondAgo = now - 1000L
-        lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
-        scansPerSecond = lastScanRates.size.toDouble()
 
         val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
             // EBT-T4: Handle unknown signature with throttling
@@ -264,6 +261,14 @@ fun EditBoardScreen(
                         consumeScanRequest = { pendingScanRequest.get() },
                         frameDecoder = frameDecoder,
                         onScanProcessed = { scanOutcome ->
+                            // EBT-8: Measure decoder throughput (every Decoded outcome counts)
+                            if (scanOutcome is CameraScanOutcome.Decoded) {
+                                val now = System.currentTimeMillis()
+                                val oneSecondAgo = now - 1000L
+                                lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
+                                scansPerSecond = lastScanRates.size.toDouble()
+                            }
+
                             when (scanOutcome) {
                                 is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
                                     is BarcodeDecodeResult.Found -> {
