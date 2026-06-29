@@ -2,7 +2,7 @@
 
 ITROBOC stands for Independent Tool for Reading Observed Barcodes On Cards.
 
-The project is planned as an Android-first tool for bridge tournament directors. It will eventually turn barcode observations from physical playing cards into canonical card IDs, assemble hands and boards, validate results, and export PBN.
+The project is planned as an Android-first tool for bridge tournament directors. It turn barcode observations from physical playing cards into canonical card IDs, assembles hands and boards, validates results, and exports PBN.
 
 ## Current milestone
 
@@ -15,14 +15,14 @@ The repository currently contains:
   - deck-profile signature mapping and signature-model metadata
   - a built-in 52-card demo/reference deck profile with opaque synthetic signatures
   - single-scan and batch-scan accumulator logic for TD workflow
-  - scan severity classification for future UI messaging
-  - hand and board progress summaries for future TD display
-  - batch presentation summaries for a future TD screen
-  - basic PBN export
-- a minimal Android `:app` shell with:
+  - scan severity classification for UI messaging
+  - hand and board progress summaries for TD display
+  - batch presentation summaries
+  - PBN export logic
+- a functional Android `:app` shell with:
   - a main menu as the entry point
   - an Admin actions screen for Deck Profile management:
-    - functional profile listing with active selection
+    - profile listing with active selection
     - in-memory Add/Delete functionality
     - active profile retained while moving between app screens
     - functional profile export/import (JSON)
@@ -31,7 +31,6 @@ The repository currently contains:
       - real CameraX preview plus one-frame scan attempts for Admin calibration
       - shared scan guide / ROI crop aimed at one barcode strip
       - `grid13-v2` barcode signatures such as `bfm1549`
-      - mock scanner fallback with conflict detection
       - support for aliases (multiple signatures per card)
       - auto-advance calibration flow
       - on-screen frame/decode debug text
@@ -39,28 +38,29 @@ The repository currently contains:
   - a TD actions screen featuring a 30-board session overview:
     - 3x10 grid of boards 1..30
     - color-coding by board status (green for complete, yellow for empty/partial)
-    - mock board scan screen per board
     - active profile name shown in the overview
-    - placeholders for session import/export
-  - a "Mock actions" screen featuring the fake TD workflow:
-    - seat selection
-    - free-text fake signature batch input
-    - preset fake-batch buttons
-    - current active profile context shared from the app shell
-    - hand status, latest batch messages, grouped hand cards, board progress, and gated PBN preview
+  - a functional **TD::EditBoard** scanning cockpit:
+    - 3x3 spatial table layout (landscape-first)
+    - real-time CameraX "stream" scanning with Grid13 decoder
+    - persistent session-backed board state
+    - suit-grouped hand displays with accessibility-tuned fonts
+    - active seat selection with auto-advance (N -> E -> S -> W)
+    - **Auto-fill "Fourth Hand"**: automatically calculates and assigns the final 13 cards when the other three hands are complete
+    - orientation-aware scanning with `bfm`/`brm` mode toggle
+    - detailed scan feedback and board progress status
+    - gated PBN preview triggered upon board completion
+  - a "Mock actions" screen featuring a legacy fake TD workflow for dry-runs.
 
-Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
+Broader product direction and workflow notes live in [docs/product_context.md].
 
-For details on the signature mapping scheme used in the fake shell, see [md-files/signatures.md](md-files/signatures.md).
-
-For the current barcode signature model and Grid13 implementation handoff, see [md-files/grid13-v2-barcode-model.md](md-files/grid13-v2-barcode-model.md).
+For the current barcode signature model and Grid13 implementation handoff, see [docs/grid13_v2_barcode_model.md].
 
 ## Built-in deck profiles
 
 The app currently ships with two built-in profiles:
 
 - `builtin-observed-v1` is the default active profile. It was generated from Admin::Edit scan logs and uses `grid13-v2` aliases. 
-- `builtin-demo-bridge52-v1` is a synthetic demo/reference mapping only. It uses opaque raw signatures such as `0x1001 -> SA`, carries explicit synthetic signature-model metadata, and remains useful for tests plus the fake Android TD shell.
+- `builtin-demo-bridge52-v1` is a synthetic demo/reference mapping only. It uses opaque raw signatures such as `0x1002 -> SK`, carries explicit synthetic signature-model metadata, and remains useful for tests plus the fake Android TD shell.
 
 Neither built-in profile is a claim about official WinDup, Jannersten, or any other physical barcode mapping. Real calibrated deck profiles are expected to come from admin-side calibration and observation.
 
@@ -74,6 +74,4 @@ Run tests from the repository root with:
 
 ## Not in scope yet
 
-This milestone still does not add TD multi-card scanning, OpenCV, production-grade barcode decoding, rotation/perspective handling, persistent profile storage, or device-wide session persistence.
-
-The Android app now includes Admin-side camera capture and a functional `:vision` `grid13-v2` decoder, but the broader TD workflow still uses fake signatures and the current camera path should be treated as a calibration loop rather than finished scanning.
+This milestone still does not add TD multi-card "snap" scanning, OpenCV, perspective handling, persistent profile storage to disk, or device-wide session persistence across app restarts.
