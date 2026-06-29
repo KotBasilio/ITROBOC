@@ -1,5 +1,7 @@
 package org.itroboc.vision
 
+import org.itroboc.core.BuiltInDeckProfiles
+import org.itroboc.core.CardId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -50,6 +52,25 @@ class Grid13GoldenManifestTest {
         }
 
         assertTrue(canonicalized.toSet().size < manifest.cards.size)
+    }
+
+    @Test
+    fun `golden manifest bfm and brm signatures match observed v1 deck profile exactly`() {
+        val observedV1 = BuiltInDeckProfiles.observedV1()
+        val manifestMappings = manifest.cards.flatMap { card ->
+            listOf(
+                card.rawSignature to CardId.parse(card.cardId),
+                card.reverseSignature to CardId.parse(card.cardId),
+            )
+        }
+
+        assertEquals("grid13-v2", observedV1.metadata.signatureModel)
+        assertEquals(manifestMappings.size, observedV1.mappingCount())
+        assertEquals(manifestMappings.map { it.first }.toSet(), observedV1.rawSignatures())
+
+        manifestMappings.forEach { (signature, expectedCard) ->
+            assertEquals(expectedCard, observedV1.lookup(signature), signature)
+        }
     }
 }
 
