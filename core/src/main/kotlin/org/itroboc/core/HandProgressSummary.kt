@@ -8,13 +8,16 @@ data class HandProgressSummary(
     val cardsBySuit: List<SuitCards>,
 ) {
     companion object {
-        fun from(seat: Seat, handState: HandState): HandProgressSummary =
-            HandProgressSummary(
+        fun from(seat: Seat, handState: HandState): HandProgressSummary {
+            val currentCount = handState.count()
+
+            return HandProgressSummary(
                 seat = seat,
-                currentCount = handState.count(),
-                remainingCount = HandState.FULL_HAND_SIZE - handState.count(),
+                currentCount = currentCount,
+                remainingCount = HandState.FULL_HAND_SIZE - currentCount,
                 isComplete = handState.isComplete(),
                 cardsBySuit = handState.cardsBySuitInBridgeOrder(),
             )
+        }
     }
 }
