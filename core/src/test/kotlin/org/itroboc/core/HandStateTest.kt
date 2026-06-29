@@ -26,6 +26,20 @@ class HandStateTest {
     }
 
     @Test
+    fun `rejects adding more than thirteen cards to a hand`() {
+        val fullHand = listOf(
+            "SA", "SK", "SQ", "SJ", "ST",
+            "H9", "H8", "H7",
+            "D6", "D5",
+            "C4", "C3", "C2",
+        ).fold(HandState()) { acc, rawCard -> acc.addCard(CardId.parse(rawCard)) }
+
+        assertFailsWith<IllegalArgumentException> {
+            fullHand.addCard(CardId.parse("HA"))
+        }
+    }
+
+    @Test
     fun `validates a complete thirteen card hand`() {
         val hand = listOf(
             "SA", "SK", "SQ", "SJ", "ST",

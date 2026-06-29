@@ -3,6 +3,7 @@ package org.itroboc.core
 data class HandState(private val cards: Set<CardId> = emptySet()) {
     fun addCard(card: CardId): HandState {
         require(card !in cards) { "Card already present in hand: $card" }
+        require(cards.size < FULL_HAND_SIZE) { "A bridge hand cannot exceed $FULL_HAND_SIZE cards" }
         return HandState(cards + card)
     }
 

@@ -84,4 +84,35 @@ class BoardProgressSummaryTest {
         assertEquals(setOf(Seat.NORTH, Seat.SOUTH, Seat.WEST), summary.completeSeats)
         assertEquals(false, summary.boardComplete)
     }
+
+    @Test
+    fun `board is not complete when total cards are fifty two but a hand is overfull`() {
+        val northCards = listOf("SA", "SK", "SQ", "SJ", "ST", "S9", "S8", "S7", "S6", "S5", "S4", "S3", "S2", "HA")
+            .map(CardId::parse)
+            .toSet()
+        val eastCards = listOf("HK", "HQ", "HJ", "HT", "H9", "H8", "H7", "H6", "H5", "H4", "H3", "H2", "DA")
+            .map(CardId::parse)
+            .toSet()
+        val southCards = listOf("DK", "DQ", "DJ", "DT", "D9", "D8", "D7", "D6", "D5", "D4", "D3", "D2", "CA")
+            .map(CardId::parse)
+            .toSet()
+        val westCards = listOf("CK", "CQ", "CJ", "CT", "C9", "C8", "C7", "C6", "C5", "C4", "C3", "C2")
+            .map(CardId::parse)
+            .toSet()
+
+        val board = BoardState(
+            mapOf(
+                Seat.NORTH to HandState(northCards),
+                Seat.EAST to HandState(eastCards),
+                Seat.SOUTH to HandState(southCards),
+                Seat.WEST to HandState(westCards),
+            ),
+        )
+
+        val summary = BoardProgressSummary.from(board)
+
+        assertEquals(52, summary.totalCards)
+        assertEquals(setOf(Seat.EAST, Seat.SOUTH), summary.completeSeats)
+        assertEquals(false, summary.boardComplete)
+    }
 }
