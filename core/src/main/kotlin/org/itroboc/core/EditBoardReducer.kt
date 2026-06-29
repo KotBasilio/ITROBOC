@@ -36,9 +36,10 @@ object EditBoardReducer {
         }
 
         if (hand.isComplete()) {
+            val nextSeat = selectedSeat.next()
             return EditBoardUpdate(
-                state = editState,
-                message = "Hand ${selectedSeat.displayName} already complete."
+                state = editState.copy(selectedSeat = nextSeat),
+                message = "Hand ${selectedSeat.displayName} already complete. Auto-advancing to ${nextSeat.displayName}."
             )
         }
 
