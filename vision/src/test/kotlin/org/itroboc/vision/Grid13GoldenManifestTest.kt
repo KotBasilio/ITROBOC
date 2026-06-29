@@ -47,6 +47,20 @@ class Grid13GoldenManifestTest {
     }
 
     @Test
+    fun `golden manifest bitstrings keep the corset frame invariant`() {
+        val allBitStrings = manifest.cards.flatMap { card ->
+            listOf(card.grid13FwdBits, card.grid13RevBits)
+        }
+
+        allBitStrings.forEach { bits ->
+            assertEquals('1', bits.first(), bits)
+            assertEquals('0', bits[1], bits)
+            assertEquals('0', bits[11], bits)
+            assertEquals('1', bits.last(), bits)
+        }
+    }
+
+    @Test
     fun `golden manifest run signatures are exact and collision free`() {
         assertEquals(52, manifest.cards.map { it.rl2 }.toSet().size)
         assertTrue(manifest.cards.any { "-W3-" in "-${it.rl2}-" })
