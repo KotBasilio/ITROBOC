@@ -60,7 +60,7 @@ private data class Grid13GoldenManifest(
     companion object {
         fun load(): Grid13GoldenManifest {
             val text = requireNotNull(
-                Grid13GoldenManifest::class.java.getResource("/barcode-sheets/grid13-v2-golden.json"),
+                Grid13GoldenManifest::class.java.getResource("docs/dev_history/vision/barcodes/grid13-v2-golden.json"),
             ) {
                 "Missing grid13-v2 golden manifest"
             }.readText()
