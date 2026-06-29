@@ -286,9 +286,9 @@ Acceptance criteria
 - App still builds and existing behavior remains intact
 
 Nice-to-have
-- If there is a clean place, also make it easy to later display:
-  - average scan latency in ms, i.e. `FPS 7.8; L120`
-  - accepted vs rejected scans, i.e. `FPS 7.8; L120; R23%`
+- If there is a clean way, also display in the same line:
+  - average scan latency in ms, i.e. line becomes `FPS 7.8; L120`
+  - accepted vs rejected scans, i.e. line becomes `FPS 7.8; L120; R23%`
 
 Notes
 - This is for manual measurement by Archy on device
