@@ -12,22 +12,29 @@ class Grid13BarcodeMeasurementTest {
         val projection = doubleArrayOf(
             0.0,
             100.0, 100.0,
-            0.0,
+            0.0, 0.0,
             100.0, 100.0,
-            0.0,
+            0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0, 0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0, 0.0, 0.0,
             100.0, 100.0,
             0.0,
         )
 
         val measurement = assertNotNull(measureGrid13BarcodeProjection(projection, threshold = 50))
 
-        assertEquals(listOf(2, 2, 2), measurement.blackRunsPx)
-        assertEquals(listOf(1, 1), measurement.whiteGapsPx)
-        assertEquals(listOf(1..2, 4..5, 7..8), measurement.blackRunEdges)
+        assertEquals(listOf(2, 2, 2, 2, 2, 2), measurement.blackRunsPx)
+        assertEquals(listOf(2, 2, 2, 4, 4), measurement.whiteGapsPx)
+        assertEquals(listOf(1..2, 5..6, 9..10, 13..14, 19..20, 25..26), measurement.blackRunEdges)
         assertEquals(1, measurement.activeStartX)
-        assertEquals(8, measurement.activeEndX)
-        assertEquals(8, measurement.activeSpanPx)
+        assertEquals(26, measurement.activeEndX)
+        assertEquals(26, measurement.activeSpanPx)
         assertEquals(13, measurement.grid13FwdBits.length)
+        assertEquals("1010101001001", measurement.grid13FwdBits)
         assertEquals(grid13RunLengthSignature(measurement.grid13FwdBits), measurement.rl2)
         assertEquals(reverseBits(measurement.grid13FwdBits), measurement.grid13RevBits)
         assertTrue(measurement.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")))
@@ -43,16 +50,24 @@ class Grid13BarcodeMeasurementTest {
     fun `ignores tiny edge artifacts before active barcode span`() {
         val projection = doubleArrayOf(
             100.0,
+            0.0, 0.0, 0.0,
+            100.0, 100.0,
             0.0, 0.0,
             100.0, 100.0,
-            0.0,
+            0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0, 0.0, 0.0,
+            100.0, 100.0,
+            0.0, 0.0, 0.0, 0.0,
             100.0, 100.0,
         )
 
         val measurement = assertNotNull(measureGrid13BarcodeProjection(projection, threshold = 50))
 
-        assertEquals(listOf(3..4, 6..7), measurement.blackRunEdges)
-        assertEquals(3, measurement.activeStartX)
+        assertEquals(listOf(4..5, 8..9, 12..13, 16..17, 22..23, 28..29), measurement.blackRunEdges)
+        assertEquals(4, measurement.activeStartX)
     }
 
     @Test
@@ -67,6 +82,31 @@ class Grid13BarcodeMeasurementTest {
             grid13BitsFromProjection(
                 projection = projection,
                 activeSpan = 0..12,
+                threshold = 50,
+            ),
+        )
+    }
+
+    @Test
+    fun `rejects raw grid13 candidates containing black triple or white quadruple runs`() {
+        assertNull(
+            measureGrid13BarcodeProjection(
+                projection = doubleArrayOf(
+                    100.0, 100.0,
+                    0.0, 0.0,
+                    100.0, 100.0,
+                    100.0, 100.0,
+                    100.0, 100.0,
+                    0.0, 0.0,
+                    100.0, 100.0,
+                    0.0, 0.0,
+                    100.0, 100.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    100.0, 100.0,
+                ),
                 threshold = 50,
             ),
         )

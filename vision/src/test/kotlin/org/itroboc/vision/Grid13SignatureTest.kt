@@ -103,4 +103,11 @@ class Grid13SignatureTest {
             grid13RunLengthSignature("1011000110101"),
         )
     }
+
+    @Test
+    fun `flags invalid raw grid13 candidates before run conversion`() {
+        assertTrue(hasInvalidGrid13RunCandidate("1011101001001"))
+        assertTrue(hasInvalidGrid13RunCandidate("1000010101001"))
+        assertFalse(hasInvalidGrid13RunCandidate("1010101001001"))
+    }
 }

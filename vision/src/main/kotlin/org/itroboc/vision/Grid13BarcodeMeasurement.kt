@@ -48,6 +48,9 @@ fun measureGrid13BarcodeProjection(
         activeSpan = activeSpan,
         threshold = threshold,
     )
+    if (hasInvalidGrid13RunCandidate(fwdBits)) {
+        return null
+    }
     val revBits = reverseBits(fwdBits)
 
     return Grid13BarcodeMeasurement(

@@ -45,12 +45,13 @@ class Grid13BarcodeDecoderTest {
     }
 
     @Test
-    fun `low confidence measurement is ambiguous and not silently found`() {
-        val result = decoder.decode(grid13Image("1000000000001"))
+    fun `high confidence threshold keeps valid measurement ambiguous instead of silently found`() {
+        val result = Grid13BarcodeDecoder(minimumFoundConfidence = 1.0)
+            .decode(grid13Image("1010101001001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 
         assertEquals("Low-confidence grid13-v2 measurement", ambiguous.reason)
-        assertEquals(listOf("bfm1001"), ambiguous.candidates.map { it.rawSignature })
+        assertEquals(listOf("bfm1549"), ambiguous.candidates.map { it.rawSignature })
         assertEquals("grid13-v2", ambiguous.debug?.signatureModel)
         assertEquals(true, ambiguous.debug?.sentinelValid)
     }
@@ -58,14 +59,14 @@ class Grid13BarcodeDecoderTest {
     @Test
     fun `invalid sentinel pattern is normalized before producing a signature`() {
         val result = Grid13BarcodeDecoder(minimumFoundConfidence = 0.0)
-            .decode(grid13Image("1100000000001"))
+            .decode(grid13Image("1101010101001"))
         val found = assertIs<BarcodeDecodeResult.Found>(result)
         val debug = assertNotNull(found.signature.debug)
 
-        assertEquals("bfm1001", found.signature.rawSignature)
-        assertEquals("1100000000001", debug.grid13FwdBitsPreSentinel)
-        assertEquals("1000000000001", debug.grid13FwdBits)
-        assertEquals("B1-W11-B1", debug.rl2)
+        assertEquals("bfm12A9", found.signature.rawSignature)
+        assertEquals("1101010101001", debug.grid13FwdBitsPreSentinel)
+        assertEquals("1001010101001", debug.grid13FwdBits)
+        assertEquals("B1-W2-B1-W1-B1-W1-B1-W1-B1-W2-B1", debug.rl2)
         assertEquals(false, debug.sentinelValid)
         assertEquals(listOf("bit11 must be white"), debug.sentinelIssues)
         assertEquals(true, debug.sentinelRepairApplied)
@@ -75,12 +76,20 @@ class Grid13BarcodeDecoderTest {
     @Test
     fun `normalized sentinel candidate can remain ambiguous because of confidence`() {
         val result = Grid13BarcodeDecoder(minimumFoundConfidence = 1.0)
-            .decode(grid13Image("1100000000001"))
+            .decode(grid13Image("1101010101001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 
         assertEquals("Low-confidence grid13-v2 measurement", ambiguous.reason)
-        assertEquals(listOf("bfm1001"), ambiguous.candidates.map { it.rawSignature })
+        assertEquals(listOf("bfm12A9"), ambiguous.candidates.map { it.rawSignature })
         assertEquals(true, ambiguous.debug?.sentinelRepairApplied)
+    }
+
+    @Test
+    fun `raw candidate with black triple or white quadruple is rejected before sentinel repair`() {
+        val result = decoder.decode(grid13Image("1011000010101"))
+        val notFound = assertIs<BarcodeDecodeResult.NotFound>(result)
+
+        assertEquals("No grid13-v2 barcode measurement produced", notFound.reason)
     }
 
     private fun grid13Image(bits: String): GrayImage {

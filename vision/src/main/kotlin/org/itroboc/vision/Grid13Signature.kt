@@ -56,6 +56,11 @@ fun normalizeGrid13Sentinels(bits13: String): String {
     }
 }
 
+fun hasInvalidGrid13RunCandidate(bits13: String): Boolean {
+    validateGrid13Bits(bits13)
+    return "111" in bits13 || "0000" in bits13
+}
+
 fun grid13RunLengthSignature(bits13: String): String {
     validateGrid13Bits(bits13)
     val runs = mutableListOf<String>()
