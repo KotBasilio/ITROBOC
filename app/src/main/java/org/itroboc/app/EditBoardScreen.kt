@@ -39,7 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import org.itroboc.core.*
-import org.itroboc.vision.BarcodeDecodeResult
+import org.itroboc.vision.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -128,7 +128,7 @@ fun EditBoardScreen(
     }
 
     val pendingScanRequest = remember { AtomicBoolean(true) }
-    val frameDecoder = remember { AdminEditCameraFrameDecoder() }
+    val frameDecoder = remember { AdminEditCameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
 
     fun onSeatClick(seat: Seat) {
         val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
