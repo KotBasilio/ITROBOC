@@ -239,3 +239,92 @@ Unknown signatures suppressed: 7
 - A TD can tell when the scanner is seeing unknown codes.
 
 This ticket is lower priority than debounce and pure rule extraction.
+
+---
+
+## Ticket 5 — Show scans-per-second in TD::EditBoard::StatusArea
+
+Goal
+Add a lightweight live scans-per-second indicator to TD::EditBoard::StatusArea so Archy can run the app on device and observe current scan throughput during real camera use.
+
+Why
+Before optimizing Grid13 scanning further, we want an on-screen performance signal grounded in actual runtime behavior. This should help compare builds and scanner changes quickly during manual playtesting.
+
+Scope
+- TD::EditBoard only
+- Show current scans-per-second in StatusArea
+- Keep UI simple and readable
+- No deep redesign of the screen
+- No persistence needed
+
+Definition
+- “scan” here means one completed decoder attempt / analysis cycle that reaches the current TD stream-scanning result path
+- Prefer measuring actual completed scan cycles, not camera frame delivery rate
+- If there is already a natural event where a scan result is emitted, hook into that
+
+Requested behavior
+- Add a text line in StatusArea, for example:
+  - `FPS 7.8`
+  - that short line meaning not literally `frames per second`, but `Scan rate: 7.8 / s`
+- Update continuously while stream scanning is active
+- Smooth the value enough to avoid wild flicker
+  - recommended: rolling 1-second window, or EMA-style smoothing
+- When no recent scans happened, show `No scans`
+- Keep formatting stable to one decimal place
+
+Implementation guidance
+- Keep logic local and simple
+- Prefer a small UI-facing state holder or helper rather than scattering timing code
+- Avoid polluting core domain logic with Android/UI timing concerns
+- If possible, measure timestamps at the point where scan results are already processed in TD::EditBoard flow
+- Make sure recomposition churn stays reasonable
+
+Acceptance criteria
+- While TD stream scanning is running, StatusArea shows live scans-per-second
+- The number changes in response to real runtime throughput
+- It reflects decoder attempt throughput, not just camera preview FPS
+- App still builds and existing behavior remains intact
+
+Nice-to-have
+- If there is a clean place, also make it easy to later display:
+  - average scan latency in ms, i.e. `FPS 7.8; L120`
+  - accepted vs rejected scans, i.e. `FPS 7.8; L120; R23%`
+
+Notes
+- This is for manual measurement by Archy on device
+- Simplicity is preferred over overengineering
+- Preserve existing UI style unless a tiny label addition needs minor spacing tweaks
+
+---
+
+## EditBoard Tickets rehash / backlog 
+
+EBT-1. Clarify/remove signatureFor vs viewedAs:
+   EditBoard uses viewedAs(mode). Add tests for viewedAs. Rename or remove signatureFor if it represents only debug reverseSignature.
+
+EBT-2. Complete-board mode:
+   stop scan mutations when board complete and show large PBN in center.
+
+EBT-3. Preserve auto-fill status:
+   do not overwrite the fourth-hand auto-fill message.
+
+EBT-4. Add stream debounce:
+   suppress repeated same token/card while it remains visible.
+
+EBT-5. Extract EditBoard reducer:
+   pure-test add, duplicate, auto-advance, auto-fill, clear-hand, clear-board, board-complete rules.
+
+EBT-6. Clear stale UI feedback:
+   after Clear hand / Clear board, update Status and clear Last scanned if appropriate.
+
+EBT-7. Use semantic boardComplete helper in UI:
+   prefer BoardProgressSummary.boardComplete or equivalent over raw totalCardCount == 52.
+
+EBT-8. Show scans-per-second.
+
+---
+
+## EditBoard Tickets Backlog Progress
+
+MOVE `EBT` TICKETS HERE ONCE DONE.
+
