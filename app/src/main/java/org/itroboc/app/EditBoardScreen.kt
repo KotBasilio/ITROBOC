@@ -70,7 +70,7 @@ fun EditBoardScreen(
     val boardNumber = boardEditState.boardNumber
     val boardState = boardEditState.boardState
     val selectedSeat = boardEditState.selectedSeat
-    val isBoardComplete = boardState.totalCardCount() == BoardState.FULL_BOARD_SIZE
+    val isBoardComplete = BoardProgressSummary.from(boardState).boardComplete
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
