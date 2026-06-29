@@ -3,7 +3,6 @@ package org.itroboc.core
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 class EditBoardReducerTest {
 
@@ -42,7 +41,7 @@ class EditBoardReducerTest {
     }
 
     @Test
-    fun `adding to a complete hand does nothing`() {
+    fun `adding to a complete hand keeps cards intact and auto-advances`() {
         var board = BoardState()
         val cards = Rank.entries.map { CardId(Suit.SPADES, it) }
         cards.forEach { board = board.addCard(Seat.NORTH, it) }
@@ -52,7 +51,9 @@ class EditBoardReducerTest {
         val update = EditBoardReducer.applyScannedCard(state, newCard, "sig2")
 
         assertEquals(13, update.state.boardState.totalCardCount())
-        assertEquals(state, update.state)
+        assertEquals(Seat.EAST, update.state.selectedSeat)
+        assertEquals(board, update.state.boardState)
+        assertEquals("Hand North already complete. Auto-advancing to East.", update.message)
     }
 
     @Test
