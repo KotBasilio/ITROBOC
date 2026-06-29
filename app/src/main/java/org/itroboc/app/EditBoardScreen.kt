@@ -69,10 +69,33 @@ fun EditBoardScreen(
     val boardNumber = boardEditState.boardNumber
     val boardState = boardEditState.boardState
     val selectedSeat = boardEditState.selectedSeat
+    val isBoardComplete = boardState.totalCardCount() == BoardState.FULL_BOARD_SIZE
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
     var lastScannedCard by remember { mutableStateOf<CardId?>(null) }
+    
+    // EBT-4: Debounce state
+    var lastRawSignature by remember { mutableStateOf<String?>(null) }
+    var lastScanTimeMillis by remember { mutableLongStateOf(0L) }
+    val debounceWindowMillis = 1000L
+
+    // EBT-T4: Unknown signature throttling
+    var unknownSignatureCount by remember { mutableIntStateOf(0) }
+    var lastUnknownMessageTimeMillis by remember { mutableLongStateOf(0L) }
+    val unknownThrottleMillis = 3000L
+
+    // EBT-8: Scan rate measurement
+    var lastScanRates by remember { mutableStateOf(listOf<Long>()) }
+    var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
+    
+    // Update FPS every second
+    LaunchedEffect(lastScanTimeMillis) {
+        val now = System.currentTimeMillis()
+        val oneSecondAgo = now - 1000L
+        lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
+        scansPerSecond = lastScanRates.size.toDouble()
+    }
 
     val context = LocalContext.current
     var hasCameraPermission by remember {
@@ -100,91 +123,52 @@ fun EditBoardScreen(
     val pendingScanRequest = remember { AtomicBoolean(true) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder() }
 
-    fun performAutoFillIfPossible(currentEditState: BoardEditState, seat: Seat): BoardEditState {
-        val currentBoardState = currentEditState.boardState
-        val selectedHand = currentBoardState.handOf(seat)
-        val otherSeats = Seat.entries.filter { it != seat }
-        val otherHandsComplete = otherSeats.all { currentBoardState.handOf(it).isComplete() }
-
-        if (selectedHand.count() == 0 && otherHandsComplete) {
-            val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }.toSet()
-            val assignedCards = currentBoardState.allCards()
-            val remainingCards = allCards - assignedCards
-
-            if (remainingCards.size == 13) {
-                var autoFilledBoard = currentBoardState
-                remainingCards.forEach { card ->
-                    autoFilledBoard = autoFilledBoard.addCard(seat, card)
-                }
-                lastResultMessage = "${seat.displayName} auto-filled from remaining 13 cards. Board complete."
-                return currentEditState.copy(boardState = autoFilledBoard)
-            }
-        }
-        return currentEditState
-    }
-
     fun onSeatClick(seat: Seat) {
         val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
-        val autoFilledState = performAutoFillIfPossible(nextBoardEditState, seat)
-        onBoardEditStateChange(autoFilledState)
+        val update = EditBoardReducer.tryAutoFillFourthHand(nextBoardEditState)
+        onBoardEditStateChange(update.state)
+        if (update.message != null) {
+            lastResultMessage = update.message
+        }
     }
 
     fun handleScan(signature: String) {
-        val accumulator = TdScanAccumulator(deckProfile, boardState)
-        val report = accumulator.scan(selectedSeat, signature)
-        
-        val newBoardState = report.accumulator.boardState
-        val isHandCompleteNow = newBoardState.handOf(selectedSeat).isComplete()
-        
-        var nextSeat = selectedSeat
-        var autoAdvanceMessage = ""
-        
-        if (isHandCompleteNow && (report.result is TdScanResult.Added || report.result is TdScanResult.HandAlreadyComplete)) {
-            nextSeat = selectedSeat.next()
-            autoAdvanceMessage = " Auto-advancing to ${nextSeat.displayName}."
-        }
+        if (isBoardComplete) return
 
-        val updatedEditState = boardEditState.copy(
-            boardState = newBoardState,
-            selectedSeat = nextSeat
-        )
-        
-        val finalizedState = if (nextSeat != selectedSeat) {
-            performAutoFillIfPossible(updatedEditState, nextSeat)
-        } else {
-            updatedEditState
+        // EBT-4: Simple stream debounce
+        val now = System.currentTimeMillis()
+        if (signature == lastRawSignature && (now - lastScanTimeMillis) < debounceWindowMillis) {
+            return
         }
+        lastRawSignature = signature
+        lastScanTimeMillis = now
 
-        onBoardEditStateChange(finalizedState)
+        val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
+            // EBT-T4: Handle unknown signature with throttling
+            unknownSignatureCount++
+            if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
+                lastResultMessage = "Unknown signature seen: $signature (Total: $unknownSignatureCount). Check orientation/profile."
+                lastUnknownMessageTimeMillis = now
+            }
+            return
+        }, signature)
         
-        lastResultMessage = when (val result = report.result) {
-            is TdScanResult.Added -> {
-                lastScannedCard = result.card
-                "Added ${result.card} to ${selectedSeat.displayName} via $signature.$autoAdvanceMessage"
-            }
-            is TdScanResult.AlreadyInThisHand -> {
-                lastScannedCard = result.card
-                "OK in ${selectedSeat.displayName}: ${result.card}."
-            }
-            is TdScanResult.AlreadyOnBoard -> {
-                lastScannedCard = result.card
-                "Skipped: ${result.card} -- ${result.existingSeat.displayName} has it."
-            }
-            is TdScanResult.UnknownSignature -> lastResultMessage
-            is TdScanResult.HandAlreadyComplete -> "Hand ${result.seat.displayName} already complete.$autoAdvanceMessage"
+        onBoardEditStateChange(update.state)
+        lastResultMessage = update.message
+        if (update.lastScannedCard != null) {
+            lastScannedCard = update.lastScannedCard
         }
     }
 
     fun onClearClick() {
         val selectedHand = boardState.handOf(selectedSeat)
         if (selectedHand.count() > 0) {
-            // Clear only hand
-            val newHands = Seat.entries.associateWith { seat ->
-                if (seat == selectedSeat) HandState() else boardState.handOf(seat)
-            }
-            onBoardEditStateChange(boardEditState.copy(boardState = BoardState(newHands)))
+            val update = EditBoardReducer.clearSelectedHand(boardEditState)
+            onBoardEditStateChange(update.state)
+            lastResultMessage = update.message
+            // EBT-6: Clear last scanned card on clear
+            lastScannedCard = null
         } else {
-            // Show clear board dialog
             showClearBoardDialog = true
         }
     }
@@ -197,7 +181,10 @@ fun EditBoardScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onBoardEditStateChange(boardEditState.copy(boardState = BoardState()))
+                        val update = EditBoardReducer.clearBoard(boardEditState)
+                        onBoardEditStateChange(update.state)
+                        lastResultMessage = update.message
+                        lastScannedCard = null
                         showClearBoardDialog = false
                     }
                 ) {
@@ -238,6 +225,7 @@ fun EditBoardScreen(
                 boardState = boardState,
                 orientationMode = orientationMode,
                 message = lastResultMessage,
+                fps = scansPerSecond,
                 modifier = Modifier.weight(2.5f)
             )
         }
@@ -259,7 +247,9 @@ fun EditBoardScreen(
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
-                if (hasCameraPermission) {
+                if (isBoardComplete) {
+                    BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
+                } else if (hasCameraPermission) {
                     CameraPreview(
                         consumeScanRequest = { pendingScanRequest.get() },
                         frameDecoder = frameDecoder,
@@ -313,6 +303,40 @@ fun EditBoardScreen(
                 boardState = boardState,
                 boardNumber = boardNumber,
                 modifier = Modifier.weight(1.5f)
+            )
+        }
+    }
+}
+
+@Composable
+fun BoardCompleteView(boardState: BoardState, boardNumber: Int) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1B5E20).copy(alpha = 0.9f))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Board Complete",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        val pbn = PbnExporter.export(boardState, PbnExportOptions(boardNumber = boardNumber))
+        Surface(
+            color = Color.Black.copy(alpha = 0.5f),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = pbn,
+                color = Color(0xFF81C784),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(16.dp),
+                lineHeight = 24.sp
             )
         }
     }
@@ -462,6 +486,7 @@ fun StatusArea(
     boardState: BoardState,
     orientationMode: BarcodeOrientationMode,
     message: String?,
+    fps: Double,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -471,12 +496,21 @@ fun StatusArea(
         contentAlignment = Alignment.TopStart
     ) {
         Column {
-            Text(
-                "Status",
-                color = Color(0xFF4CAF50),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Status",
+                    color = Color(0xFF4CAF50),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                val fpsText = if (fps > 0) "FPS %.1f".format(fps) else "No scans"
+                Text(
+                    text = fpsText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
             
             val totalCount = boardState.totalCardCount()
             Text(
