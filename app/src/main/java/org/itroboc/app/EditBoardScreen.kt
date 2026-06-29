@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
 import org.itroboc.core.*
 import org.itroboc.vision.BarcodeDecodeResult
 import java.util.concurrent.Executors
@@ -88,13 +89,19 @@ fun EditBoardScreen(
     // EBT-8: Scan rate measurement
     var lastScanRates by remember { mutableStateOf(listOf<Long>()) }
     var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
-    
-    // Update FPS every second
-    LaunchedEffect(lastScanTimeMillis) {
-        val now = System.currentTimeMillis()
-        val oneSecondAgo = now - 1000L
-        lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
-        scansPerSecond = lastScanRates.size.toDouble()
+
+    // Refresh the rolling 1s scan-rate window even when scanning pauses.
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = System.currentTimeMillis()
+            val oneSecondAgo = now - 1000L
+            val recentScanRates = lastScanRates.filter { it > oneSecondAgo }
+            if (recentScanRates != lastScanRates) {
+                lastScanRates = recentScanRates
+            }
+            scansPerSecond = recentScanRates.size.toDouble()
+            delay(250L)
+        }
     }
 
     val context = LocalContext.current
@@ -142,6 +149,9 @@ fun EditBoardScreen(
         }
         lastRawSignature = signature
         lastScanTimeMillis = now
+        val oneSecondAgo = now - 1000L
+        lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
+        scansPerSecond = lastScanRates.size.toDouble()
 
         val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
             // EBT-T4: Handle unknown signature with throttling
