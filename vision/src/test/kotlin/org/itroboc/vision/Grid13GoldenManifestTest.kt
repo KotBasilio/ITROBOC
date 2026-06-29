@@ -39,6 +39,14 @@ class Grid13GoldenManifestTest {
     }
 
     @Test
+    fun `golden manifest forward and reverse bits encode to their bfm and brm signatures`() {
+        manifest.cards.forEach { card ->
+            assertEquals(forwardMealSignature(card.grid13FwdBits), card.rawSignature, card.cardId)
+            assertEquals(reverseMealSignature(card.grid13RevBits), card.reverseSignature, card.cardId)
+        }
+    }
+
+    @Test
     fun `golden manifest run signatures are exact and collision free`() {
         assertEquals(52, manifest.cards.map { it.rl2 }.toSet().size)
         assertTrue(manifest.cards.any { "-W3-" in "-${it.rl2}-" })
