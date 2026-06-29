@@ -5,7 +5,7 @@ This note is the durable implementation handoff for ITROBOC's current barcode si
 Related deeper docs:
 
 * `docs/dev_history/vision/grid13_design.md` — original design and rationale.
-* `docs/dev_history/vision/grid13_v2_barcode_model.md` — active v2 design spec.
+* `docs/dev_history/vision/grid13_v2_barcode_model.md` — this doc, active v2 design spec.
 * `docs/dev_history/vision/barcodes/deep-research-report.md` — source research table and algorithm notes.
 * `docs/dev_history/admin-edit/admin_edit.md` — Admin::Edit calibration workflow and debug-log behavior.
 
@@ -42,6 +42,109 @@ The current golden manifest's `rl2` field is derived from exact runs in
 has no observed `B3`, and is collision-free for the 52 forward signatures.
 Measured widths remain available independently as `blackRunsPx` and
 `whiteGapsPx`.
+
+## Status
+
+This document describes the current working barcode model for ITROBOC.
+
+`grid13-v2` is the active raw-signature model for observed physical barcode marks on cards.
+
+Core principle:
+
+> Visible runs are evidence; Grid13 cells are identity; `bfm`/`brm` prefixes preserve orientation.
+
+The scanner outputs raw signatures. Deck Profiles map those raw signatures to semantic card IDs such as `SA`, `DQ`, or `C7`.
+
+The decoder must not directly know card meaning.
+
+## Product context
+
+ITROBOC reads barcode-like markings printed on physical bridge playing cards. The app is designed around this separation:
+
+```text
+camera crop -> barcode decoder -> raw signature -> Deck Profile -> CardId -> bridge hand / PBN
+```
+
+The raw signature should be stable, compact, and suitable for display as a clickable Admin alias chip.
+
+## Grid13 decoding overview
+
+The intended decoder flow is:
+
+1. Receive a barcode crop or ROI.
+2. Convert image data into a 1D ink signal.
+3. Detect black/ink runs and white gaps.
+4. Find the active span from the left boundary black region to the right boundary black region.
+5. Divide the active span into 13 equal cells.
+6. Threshold each cell into `1` for ink / black, or `0` for no ink / white.
+7. Apply Grid13 control-bit normalization.
+8. Encode the 13-bit payload as a compact alias token.
+
+Example:
+
+```text
+bits: 1001010100101
+hex:  12A5
+alias: bfm12A5
+```
+
+## Bit numbering
+
+The 13 visual cells are numbered left-to-right for visual reasoning:
+
+```text
+cell0 cell1 ... cell12
+```
+
+For integer/hex encoding, the rightmost cell is the least significant bit:
+
+```text
+leftmost visual cell  -> bit12
+rightmost visual cell -> bit0
+```
+
+So the 13-bit value is packed into a 16-bit integer with the top three bits unused.
+
+## Sentinel / control-bit structure
+
+A valid Grid13 barcode is expected to have this outer structure:
+
+```text
+10.........01
+```
+
+That means:
+
+- `bit12 = 1` — left boundary black/control cell
+- `bit11 = 0` — white gap after left boundary
+- `bit1  = 0` — white gap before right boundary
+- `bit0  = 1` — right boundary black/control cell
+
+Numeric mask:
+
+```kotlin
+(value and 0x1803) == 0x1001
+```
+
+## Control-bit normalization policy
+
+ITROBOC intentionally uses control-bit normalization.
+
+If the measured Grid13 candidate is close enough to be useful, but its four outer control cells are malformed, the decoder may normalize those four cells to the expected sentinel structure:
+
+```text
+10.........01
+```
+
+This is the “proper sandwich” policy: if the meal looks incomplete but the detected barcode evidence is otherwise coherent, make a proper sandwich and keep the warning.
+
+This must not hide evidence. The decoder/debug model should retain:
+
+- pre-normalization bits
+- post-normalization bits
+- whether sentinel repair was applied
+- why repair was applied
+- warnings / confidence
 
 ## Grid13 Procedure
 
@@ -105,13 +208,13 @@ Bad:
 canonical = min(forward, reverse)
 ```
 
-Why: reverse-canonicalization reduced uniqueness in analysis. The app should encourage stable scan orientation and use `bfm...` as the normal assignable alias.
+Why: reverse-canonicalization reduced uniqueness in analysis.
 
 Current rule:
 
 * assign/store `rawSignature`, usually `bfmHHHH`;
-* log `reverseSignature`, usually `brmHHHH`, for diagnosis;
-* do not automatically add the reverse token as an alias.
+* assign/store `reverseSignature`, usually `brmHHHH`;
+* automatically add the reverse token as an alias.
 
 ## Deck Profile Boundary
 
@@ -134,8 +237,7 @@ Current profile model notes:
 * Custom calibration profiles default to `grid13-v2`.
 * The default built-in profile is currently `builtin-observed-v1`.
 * `builtin-observed-v1` contains `bfm...` forward aliases and `brm...` reverse aliases for retained cards.
-* The built-in demo profile is explicitly synthetic: `synthetic-demo-bridge52-v1`.
-* The built-in demo profile's `0x1001`-style signatures are not real physical deck mappings.
+* The built-in demo profile is explicitly synthetic: `synthetic-demo-bridge52-v1` -- not real physical deck mappings.
 
 ## Current Admin::Edit Flow
 
