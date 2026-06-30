@@ -2,12 +2,12 @@ package org.itroboc.vision
 
 /**
  * An optimized decoder for the "Verdict" path.
- * 
- * Phase 1: Seam splitting. Initially delegates to [Grid13BarcodeDecoder] 
+ *
+ * Phase 1: Seam splitting. Initially delegates to a fuller decoder
  * but strips out debug information to separate call sites.
  */
 class Grid13VerdictDecoder(
-    private val fullDecoder: Grid13BarcodeDecoder = Grid13BarcodeDecoder()
+    private val fullDecoder: BarcodeDecoder = Grid13BarcodeDecoder()
 ) : BarcodeDecoder {
 
     override fun decode(image: GrayImage): BarcodeDecodeResult {
