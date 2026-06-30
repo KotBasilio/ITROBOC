@@ -9,7 +9,7 @@ import org.itroboc.vision.BarcodeDebugInfo
 import org.itroboc.vision.BarcodeDecoder
 import org.itroboc.vision.BarcodeRoi
 import org.itroboc.vision.DetectedSignature
-import org.itroboc.vision.Grid13BarcodeDecoder
+import org.itroboc.vision.Grid13SlowDecoder
 import org.itroboc.vision.GrayImage
 import java.io.File
 import kotlin.math.roundToInt
@@ -62,7 +62,7 @@ internal sealed interface CameraScanOutcome {
 }
 
 internal class AdminEditCameraFrameDecoder(
-    private val decoder: BarcodeDecoder = Grid13BarcodeDecoder(),
+    private val decoder: BarcodeDecoder = Grid13SlowDecoder(),
     private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
 ) {
     fun decode(imageProxy: ImageProxy): CameraScanOutcome {

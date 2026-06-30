@@ -7,7 +7,7 @@ package org.itroboc.vision
  * but strips out debug information to separate call sites.
  */
 class Grid13VerdictDecoder(
-    private val fullDecoder: BarcodeDecoder = Grid13BarcodeDecoder()
+    private val fullDecoder: BarcodeDecoder = Grid13SlowDecoder()
 ) : BarcodeDecoder {
 
     override fun decode(image: GrayImage): BarcodeDecodeResult {

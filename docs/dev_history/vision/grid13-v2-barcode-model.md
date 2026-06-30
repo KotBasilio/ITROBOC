@@ -166,7 +166,7 @@ Current implementation lives mainly in `:vision`:
 * `Grid13Signature.kt`
 * `Grid13MeasurementPrimitives.kt`
 * `Grid13BarcodeMeasurement.kt`
-* `Grid13BarcodeDecoder.kt`
+* `Grid13SlowDecoder.kt`
 
 ## Raw Signature Format
 
@@ -247,7 +247,7 @@ Admin::Edit currently uses Grid13 for one-frame calibration scans:
 CameraX frame
 -> centered guide ROI
 -> luma GrayImage
--> Grid13BarcodeDecoder
+-> Grid13SlowDecoder
 -> BarcodeDecodeResult
 -> DeckProfileEditor.assign(rawSignature, selectedCard)
 ```

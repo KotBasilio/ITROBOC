@@ -70,7 +70,7 @@ class Grid13VerdictDecoderTest {
 
     @Test
     fun `real decoder smoke test matches full verdict shape on found barcode`() {
-        val fullDecoder = Grid13BarcodeDecoder()
+        val fullDecoder = Grid13SlowDecoder()
         val verdictDecoder = Grid13VerdictDecoder(fullDecoder)
         val image = grid13Image("1010101001001")
 
