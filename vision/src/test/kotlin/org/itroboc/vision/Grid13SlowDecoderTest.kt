@@ -6,8 +6,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class Grid13BarcodeDecoderTest {
-    private val decoder = Grid13BarcodeDecoder()
+class Grid13SlowDecoderTest {
+    private val decoder = Grid13SlowDecoder()
 
     @Test
     fun `decodes grid13 image into forward meal signature`() {
@@ -46,7 +46,7 @@ class Grid13BarcodeDecoderTest {
 
     @Test
     fun `high confidence threshold keeps valid measurement ambiguous instead of silently found`() {
-        val result = Grid13BarcodeDecoder(minimumFoundConfidence = 1.0)
+        val result = Grid13SlowDecoder(minimumFoundConfidence = 1.0)
             .decode(grid13Image("1010101001001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 
@@ -58,7 +58,7 @@ class Grid13BarcodeDecoderTest {
 
     @Test
     fun `invalid sentinel pattern is normalized before producing a signature`() {
-        val result = Grid13BarcodeDecoder(minimumFoundConfidence = 0.0)
+        val result = Grid13SlowDecoder(minimumFoundConfidence = 0.0)
             .decode(grid13Image("1101010101001"))
         val found = assertIs<BarcodeDecodeResult.Found>(result)
         val debug = assertNotNull(found.signature.debug)
@@ -75,7 +75,7 @@ class Grid13BarcodeDecoderTest {
 
     @Test
     fun `normalized sentinel candidate can remain ambiguous because of confidence`() {
-        val result = Grid13BarcodeDecoder(minimumFoundConfidence = 1.0)
+        val result = Grid13SlowDecoder(minimumFoundConfidence = 1.0)
             .decode(grid13Image("1101010101001"))
         val ambiguous = assertIs<BarcodeDecodeResult.Ambiguous>(result)
 

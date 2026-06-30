@@ -1,6 +1,6 @@
 package org.itroboc.vision
 
-class Grid13BarcodeDecoder(
+class Grid13SlowDecoder(
     private val minimumFoundConfidence: Double = 0.60,
 ) : BarcodeDecoder {
     init {
