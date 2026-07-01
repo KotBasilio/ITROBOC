@@ -106,12 +106,13 @@ fun EditBoardScreen(
                 if (cumulative > 1000L) break
                 pruned.add(delta)
             }
-            scanDeltas = pruned.asReversed()
+            val retainedDeltas = pruned.asReversed()
+            scanDeltas = retainedDeltas
 
             // Compute average rate while active, otherwise expose idle loop count.
-            if (scanDeltas.isNotEmpty()) {
-                val avgDelta = scanDeltas.average()
-                scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
+            if (retainedDeltas.isNotEmpty()) {
+                val avgDelta = retainedDeltas.average()
+                scansPerSecond = if (avgDelta > 0) cumulative / avgDelta else 0.0
                 scansIdleCount = 0
             } else {
                 scansPerSecond = - scansIdleCount.toDouble()
