@@ -45,7 +45,7 @@ class Grid13SlowDecoder(
 
 const val GRID13_SIGNATURE_MODEL: String = "grid13-v2"
 
-private fun Grid13BarcodeMeasurement.toDetectedSignature(
+private fun Grid13SlowBarcodeMeasurement.toDetectedSignature(
     imageHeight: Int,
     threshold: Int,
     sentinelCheck: Grid13SentinelCheck,

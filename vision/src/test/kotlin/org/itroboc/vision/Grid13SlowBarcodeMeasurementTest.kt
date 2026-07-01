@@ -6,7 +6,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class Grid13BarcodeMeasurementTest {
+class Grid13SlowBarcodeMeasurementTest {
     @Test
     fun `measures projection into runs span grid13 and signatures`() {
         val projection = doubleArrayOf(
