@@ -50,7 +50,7 @@ fun EditBoardScreenPreview() {
         EditBoardScreen(
             boardEditState = BoardEditState(boardNumber = 7),
             deckProfile = BuiltInDeckProfiles.defaultProfile(),
-            orientationMode = BarcodeOrientationMode.BFM,
+            orientationMode = BarcodeOrientationMode.BRM,
             onOrientationModeChange = {},
             onBoardEditStateChange = {},
             onBack = {}
@@ -86,20 +86,35 @@ fun EditBoardScreen(
     var lastUnknownMessageTimeMillis by remember { mutableLongStateOf(0L) }
     val unknownThrottleMillis = 3000L
 
-    // EBT-8: Scan rate measurement
-    var lastScanRates by remember { mutableStateOf(listOf<Long>()) }
-    var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
+    // EBT-8: Scan rate measurement using deltas
+    var scanDeltas by remember { mutableStateOf<List<Long>>(emptyList()) }
+    var scansPerSecond by remember { mutableDoubleStateOf(42.0) }
+    var scansIdleCount by remember { mutableLongStateOf(0L) }
+    val initialNow = System.currentTimeMillis()
+    var lastScanTimestamp by remember { mutableStateOf(initialNow) }
 
-    // Refresh the rolling 1s scan-rate window even when scanning pauses.
     LaunchedEffect(Unit) {
         while (true) {
-            val now = System.currentTimeMillis()
-            val oneSecondAgo = now - 1000L
-            val recentScanRates = lastScanRates.filter { it > oneSecondAgo }
-            if (recentScanRates != lastScanRates) {
-                lastScanRates = recentScanRates
+            // Fade-out: prune deltas that correspond to scans older than 1s
+            // We reconstruct a timeline by walking backwards from now
+            var cumulative = 0L
+            val pruned = mutableListOf<Long>()
+            for (delta in scanDeltas.asReversed()) {
+                cumulative += delta
+                if (cumulative > 1000L) break
+                pruned.add(delta)
             }
-            scansPerSecond = recentScanRates.size.toDouble()
+            scanDeltas = pruned.asReversed()
+
+            // Compute average rate
+            if (scanDeltas.isNotEmpty()) {
+                val avgDelta = scanDeltas.average()
+                scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
+                scansIdleCount = 0
+            } else {
+                scansPerSecond = - scansIdleCount.toDouble()
+                scansIdleCount++
+            }
             delay(250L)
         }
     }
@@ -232,7 +247,7 @@ fun EditBoardScreen(
                 boardState = boardState,
                 orientationMode = orientationMode,
                 message = lastResultMessage,
-                fps = scansPerSecond,
+                sps = scansPerSecond,
                 modifier = Modifier.weight(2.5f)
             )
         }
@@ -261,13 +276,11 @@ fun EditBoardScreen(
                         consumeScanRequest = { pendingScanRequest.get() },
                         frameDecoder = frameDecoder,
                         onScanProcessed = { scanOutcome ->
-                            // EBT-8: Measure decoder throughput (every Decoded outcome counts)
-                            if (scanOutcome is CameraScanOutcome.Decoded) {
-                                val now = System.currentTimeMillis()
-                                val oneSecondAgo = now - 1000L
-                                lastScanRates = (lastScanRates + now).filter { it > oneSecondAgo }
-                                scansPerSecond = lastScanRates.size.toDouble()
-                            }
+                            // EBT-8: Measure decoder throughput (every scan counts)
+                            val now = System.currentTimeMillis()
+                            val delta = now - lastScanTimestamp
+                            scanDeltas = scanDeltas + delta
+                            lastScanTimestamp = now
 
                             when (scanOutcome) {
                                 is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
@@ -501,7 +514,7 @@ fun StatusArea(
     boardState: BoardState,
     orientationMode: BarcodeOrientationMode,
     message: String?,
-    fps: Double,
+    sps: Double,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -511,27 +524,19 @@ fun StatusArea(
         contentAlignment = Alignment.TopStart
     ) {
         Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Status",
-                    color = Color(0xFF4CAF50),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                val fpsText = if (fps > 0) "FPS %.1f".format(fps) else "No scans"
-                Text(
-                    text = fpsText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
-                )
-            }
-            
             val totalCount = boardState.totalCardCount()
             Text(
-                text = "Cards: $totalCount/52 | Mode: ${orientationMode.label}",
+                text = "Cards: $totalCount/52",
+                fontSize = 40.sp,
+                color = Color(0xFF4CAF50),
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            val fpsText = if (sps > 0.0) "FPS %4.1f".format(sps) else "IDLE %.0f".format(- sps)
+            Text(
+                text = "Mode: ${orientationMode.label} | " + fpsText,
                 fontSize = 24.sp,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray
             )
 
