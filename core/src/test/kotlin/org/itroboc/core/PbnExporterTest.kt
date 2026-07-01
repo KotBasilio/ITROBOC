@@ -24,12 +24,13 @@ class PbnExporterTest {
     }
 
     @Test
-    fun `exports pbn with optional metadata and dealer rotation`() {
+    fun `exports pbn with optional metadata dealer rotation and vulnerability`() {
         val expected = """
             [Event "Club Duplicate"]
             [Site "Budapest"]
             [Board "12"]
             [Dealer "E"]
+            [Vulnerable "NS"]
             [Deal "E:98765.AKQJT.43.A 432.65432.AKQJ.T ..T9872.KQJ98765 AKQJT.987.65.432"]
         """.trimIndent()
 
@@ -40,6 +41,7 @@ class PbnExporterTest {
                 event = "Club Duplicate",
                 site = "Budapest",
                 dealer = Seat.EAST,
+                vulnerability = BoardVulnerability.NS,
             ),
         )
 

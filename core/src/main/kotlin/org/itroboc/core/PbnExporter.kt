@@ -15,6 +15,7 @@ object PbnExporter {
             options.site?.let { appendLine("[Site \"$it\"]") }
             options.boardNumber?.let { appendLine("[Board \"$it\"]") }
             appendLine("[Dealer \"${options.dealer.symbol}\"]")
+            options.vulnerability?.let { appendLine("[Vulnerable \"${it.pbnValue}\"]") }
             append("[Deal \"${options.dealer.symbol}:$dealValue\"]")
         }
     }
@@ -25,4 +26,5 @@ data class PbnExportOptions(
     val event: String? = "ITROBOC Export",
     val site: String? = "Local",
     val dealer: Seat = Seat.NORTH,
+    val vulnerability: BoardVulnerability? = null,
 )
