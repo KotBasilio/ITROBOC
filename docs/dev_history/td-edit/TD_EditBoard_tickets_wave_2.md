@@ -299,22 +299,18 @@ Notes
 
 ## EditBoard Tickets rehash / backlog and Progress
 
-- [x] EBT-1. Clarify/remove signatureFor vs viewedAs:
-   EditBoard uses viewedAs(mode). Logic extracted to EditBoardReducer.
-- [x] EBT-2. Complete-board mode:
-   stop scan mutations when board complete and show large PBN in center.
-- [x] EBT-3. Preserve auto-fill status:
-   auto-fill message is now returned by the reducer and shown in UI.
+- [x] EBT-1. Clarify viewedAs; remove signatureFor.
+- [x] EBT-2. Complete-board mode.
+- [x] EBT-3. Preserve auto-fill status.
 - [x] EBT-4. Add stream debounce:
    suppress repeated same token/card while it remains visible. 1000ms window implemented.
-- [x] EBT-5. Extract EditBoard reducer:
-   pure-test add, duplicate, auto-advance, auto-fill, clear-hand, clear-board, board-complete rules.
-- [x] EBT-6. Clear stale UI feedback:
-   after Clear hand / Clear board, update Status and clear Last scanned.
-- [x] EBT-7. Use semantic boardComplete helper in UI:
-   BoardCompleteView triggers when boardState.totalCardCount() == 52.
+- [x] EBT-5. Extract EditBoard reducer.
+- [x] EBT-6. Clear stale UI feedback.
+- [x] EBT-7. Use semantic boardComplete helper in UI.
 - [x] EBT-8. Show scans-per-second.
    FPS indicator implemented in StatusArea.
+   Current logic uses recent inter-scan deltas from the EditBoard feed path.
+   `scansIdleCount` is intentionally surfaced through the idle display so startup / camera-off loops remain visible during manual measurement.
 - [x] EBT-T4. UnknownSignature quiet/non-stale:
    Throttled unknown messages (3s) with a count indicator.
 
