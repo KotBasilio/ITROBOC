@@ -358,7 +358,10 @@ fun BoardCompleteView(boardState: BoardState, boardNumber: Int) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(24.dp))
-        val pbn = PbnExporter.export(boardState, PbnExportOptions(boardNumber = boardNumber))
+        val pbn = TdSessionExchange.exportCompleteBoard(
+            boardState = boardState,
+            boardNumber = boardNumber,
+        )
         Surface(
             color = Color.Black.copy(alpha = 0.5f),
             shape = MaterialTheme.shapes.medium
@@ -611,7 +614,10 @@ fun PBNArea(
             )
             
             if (isComplete) {
-                val pbn = PbnExporter.export(boardState, PbnExportOptions(boardNumber = boardNumber))
+                val pbn = TdSessionExchange.exportCompleteBoard(
+                    boardState = boardState,
+                    boardNumber = boardNumber,
+                )
                 Text(
                     text = pbn,
                     style = MaterialTheme.typography.bodySmall,

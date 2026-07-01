@@ -13,6 +13,21 @@ import org.itroboc.core.Seat
 import org.itroboc.core.Suit
 
 internal object TdSessionExchange {
+    fun exportCompleteBoard(
+        boardState: BoardState,
+        boardNumber: Int,
+    ): String {
+        val metadata = DuplicateBoardMetadata.forBoardNumber(boardNumber)
+        return PbnExporter.export(
+            boardState,
+            PbnExportOptions(
+                boardNumber = boardNumber,
+                dealer = metadata.dealer,
+                vulnerability = metadata.vulnerability,
+            ),
+        )
+    }
+
     fun exportCompleteBoards(sessionState: TdSessionState): String? {
         val exportedBoards = sessionState.boards.values
             .asSequence()
@@ -21,14 +36,9 @@ internal object TdSessionExchange {
                 if (!BoardProgressSummary.from(boardEditState.boardState).boardComplete) {
                     return@mapNotNull null
                 }
-                val metadata = DuplicateBoardMetadata.forBoardNumber(boardEditState.boardNumber)
-                PbnExporter.export(
-                    boardEditState.boardState,
-                    PbnExportOptions(
-                        boardNumber = boardEditState.boardNumber,
-                        dealer = metadata.dealer,
-                        vulnerability = metadata.vulnerability,
-                    ),
+                exportCompleteBoard(
+                    boardState = boardEditState.boardState,
+                    boardNumber = boardEditState.boardNumber,
                 )
             }
             .toList()
