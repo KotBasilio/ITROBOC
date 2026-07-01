@@ -1,6 +1,6 @@
 package org.itroboc.app
 
-import org.itroboc.vision.checkGrid13Sentinels
+import org.itroboc.vision.checkGrid13SentinelsSlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -23,8 +23,8 @@ class AdminReadOnlyCardPreviewTest {
 
     @Test
     fun `detects sentinel validity for valid and invalid tokens`() {
-        assertTrue(checkGrid13Sentinels(requireNotNull(grid13BitsFromToken("bfm1549"))).isValid)
-        assertFalse(checkGrid13Sentinels(requireNotNull(grid13BitsFromToken("bfm02A4"))).isValid)
+        assertTrue(checkGrid13SentinelsSlow(requireNotNull(grid13BitsFromToken("bfm1549"))).isValid)
+        assertFalse(checkGrid13SentinelsSlow(requireNotNull(grid13BitsFromToken("bfm02A4"))).isValid)
     }
 
     @Test

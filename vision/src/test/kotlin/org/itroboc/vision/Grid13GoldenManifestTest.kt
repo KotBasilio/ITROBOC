@@ -31,25 +31,25 @@ class Grid13GoldenManifestTest {
             assertTrue(card.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")), card.cardId)
             assertTrue(card.reverseSignature.matches(Regex("^brm[0-9A-F]{4}$")), card.cardId)
             assertEquals(13, card.grid13FwdBits.length, card.cardId)
-            assertEquals(reverseBits(card.grid13FwdBits), card.grid13RevBits, card.cardId)
-            assertEquals(forwardMealSignature(card.grid13FwdBits), card.rawSignature, card.cardId)
-            assertEquals(reverseMealSignature(card.grid13RevBits), card.reverseSignature, card.cardId)
-            assertEquals(grid13RunLengthSignature(card.grid13FwdBits), card.rl2, card.cardId)
+            assertEquals(reverseBitsSlow(card.grid13FwdBits), card.grid13RevBits, card.cardId)
+            assertEquals(forwardMealSignatureSlow(card.grid13FwdBits), card.rawSignature, card.cardId)
+            assertEquals(reverseMealSignatureSlow(card.grid13RevBits), card.reverseSignature, card.cardId)
+            assertEquals(grid13RunLengthSignatureSlow(card.grid13FwdBits), card.rl2, card.cardId)
         }
     }
 
     @Test
     fun `golden manifest forward and reverse bits encode to their bfm and brm signatures`() {
         manifest.cards.forEach { card ->
-            assertEquals(forwardMealSignature(card.grid13FwdBits), card.rawSignature, card.cardId)
-            assertEquals(reverseMealSignature(card.grid13RevBits), card.reverseSignature, card.cardId)
+            assertEquals(forwardMealSignatureSlow(card.grid13FwdBits), card.rawSignature, card.cardId)
+            assertEquals(reverseMealSignatureSlow(card.grid13RevBits), card.reverseSignature, card.cardId)
         }
     }
 
     @Test
     fun `golden manifest rl2 strings match grid13 forward bits exactly`() {
         manifest.cards.forEach { card ->
-            assertEquals(grid13RunLengthSignature(card.grid13FwdBits), card.rl2, card.cardId)
+            assertEquals(grid13RunLengthSignatureSlow(card.grid13FwdBits), card.rl2, card.cardId)
         }
     }
 

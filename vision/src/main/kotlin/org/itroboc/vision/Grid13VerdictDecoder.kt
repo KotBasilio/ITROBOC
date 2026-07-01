@@ -80,23 +80,23 @@ class Grid13VerdictDecoder(
             }
         }
 
-        if (hasInvalidGrid13RunCandidate(fwdBits)) {
+        if (hasInvalidGrid13RunCandidateSlow(fwdBits)) {
             return BarcodeDecodeResult.NotFound("Invalid bit run pattern")
         }
 
         // 5. Sentinel normalization
-        val sentinelCheck = checkGrid13Sentinels(fwdBits)
+        val sentinelCheck = checkGrid13SentinelsSlow(fwdBits)
         val correctedFwdBits = if (sentinelCheck.isValid) {
             fwdBits
         } else {
-            normalizeGrid13Sentinels(fwdBits)
+            normalizeGrid13SentinelsSlow(fwdBits)
         }
 
         // 6. Confidence calculation
         val confidence = calculateConfidence(blackRuns, activeWidth)
 
         val signature = DetectedSignature(
-            rawSignature = forwardMealSignature(correctedFwdBits),
+            rawSignature = forwardMealSignatureSlow(correctedFwdBits),
             confidence = confidence,
             bounds = BarcodeBounds(
                 x = activeSpan.first,

@@ -76,18 +76,21 @@ Good candidates for sharing:
 - `thresholdInkProjection(...)`
 - `extractRuns(...)`
 - `activeSpanFromBlackRuns(...)`
-- `grid13SlowBitsFromProjection(...)`
-- `hasInvalidGrid13RunCandidate(...)`
-- `checkGrid13Sentinels(...)`
-- `normalizeGrid13Sentinels(...)`
 
 This reduces the risk that slow and verdict silently drift in bit derivation.
 
 But this should not be read as "verdict must reuse every slow-path representation."
 
-In particular, I think it is healthy to allow verdict-dedicated helpers such as:
+For example:
 
-- `grid13VerdictBitsFromProjection(...)` returning a compact bit representation
+- `grid13SlowBitsFromProjection(...)`
+- `hasInvalidGrid13RunCandidateSlow(...)`
+- `checkGrid13SentinelsSlow(...)`
+- `normalizeGrid13SentinelsSlow(...)`
+
+I think it is healthy to allow verdict-dedicated helpers such as:
+
+- `grid13FastBitsFromProjection(...)` returning a compact bit representation
 - bitwise sentinel check / normalization helpers
 - bitwise reverse / meal-signature conversion helpers
 - bitwise invalid-run checks for `111` / `0000`-style gates

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.CardId
 import org.itroboc.core.Suit
-import org.itroboc.vision.checkGrid13Sentinels
+import org.itroboc.vision.checkGrid13SentinelsSlow
 
 private val inspectionGreen = Color(0xFF2E7D32)
 private val sentinelWarningPink = Color(0xFFFCE4EC)
@@ -148,7 +148,7 @@ private fun BarcodeInspection(
     modifier: Modifier = Modifier,
 ) {
     val bits = token?.let { grid13BitsFromToken(it) }
-    val sentinelCheck = bits?.let { checkGrid13Sentinels(it) }
+    val sentinelCheck = bits?.let { checkGrid13SentinelsSlow(it) }
     val isValid = sentinelCheck?.isValid ?: true
 
     Column(

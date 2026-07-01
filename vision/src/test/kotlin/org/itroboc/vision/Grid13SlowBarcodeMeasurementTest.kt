@@ -35,8 +35,8 @@ class Grid13SlowBarcodeMeasurementTest {
         assertEquals(26, measurement.activeSpanPx)
         assertEquals(13, measurement.grid13FwdBits.length)
         assertEquals("1010101001001", measurement.grid13FwdBits)
-        assertEquals(grid13RunLengthSignature(measurement.grid13FwdBits), measurement.rl2)
-        assertEquals(reverseBits(measurement.grid13FwdBits), measurement.grid13RevBits)
+        assertEquals(grid13RunLengthSignatureSlow(measurement.grid13FwdBits), measurement.rl2)
+        assertEquals(reverseBitsSlow(measurement.grid13FwdBits), measurement.grid13RevBits)
         assertTrue(measurement.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")))
         assertTrue(measurement.reverseSignature.matches(Regex("^brm[0-9A-F]{4}$")))
     }

@@ -146,7 +146,7 @@ Both `bfm` and `brm` are valid raw-signature families. Do not reduce them to a s
 Do not do this:
 
 ```text
-canonical = min(forwardBits, reverseBits)
+canonical = min(forwardBits, reverseBitsSlow)
 ```
 
 The prefix is part of the identity.
