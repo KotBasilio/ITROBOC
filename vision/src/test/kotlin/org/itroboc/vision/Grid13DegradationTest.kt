@@ -118,12 +118,12 @@ class Grid13DegradationTest {
         )
     }
 
-    private fun measureBaseline(): Map<String, Grid13BarcodeMeasurement> =
+    private fun measureBaseline(): Map<String, Grid13SlowBarcodeMeasurement> =
         measureAllSheets().associate { it.cardId to it.measurement }
 
     private fun degradationReport(
         name: String,
-        baseline: Map<String, Grid13BarcodeMeasurement>,
+        baseline: Map<String, Grid13SlowBarcodeMeasurement>,
         imageTransform: (BufferedImage) -> BufferedImage = { it },
         cropTransform: (LabeledBarcodeCrop, BufferedImage) -> LabeledBarcodeCrop = { crop, _ -> crop },
     ): DegradationReport {
@@ -205,7 +205,7 @@ class Grid13DegradationTest {
             val transformed = imageTransform(original)
             BarcodeSheetAnalyzer.analyzeSuitSheet(sheet).crops.mapNotNull { originalCrop ->
                 val crop = cropTransform(originalCrop, transformed)
-                val measurement = measureGrid13Barcode(crop.toInkImage(transformed, channel))
+                val measurement = measureGrid13SlowBarcode(crop.toInkImage(transformed, channel))
                 measurement?.let {
                     LabeledBarcodeMeasurement(
                         cardId = originalCrop.cardId,

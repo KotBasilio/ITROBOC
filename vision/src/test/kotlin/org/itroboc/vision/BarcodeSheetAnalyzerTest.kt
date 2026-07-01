@@ -130,7 +130,7 @@ internal object BarcodeSheetAnalyzer {
         suitSheets.flatMap { sheet ->
             val image = loadResourceImage(sheet.resourceName)
             analyzeSuitSheet(sheet).crops.map { crop ->
-                val measurement = requireNotNull(measureGrid13Barcode(crop.toInkImage(image))) {
+                val measurement = requireNotNull(measureGrid13SlowBarcode(crop.toInkImage(image))) {
                     "Could not measure ${crop.cardId} from ${crop.sheetResourceName}"
                 }
                 LabeledBarcodeMeasurement(
@@ -148,7 +148,7 @@ internal object BarcodeSheetAnalyzer {
         suitSheets.forEach { sheet ->
             val image = loadResourceImage(sheet.resourceName)
             analyzeSuitSheet(sheet).crops.forEach { crop ->
-                val measurement = measureGrid13Barcode(crop.toInkImage(image))
+                val measurement = measureGrid13SlowBarcode(crop.toInkImage(image))
                 if (measurement == null) {
                     failures += crop.cardId
                 } else {
@@ -289,7 +289,7 @@ internal data class LabeledBarcodeCrop(
 internal data class LabeledBarcodeMeasurement(
     val cardId: String,
     val crop: LabeledBarcodeCrop,
-    val measurement: Grid13BarcodeMeasurement,
+    val measurement: Grid13SlowBarcodeMeasurement,
 ) {
     fun toReportRow(): String =
         listOf(

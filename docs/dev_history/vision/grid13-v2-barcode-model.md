@@ -165,7 +165,7 @@ Current implementation lives mainly in `:vision`:
 
 * `Grid13Signature.kt`
 * `Grid13MeasurementPrimitives.kt`
-* `Grid13BarcodeMeasurement.kt`
+* `Grid13SlowBarcodeMeasurement.kt`
 * `Grid13SlowDecoder.kt`
 
 ## Raw Signature Format

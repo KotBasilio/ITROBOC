@@ -1,6 +1,6 @@
 package org.itroboc.vision
 
-data class Grid13BarcodeMeasurement(
+data class Grid13SlowBarcodeMeasurement(
     val blackRunsPx: List<Int>,
     val whiteGapsPx: List<Int>,
     val blackRunEdges: List<IntRange>,
@@ -19,10 +19,10 @@ data class Grid13BarcodeMeasurement(
     val warnings: List<String> = emptyList(),
 )
 
-fun measureGrid13Barcode(
+fun measureGrid13SlowBarcode(
     image: InkImage,
     threshold: Int? = null,
-): Grid13BarcodeMeasurement? {
+): Grid13SlowBarcodeMeasurement? {
     val projection = projectInkColumns(image)
     return measureGrid13SlowBarcodeProjection(
         projection = projection,
@@ -34,7 +34,7 @@ fun measureGrid13SlowBarcodeProjection(
     projection: DoubleArray,
     threshold: Int = adaptiveInkThreshold(projection),
     minBlackRunWidth: Int = 2,
-): Grid13BarcodeMeasurement? {
+): Grid13SlowBarcodeMeasurement? {
     require(minBlackRunWidth > 0) { "minBlackRunWidth must be positive" }
     if (projection.inkRange < 1.0) {
         return null
@@ -53,7 +53,7 @@ fun measureGrid13SlowBarcodeProjection(
     }
     val revBits = reverseBits(fwdBits)
 
-    return Grid13BarcodeMeasurement(
+    return Grid13SlowBarcodeMeasurement(
         blackRunsPx = blackRuns.map { it.width },
         whiteGapsPx = whiteGaps.map { it.width },
         blackRunEdges = blackRuns,
@@ -68,8 +68,8 @@ fun measureGrid13SlowBarcodeProjection(
         grid13RevHex = grid13BitsToHex(revBits),
         rawSignature = forwardMealSignature(fwdBits),
         reverseSignature = reverseMealSignature(revBits),
-        confidence = confidenceForMeasurement(blackRuns = blackRuns, activeSpan = activeSpan),
-        warnings = warningsForMeasurement(blackRuns),
+        confidence = confidenceForSlowMeasurement(blackRuns = blackRuns, activeSpan = activeSpan),
+        warnings = warningsForSlowMeasurement(blackRuns),
     )
 }
 
@@ -95,7 +95,7 @@ fun grid13SlowBitsFromProjection(
     }
 }
 
-private fun confidenceForMeasurement(
+private fun confidenceForSlowMeasurement(
     blackRuns: List<IntRange>,
     activeSpan: IntRange,
 ): Double {
@@ -109,7 +109,7 @@ private fun confidenceForMeasurement(
     return ((0.4 * runCountScore) + (0.3 * spanScore) + (0.3 * endpointScore)).coerceIn(0.0, 0.99)
 }
 
-private fun warningsForMeasurement(blackRuns: List<IntRange>): List<String> = buildList {
+private fun warningsForSlowMeasurement(blackRuns: List<IntRange>): List<String> = buildList {
     if (!blackRuns.endpointBarsLookNarrow()) {
         add("Endpoint black bars are not clearly narrow")
     }
