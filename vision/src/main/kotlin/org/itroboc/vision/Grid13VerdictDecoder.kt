@@ -1,6 +1,7 @@
 package org.itroboc.vision
 
 import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * An optimized decoder for the "Verdict" path.
@@ -12,9 +13,15 @@ import kotlin.math.abs
 class Grid13VerdictDecoder(
     private val minimumFoundConfidence: Double = 0.60,
 ) : BarcodeDecoder {
+    init {
+        require(minimumFoundConfidence in 0.0..1.0) {
+            "minimumFoundConfidence must be within [0, 1]"
+        }
+    }
 
     override fun decode(image: GrayImage): BarcodeDecodeResult {
-        // 1. Column projection (Ink-based: 255 is black)
+        // Phase A keeps the projection allocation, but removes string-shaped bit work
+        // and list-heavy run analysis from the verdict hot path.
         val projection = DoubleArray(image.width) { x ->
             var total = 0
             for (y in 0 until image.height) {
@@ -27,79 +34,72 @@ class Grid13VerdictDecoder(
             return BarcodeDecodeResult.NotFound("Empty image projection")
         }
 
-        // 2. Adaptive threshold
-        val minValue = projection.minOrNull() ?: 0.0
-        val maxValue = projection.maxOrNull() ?: 0.0
-        if ((maxValue - minValue) < 1.0) {
+        if (projection.inkRange < 1.0) {
             return BarcodeDecodeResult.NotFound("Insufficient ink contrast")
         }
-        val threshold = (minValue + maxValue) / 2.0
+        val threshold = adaptiveInkThreshold(projection)
 
-        // 3. Extract black runs for active span and confidence
-        val blackRuns = mutableListOf<IntRange>()
-        var runStart = -1
-        for (x in projection.indices) {
-            val isBlack = projection[x] >= threshold
-            if (isBlack && runStart == -1) {
-                runStart = x
-            } else if (!isBlack && runStart != -1) {
-                val width = x - runStart
-                if (width >= 2) {
-                    blackRuns += runStart until x
+        var firstBlack = -1
+        var lastBlackExclusive = -1
+        var blackRunCount = 0
+        var widestRunWidth = 0
+        var firstRunWidth = 0
+        var lastRunWidth = 0
+        var currentRunStart = -1
+
+        fun commitRun(runEndExclusive: Int) {
+            if (currentRunStart == -1) return
+            val runWidth = runEndExclusive - currentRunStart
+            if (runWidth >= 2) {
+                if (firstBlack == -1) {
+                    firstBlack = currentRunStart
+                    firstRunWidth = runWidth
                 }
-                runStart = -1
+                lastBlackExclusive = runEndExclusive
+                lastRunWidth = runWidth
+                widestRunWidth = max(widestRunWidth, runWidth)
+                blackRunCount++
             }
-        }
-        if (runStart != -1) {
-            val width = projection.size - runStart
-            if (width >= 2) {
-                blackRuns += runStart until projection.size
-            }
+            currentRunStart = -1
         }
 
-        if (blackRuns.isEmpty()) {
+        for (x in projection.indices) {
+            when {
+                projection[x] >= threshold && currentRunStart == -1 -> currentRunStart = x
+                projection[x] < threshold && currentRunStart != -1 -> commitRun(x)
+            }
+        }
+        commitRun(projection.size)
+
+        if (blackRunCount == 0) {
             return BarcodeDecodeResult.NotFound("No black bars detected")
         }
 
-        val activeSpan = blackRuns.first().first..blackRuns.last().last
-        val activeWidth = activeSpan.last - activeSpan.first + 1
-
-        // 4. Derive 13 bits
-        val fwdBits = buildString(capacity = 13) {
-            repeat(13) { cellIndex ->
-                val cellStart = activeSpan.first + ((cellIndex * activeWidth) / 13)
-                val cellEndExclusive = activeSpan.first + (((cellIndex + 1) * activeWidth) / 13)
-                val safeEndExclusive = cellEndExclusive.coerceAtLeast(cellStart + 1)
-                
-                var totalInk = 0.0
-                for (x in cellStart until safeEndExclusive) {
-                    totalInk += projection[x]
-                }
-                val meanInk = totalInk / (safeEndExclusive - cellStart)
-                append(if (meanInk >= threshold) '1' else '0')
-            }
-        }
-
-        if (hasInvalidGrid13RunCandidateSlow(fwdBits)) {
+        val activeWidth = lastBlackExclusive - firstBlack
+        val bits13 = grid13VerdictBitsFromProjection(
+            projection = projection,
+            activeStart = firstBlack,
+            activeWidth = activeWidth,
+            threshold = threshold,
+        )
+        if (hasInvalidGrid13RunCandidate(bits13)) {
             return BarcodeDecodeResult.NotFound("Invalid bit run pattern")
         }
 
-        // 5. Sentinel normalization
-        val sentinelCheck = checkGrid13SentinelsSlow(fwdBits)
-        val correctedFwdBits = if (sentinelCheck.isValid) {
-            fwdBits
-        } else {
-            normalizeGrid13SentinelsSlow(fwdBits)
-        }
-
-        // 6. Confidence calculation
-        val confidence = calculateConfidence(blackRuns, activeWidth)
+        val correctedBits13 = normalizeGrid13Sentinels(bits13)
+        val confidence = calculateConfidence(
+            blackRunCount = blackRunCount,
+            activeWidth = activeWidth,
+            firstRunWidth = firstRunWidth,
+            lastRunWidth = lastRunWidth,
+            widestRunWidth = widestRunWidth,
+        )
 
         val signature = DetectedSignature(
-            rawSignature = forwardMealSignatureSlow(correctedFwdBits),
+            rawSignature = bits13ToForwardMealSignature(correctedBits13),
             confidence = confidence,
             bounds = BarcodeBounds(
-                x = activeSpan.first,
+                x = firstBlack,
                 y = 0,
                 width = activeWidth,
                 height = image.height,
@@ -119,23 +119,109 @@ class Grid13VerdictDecoder(
     }
 
     private fun calculateConfidence(
-        blackRuns: List<IntRange>,
+        blackRunCount: Int,
         activeWidth: Int,
+        firstRunWidth: Int,
+        lastRunWidth: Int,
+        widestRunWidth: Int,
     ): Double {
-        val runCountScore = when (blackRuns.size) {
+        val runCountScore = when (blackRunCount) {
             in 5..6 -> 1.0
             4, 7 -> 0.75
             else -> 0.45
         }
         val spanScore = (1.0 - (abs(activeWidth - 54) / 54.0)).coerceIn(0.0, 1.0)
-        
-        // Endpoint narrowness check
-        val endpointScore = if (blackRuns.size >= 2) {
-            val widths = blackRuns.map { it.last - it.first + 1 }
-            val widest = widths.maxOrNull() ?: 1
-            if (widths.first() <= widest * 0.75 && widths.last() <= widest * 0.75) 1.0 else 0.5
+        val endpointScore = if (blackRunCount >= 2 && widestRunWidth > 0) {
+            if (firstRunWidth <= widestRunWidth * 0.75 && lastRunWidth <= widestRunWidth * 0.75) 1.0 else 0.5
         } else 0.0
 
         return ((0.4 * runCountScore) + (0.3 * spanScore) + (0.3 * endpointScore)).coerceIn(0.0, 0.99)
     }
 }
+
+private const val GRID13_VERDICT_BIT_COUNT = 13
+private const val GRID13_VERDICT_MAX_VALUE = (1 shl GRID13_VERDICT_BIT_COUNT) - 1
+private const val GRID13_VERDICT_SENTINEL_MASK = 0x1803
+private const val GRID13_VERDICT_SENTINEL_VALUE = 0x1001
+
+internal fun grid13VerdictBitsFromProjection(
+    projection: DoubleArray,
+    activeStart: Int,
+    activeWidth: Int,
+    threshold: Int,
+): Int {
+    require(projection.isNotEmpty()) { "projection must not be empty" }
+    require(activeStart >= 0) { "activeStart must be non-negative" }
+    require(activeWidth > 0) { "activeWidth must be positive" }
+    require(activeStart + activeWidth <= projection.size) { "active span must fit projection" }
+    require(threshold in 0..255) { "threshold must be within 0..255" }
+
+    var bits13 = 0
+    repeat(GRID13_VERDICT_BIT_COUNT) { cellIndex ->
+        val cellStart = activeStart + ((cellIndex * activeWidth) / GRID13_VERDICT_BIT_COUNT)
+        val cellEndExclusive = activeStart + (((cellIndex + 1) * activeWidth) / GRID13_VERDICT_BIT_COUNT)
+        val safeEndExclusive = cellEndExclusive.coerceAtLeast(cellStart + 1)
+
+        var totalInk = 0.0
+        for (x in cellStart until safeEndExclusive) {
+            totalInk += projection[x]
+        }
+        val meanInk = totalInk / (safeEndExclusive - cellStart)
+        bits13 = bits13 shl 1
+        if (meanInk >= threshold) {
+            bits13 = bits13 or 1
+        }
+    }
+    return bits13
+}
+
+internal fun hasInvalidGrid13RunCandidate(bits13: Int): Boolean {
+    require(bits13 in 0..GRID13_VERDICT_MAX_VALUE) {
+        "Grid13 value must fit within $GRID13_VERDICT_BIT_COUNT bits"
+    }
+
+    var currentBit = (bits13 shr (GRID13_VERDICT_BIT_COUNT - 1)) and 1
+    var currentRunLength = 1
+    for (shift in (GRID13_VERDICT_BIT_COUNT - 2) downTo 0) {
+        val bit = (bits13 shr shift) and 1
+        if (bit == currentBit) {
+            currentRunLength++
+        } else {
+            currentBit = bit
+            currentRunLength = 1
+        }
+
+        if ((currentBit == 1 && currentRunLength >= 3) || (currentBit == 0 && currentRunLength >= 4)) {
+            return true
+        }
+    }
+    return false
+}
+
+internal fun normalizeGrid13Sentinels(bits13: Int): Int {
+    require(bits13 in 0..GRID13_VERDICT_MAX_VALUE) {
+        "Grid13 value must fit within $GRID13_VERDICT_BIT_COUNT bits"
+    }
+    return (bits13 and GRID13_VERDICT_SENTINEL_MASK.inv()) or GRID13_VERDICT_SENTINEL_VALUE
+}
+
+internal fun bits13ToString(bits13: Int): String {
+    require(bits13 in 0..GRID13_VERDICT_MAX_VALUE) {
+        "Grid13 value must fit within $GRID13_VERDICT_BIT_COUNT bits"
+    }
+    return buildString(capacity = GRID13_VERDICT_BIT_COUNT) {
+        for (shift in (GRID13_VERDICT_BIT_COUNT - 1) downTo 0) {
+            append(if ((bits13 shr shift) and 1 == 1) '1' else '0')
+        }
+    }
+}
+
+internal fun bits13ToForwardMealSignature(bits13: Int): String {
+    require(bits13 in 0..GRID13_VERDICT_MAX_VALUE) {
+        "Grid13 value must fit within $GRID13_VERDICT_BIT_COUNT bits"
+    }
+    return "bfm${bits13.toString(radix = 16).uppercase().padStart(4, '0')}"
+}
+
+private val DoubleArray.inkRange: Double
+    get() = (maxOrNull() ?: 0.0) - (minOrNull() ?: 0.0)
