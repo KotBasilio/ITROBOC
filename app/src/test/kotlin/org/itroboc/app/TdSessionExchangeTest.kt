@@ -2,6 +2,7 @@ package org.itroboc.app
 
 import org.itroboc.core.BoardEditState
 import org.itroboc.core.BoardState
+import org.itroboc.core.BoardVulnerability
 import org.itroboc.core.CardId
 import org.itroboc.core.PbnExportOptions
 import org.itroboc.core.PbnExporter
@@ -38,8 +39,22 @@ class TdSessionExchangeTest {
         val exported = TdSessionExchange.exportCompleteBoards(sessionState)
 
         val expected = listOf(
-            PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 2)),
-            PbnExporter.export(boardTwo, PbnExportOptions(boardNumber = 7)),
+            PbnExporter.export(
+                boardOne,
+                PbnExportOptions(
+                    boardNumber = 2,
+                    dealer = Seat.EAST,
+                    vulnerability = BoardVulnerability.NS,
+                ),
+            ),
+            PbnExporter.export(
+                boardTwo,
+                PbnExportOptions(
+                    boardNumber = 7,
+                    dealer = Seat.SOUTH,
+                    vulnerability = BoardVulnerability.ALL,
+                ),
+            ),
         ).joinToString(separator = "\n\n")
         assertEquals(expected, exported)
     }

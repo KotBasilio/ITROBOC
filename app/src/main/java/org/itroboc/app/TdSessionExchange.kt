@@ -4,6 +4,7 @@ import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BoardEditState
 import org.itroboc.core.BoardState
 import org.itroboc.core.CardId
+import org.itroboc.core.DuplicateBoardMetadata
 import org.itroboc.core.HandState
 import org.itroboc.core.PbnExportOptions
 import org.itroboc.core.PbnExporter
@@ -20,9 +21,14 @@ internal object TdSessionExchange {
                 if (!BoardProgressSummary.from(boardEditState.boardState).boardComplete) {
                     return@mapNotNull null
                 }
+                val metadata = DuplicateBoardMetadata.forBoardNumber(boardEditState.boardNumber)
                 PbnExporter.export(
                     boardEditState.boardState,
-                    PbnExportOptions(boardNumber = boardEditState.boardNumber),
+                    PbnExportOptions(
+                        boardNumber = boardEditState.boardNumber,
+                        dealer = metadata.dealer,
+                        vulnerability = metadata.vulnerability,
+                    ),
                 )
             }
             .toList()
