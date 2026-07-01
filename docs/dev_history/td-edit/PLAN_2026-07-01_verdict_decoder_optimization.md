@@ -75,7 +75,7 @@ Good candidates for sharing:
 - `thresholdInkProjection(...)`
 - `extractRuns(...)`
 - `activeSpanFromBlackRuns(...)`
-- `grid13BitsFromProjection(...)`
+- `grid13SlowBitsFromProjection(...)`
 - `hasInvalidGrid13RunCandidate(...)`
 - `checkGrid13Sentinels(...)`
 - `normalizeGrid13Sentinels(...)`
