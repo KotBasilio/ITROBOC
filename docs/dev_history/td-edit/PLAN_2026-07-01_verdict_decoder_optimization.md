@@ -59,7 +59,7 @@ not:
 
 ## Near-Term Opportunities
 
-### 1. Centralize shared non-debug primitives
+### 1. Centralize shared non-debug primitives, but allow verdict-only bitwise helpers
 
 Right now the verdict path manually reimplements projection, thresholding, run extraction, active span, and confidence pieces.
 
@@ -67,6 +67,7 @@ That may be okay temporarily, but the healthy direction is:
 
 - keep debug-building exclusive to the slow path
 - share cheap pure primitives where parity matters
+- avoid forcing the verdict path through string-shaped helpers when bitwise helpers are the better fit
 
 Good candidates for sharing:
 
@@ -81,6 +82,28 @@ Good candidates for sharing:
 - `normalizeGrid13Sentinels(...)`
 
 This reduces the risk that slow and verdict silently drift in bit derivation.
+
+But this should not be read as "verdict must reuse every slow-path representation."
+
+In particular, I think it is healthy to allow verdict-dedicated helpers such as:
+
+- `grid13VerdictBitsFromProjection(...)` returning a compact bit representation
+- bitwise sentinel check / normalization helpers
+- bitwise reverse / meal-signature conversion helpers
+- bitwise invalid-run checks for `111` / `0000`-style gates
+
+The key principle is:
+
+- share primitives when the representation is still natural for both paths
+- fork deliberately when the slow-path string representation becomes hot-path baggage
+
+So the desired architecture is not:
+
+- "everything shared"
+
+It is:
+
+- "shared where cheap and parity-safe, verdict-specific where performance meaningfully improves"
 
 ### 2. Prefer arrays / counters over transient collections
 
@@ -111,6 +134,7 @@ The verdict decoder should favor:
 - local mutable counters
 - no optional debug branching
 - no string formatting except when a final signature is actually produced
+- compact bitwise operations when they remove text-shaped overhead
 
 The important design habit is:
 
@@ -247,7 +271,7 @@ If future optimization work goes well, the ideal verdict path looks like:
 - projection
 - threshold
 - active span / runs
-- 13 bits
+- 13-bit compact value
 - strict run gate
 - sentinel normalization
 - `rawSignature`
