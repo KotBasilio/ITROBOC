@@ -8,7 +8,13 @@ import java.io.File
 internal class TdSessionShareManager(
     private val context: Context,
 ) {
-    private val exportFile = File(context.cacheDir, "td-session-export.pbn")
+    private val exportFile: File by lazy {
+        val baseDir = context.getExternalFilesDir("td-export") ?: File(context.filesDir, "td-export")
+        if (!baseDir.exists()) {
+            baseDir.mkdirs()
+        }
+        File(baseDir, "td-session-export.pbn")
+    }
 
     fun createShareIntent(exportText: String): Intent {
         exportFile.writeText(exportText)
