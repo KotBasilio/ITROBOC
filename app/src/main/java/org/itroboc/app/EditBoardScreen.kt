@@ -86,9 +86,11 @@ fun EditBoardScreen(
     var lastUnknownMessageTimeMillis by remember { mutableLongStateOf(0L) }
     val unknownThrottleMillis = 3000L
 
-    // EBT-8: Scan rate measurement using deltas
+    // EBT-8: Scan rate measurement using inter-scan deltas.
+    // During idle periods we expose a negative value derived from scansIdleCount
+    // so manual field measurements can distinguish "camera quiet" from "camera active".
     var scanDeltas by remember { mutableStateOf<List<Long>>(emptyList()) }
-    var scansPerSecond by remember { mutableDoubleStateOf(42.0) }
+    var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
     var scansIdleCount by remember { mutableLongStateOf(0L) }
     val initialNow = System.currentTimeMillis()
     var lastScanTimestamp by remember { mutableStateOf(initialNow) }
@@ -106,7 +108,7 @@ fun EditBoardScreen(
             }
             scanDeltas = pruned.asReversed()
 
-            // Compute average rate
+            // Compute average rate while active, otherwise expose idle loop count.
             if (scanDeltas.isNotEmpty()) {
                 val avgDelta = scanDeltas.average()
                 scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
