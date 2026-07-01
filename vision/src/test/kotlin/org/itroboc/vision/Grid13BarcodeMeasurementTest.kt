@@ -25,7 +25,7 @@ class Grid13BarcodeMeasurementTest {
             0.0,
         )
 
-        val measurement = assertNotNull(measureGrid13BarcodeProjection(projection, threshold = 50))
+        val measurement = assertNotNull(measureGrid13SlowBarcodeProjection(projection, threshold = 50))
 
         assertEquals(listOf(2, 2, 2, 2, 2, 2), measurement.blackRunsPx)
         assertEquals(listOf(2, 2, 2, 4, 4), measurement.whiteGapsPx)
@@ -43,7 +43,7 @@ class Grid13BarcodeMeasurementTest {
 
     @Test
     fun `returns null for flat projection`() {
-        assertNull(measureGrid13BarcodeProjection(doubleArrayOf(0.0, 0.0, 0.0), threshold = 0))
+        assertNull(measureGrid13SlowBarcodeProjection(doubleArrayOf(0.0, 0.0, 0.0), threshold = 0))
     }
 
     @Test
@@ -64,7 +64,7 @@ class Grid13BarcodeMeasurementTest {
             100.0, 100.0,
         )
 
-        val measurement = assertNotNull(measureGrid13BarcodeProjection(projection, threshold = 50))
+        val measurement = assertNotNull(measureGrid13SlowBarcodeProjection(projection, threshold = 50))
 
         assertEquals(listOf(4..5, 8..9, 12..13, 16..17, 22..23, 28..29), measurement.blackRunEdges)
         assertEquals(4, measurement.activeStartX)
@@ -79,7 +79,7 @@ class Grid13BarcodeMeasurementTest {
 
         assertEquals(
             "1010101010101",
-            grid13BitsFromProjection(
+            grid13SlowBitsFromProjection(
                 projection = projection,
                 activeSpan = 0..12,
                 threshold = 50,
@@ -90,7 +90,7 @@ class Grid13BarcodeMeasurementTest {
     @Test
     fun `rejects raw grid13 candidates containing black triple or white quadruple runs`() {
         assertNull(
-            measureGrid13BarcodeProjection(
+            measureGrid13SlowBarcodeProjection(
                 projection = doubleArrayOf(
                     100.0, 100.0,
                     0.0, 0.0,

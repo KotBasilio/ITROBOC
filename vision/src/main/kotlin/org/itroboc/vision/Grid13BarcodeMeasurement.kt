@@ -24,13 +24,13 @@ fun measureGrid13Barcode(
     threshold: Int? = null,
 ): Grid13BarcodeMeasurement? {
     val projection = projectInkColumns(image)
-    return measureGrid13BarcodeProjection(
+    return measureGrid13SlowBarcodeProjection(
         projection = projection,
         threshold = threshold ?: adaptiveInkThreshold(projection),
     )
 }
 
-fun measureGrid13BarcodeProjection(
+fun measureGrid13SlowBarcodeProjection(
     projection: DoubleArray,
     threshold: Int = adaptiveInkThreshold(projection),
     minBlackRunWidth: Int = 2,
@@ -43,7 +43,7 @@ fun measureGrid13BarcodeProjection(
     val blackRuns = extractRuns(blackMask).filter { it.width >= minBlackRunWidth }
     val activeSpan = activeSpanFromBlackRuns(blackRuns) ?: return null
     val whiteGaps = internalWhiteGapsBetween(blackRuns)
-    val fwdBits = grid13BitsFromProjection(
+    val fwdBits = grid13SlowBitsFromProjection(
         projection = projection,
         activeSpan = activeSpan,
         threshold = threshold,
@@ -73,7 +73,7 @@ fun measureGrid13BarcodeProjection(
     )
 }
 
-fun grid13BitsFromProjection(
+fun grid13SlowBitsFromProjection(
     projection: DoubleArray,
     activeSpan: IntRange,
     threshold: Int,

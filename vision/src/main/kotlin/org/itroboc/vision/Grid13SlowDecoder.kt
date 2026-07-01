@@ -13,7 +13,7 @@ class Grid13SlowDecoder(
         val inkImage = image.toInkImage()
         val projection = projectInkColumns(inkImage)
         val threshold = adaptiveInkThreshold(projection)
-        val measurement = measureGrid13BarcodeProjection(
+        val measurement = measureGrid13SlowBarcodeProjection(
             projection = projection,
             threshold = threshold,
         ) ?: return BarcodeDecodeResult.NotFound(
