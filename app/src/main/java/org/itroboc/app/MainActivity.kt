@@ -70,6 +70,9 @@ fun AppNavigation() {
             TdOverviewScreen(
                 sessionState = sessionState,
                 activeProfile = activeProfileItem,
+                onSessionStateChange = { updatedState ->
+                    sessionState = updatedState
+                },
                 onNavigateToBoard = { boardNumber ->
                     currentScreen = Screen.EditBoard(boardNumber)
                 },
