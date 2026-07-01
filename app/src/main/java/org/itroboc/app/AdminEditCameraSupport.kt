@@ -2,6 +2,7 @@ package org.itroboc.app
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.camera.core.ImageProxy
 import androidx.core.content.FileProvider
 import org.itroboc.vision.BarcodeDecodeResult
@@ -12,6 +13,7 @@ import org.itroboc.vision.DetectedSignature
 import org.itroboc.vision.Grid13SlowDecoder
 import org.itroboc.vision.GrayImage
 import java.io.File
+import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
 internal val adminScanGuideSpec = AdminScanGuideSpec(
@@ -66,6 +68,7 @@ internal class AdminEditCameraFrameDecoder(
     private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
 ) {
     fun decode(imageProxy: ImageProxy): CameraScanOutcome {
+        val startedAtNanos = System.nanoTime()
         val frameDebugInfo = imageProxy.toFrameDebugInfo()
         val roi = centeredBarcodeRoi(
             imageWidth = imageProxy.width,
@@ -74,11 +77,21 @@ internal class AdminEditCameraFrameDecoder(
         )
 
         return try {
+            val roiCopyStartedAtNanos = System.nanoTime()
             val grayImage = imageProxy.toGrayImage(roi)
+            val roiCopyEndedAtNanos = System.nanoTime()
+            val decodeStartedAtNanos = roiCopyEndedAtNanos
+            val decodeResult = decoder.decode(grayImage)
+            val decodeEndedAtNanos = System.nanoTime()
+            maybeLogAnalyzerTimings(
+                roiCopyNanos = roiCopyEndedAtNanos - roiCopyStartedAtNanos,
+                decodeNanos = decodeEndedAtNanos - decodeStartedAtNanos,
+                totalNanos = decodeEndedAtNanos - startedAtNanos,
+            )
             CameraScanOutcome.Decoded(
                 frameDebugInfo = frameDebugInfo,
                 roi = roi,
-                decodeResult = decoder.decode(grayImage),
+                decodeResult = decodeResult,
             )
         } catch (error: Exception) {
             CameraScanOutcome.ConversionFailed(
@@ -87,6 +100,22 @@ internal class AdminEditCameraFrameDecoder(
                 reason = error.message ?: "Failed to extract guide ROI",
             )
         }
+    }
+
+    private fun maybeLogAnalyzerTimings(
+        roiCopyNanos: Long,
+        decodeNanos: Long,
+        totalNanos: Long,
+    ) {
+        if (!Log.isLoggable(ANALYZER_TIMING_TAG, Log.DEBUG)) {
+            return
+        }
+        Log.d(
+            ANALYZER_TIMING_TAG,
+            "Analyzer timings roiCopyMs=${roiCopyNanos.toMillisString()} " +
+                "verdictDecodeMs=${decodeNanos.toMillisString()} " +
+                "totalAnalyzeMs=${totalNanos.toMillisString()}",
+        )
     }
 }
 
@@ -168,6 +197,45 @@ internal fun extractGrayImageFromLumaBytes(
     )
 }
 
+internal fun extractGrayImageFromLumaPlaneBuffer(
+    imageWidth: Int,
+    imageHeight: Int,
+    lumaBuffer: ByteBuffer,
+    rowStride: Int,
+    pixelStride: Int,
+    roi: BarcodeRoi,
+): GrayImage {
+    require(pixelStride > 0) { "pixelStride must be positive" }
+    require(rowStride > 0) { "rowStride must be positive" }
+    require(roi.x >= 0 && roi.y >= 0) { "ROI origin must be non-negative" }
+    require(roi.x + roi.width <= imageWidth) { "ROI exceeds image width" }
+    require(roi.y + roi.height <= imageHeight) { "ROI exceeds image height" }
+
+    val expectedLastIndex = ((roi.y + roi.height - 1) * rowStride) +
+        ((roi.x + roi.width - 1) * pixelStride)
+    require(expectedLastIndex < lumaBuffer.limit()) {
+        "Luma plane buffer does not cover requested ROI"
+    }
+
+    val source = lumaBuffer.duplicate()
+    val pixels = ByteArray(roi.width * roi.height)
+    var destinationIndex = 0
+
+    for (y in roi.y until roi.y + roi.height) {
+        val rowOffset = y * rowStride
+        for (x in roi.x until roi.x + roi.width) {
+            val sourceIndex = rowOffset + (x * pixelStride)
+            pixels[destinationIndex++] = source.get(sourceIndex)
+        }
+    }
+
+    return GrayImage(
+        width = roi.width,
+        height = roi.height,
+        pixels = pixels,
+    )
+}
+
 internal fun ImageProxy.toFrameDebugInfo(): FrameDebugInfo =
     FrameDebugInfo(
         width = width,
@@ -180,14 +248,10 @@ internal fun ImageProxy.toFrameDebugInfo(): FrameDebugInfo =
 private fun ImageProxy.toGrayImage(roi: BarcodeRoi): GrayImage {
     val lumaPlane = planes.firstOrNull()
         ?: error("Camera frame does not expose a luma plane")
-    val buffer = lumaPlane.buffer.duplicate().apply { rewind() }
-    val lumaBytes = ByteArray(buffer.remaining())
-    buffer.get(lumaBytes)
-
-    return extractGrayImageFromLumaBytes(
+    return extractGrayImageFromLumaPlaneBuffer(
         imageWidth = width,
         imageHeight = height,
-        lumaBytes = lumaBytes,
+        lumaBuffer = lumaPlane.buffer,
         rowStride = lumaPlane.rowStride,
         pixelStride = lumaPlane.pixelStride,
         roi = roi,
@@ -224,6 +288,10 @@ internal fun CameraScanOutcome.describe(): String = when (this) {
 }
 
 private fun Double.formatConfidence(): String = "%.2f".format(this)
+
+private fun Long.toMillisString(): String = "%.3f".format(this / 1_000_000.0)
+
+private const val ANALYZER_TIMING_TAG = "AnalyzerTiming"
 
 internal data class AdminEditScanDebugRecord(
     val timestampMillis: Long,
