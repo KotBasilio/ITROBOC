@@ -157,7 +157,10 @@ fun EditBoardScreen(
     }
 
     fun handleScan(signature: String) {
-        if (isBoardComplete) return
+        if (isBoardComplete) {
+            scanDeltas = emptyList()
+            return
+        }
 
         // EBT-4: Simple stream debounce
         val now = System.currentTimeMillis()
