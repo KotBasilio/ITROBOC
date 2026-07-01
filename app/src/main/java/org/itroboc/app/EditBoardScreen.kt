@@ -158,7 +158,6 @@ fun EditBoardScreen(
 
     fun handleScan(signature: String) {
         if (isBoardComplete) {
-            scanDeltas = emptyList()
             return
         }
 
@@ -275,6 +274,7 @@ fun EditBoardScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (isBoardComplete) {
+                    scanDeltas = emptyList()
                     BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
                 } else if (hasCameraPermission) {
                     CameraPreview(
