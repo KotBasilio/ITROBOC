@@ -56,7 +56,7 @@ data class Grid13SentinelCheck(
     val issues: List<String>,
 )
 
-fun checkGrid13Sentinels(value: Int): Grid13SentinelCheck
+fun checkGrid13SentinelsSlow(value: Int): Grid13SentinelCheck
 ```
 
 Or use an equivalent existing style.

@@ -24,7 +24,7 @@ class Grid13SlowDecoder(
             ),
         )
 
-        val sentinelCheck = checkGrid13Sentinels(measurement.grid13FwdBits)
+        val sentinelCheck = checkGrid13SentinelsSlow(measurement.grid13FwdBits)
         val signature = measurement.toDetectedSignature(
             imageHeight = image.height,
             threshold = threshold,
@@ -53,16 +53,16 @@ private fun Grid13SlowBarcodeMeasurement.toDetectedSignature(
     val correctedFwdBits = if (sentinelCheck.isValid) {
         grid13FwdBits
     } else {
-        normalizeGrid13Sentinels(grid13FwdBits)
+        normalizeGrid13SentinelsSlow(grid13FwdBits)
     }
-    val correctedRevBits = reverseBits(correctedFwdBits)
-    val correctedRl2 = grid13RunLengthSignature(correctedFwdBits)
+    val correctedRevBits = reverseBitsSlow(correctedFwdBits)
+    val correctedRl2 = grid13RunLengthSignatureSlow(correctedFwdBits)
     val repairReason = sentinelCheck.issues
         .takeIf { it.isNotEmpty() }
         ?.joinToString(prefix = "Normalized Grid13 control bits: ")
 
     return DetectedSignature(
-        rawSignature = forwardMealSignature(correctedFwdBits),
+        rawSignature = forwardMealSignatureSlow(correctedFwdBits),
         confidence = confidence,
         bounds = BarcodeBounds(
             x = activeStartX,
@@ -75,12 +75,12 @@ private fun Grid13SlowBarcodeMeasurement.toDetectedSignature(
             blackRuns = blackRunEdges,
             normalizedPattern = correctedRl2,
             signatureModel = GRID13_SIGNATURE_MODEL,
-            reverseSignature = reverseMealSignature(correctedRevBits),
+            reverseSignature = reverseMealSignatureSlow(correctedRevBits),
             grid13FwdBitsPreSentinel = grid13FwdBits,
             grid13FwdBits = correctedFwdBits,
             grid13RevBits = correctedRevBits,
-            grid13FwdHex = grid13BitsToHex(correctedFwdBits),
-            grid13RevHex = grid13BitsToHex(correctedRevBits),
+            grid13FwdHex = grid13BitsToHexSlow(correctedFwdBits),
+            grid13RevHex = grid13BitsToHexSlow(correctedRevBits),
             rl2 = correctedRl2,
             blackRunsPx = blackRunsPx,
             whiteGapsPx = whiteGapsPx,

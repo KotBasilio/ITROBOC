@@ -37,10 +37,10 @@ Module: `:vision` preferred. If Bob thinks token formatting belongs elsewhere, k
 Implement helpers equivalent to:
 
 ```kotlin
-fun grid13BitsToHex(bits13: String): String
-fun forwardMealSignature(bits13: String): String   // "bfm" + hex
-fun reverseMealSignature(bits13: String): String   // "brm" + hex
-fun reverseBits(bits13: String): String
+fun grid13BitsToHexSlow(bits13: String): String
+fun forwardMealSignatureSlow(bits13: String): String   // "bfm" + hex
+fun reverseMealSignatureSlow(bits13: String): String   // "brm" + hex
+fun reverseBitsSlow(bits13: String): String
 ```
 
 Rules:

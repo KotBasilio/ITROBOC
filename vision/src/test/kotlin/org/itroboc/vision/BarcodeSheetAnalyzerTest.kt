@@ -66,7 +66,7 @@ class BarcodeSheetAnalyzerTest {
             assertTrue(record.measurement.rawSignature.matches(Regex("^bfm[0-9A-F]{4}$")), record.cardId)
             assertTrue(record.measurement.reverseSignature.matches(Regex("^brm[0-9A-F]{4}$")), record.cardId)
             assertEquals(13, record.measurement.grid13FwdBits.length, record.cardId)
-            assertEquals(reverseBits(record.measurement.grid13FwdBits), record.measurement.grid13RevBits, record.cardId)
+            assertEquals(reverseBitsSlow(record.measurement.grid13FwdBits), record.measurement.grid13RevBits, record.cardId)
             assertTrue(record.measurement.rl2.startsWith("B"), record.cardId)
         }
     }

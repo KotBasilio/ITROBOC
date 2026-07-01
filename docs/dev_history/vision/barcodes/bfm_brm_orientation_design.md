@@ -126,7 +126,7 @@ Earlier research showed that canonicalizing forward/reverse signatures can creat
 Do not do this:
 
 ```text
-canonical = min(forwardBits, reverseBits)
+canonical = min(forwardBits, reverseBitsSlow)
 ```
 
 Do not silently treat these as equivalent:

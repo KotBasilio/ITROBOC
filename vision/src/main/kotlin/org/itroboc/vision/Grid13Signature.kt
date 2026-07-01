@@ -14,7 +14,7 @@ data class Grid13SentinelCheck(
     val issues: List<String>,
 )
 
-fun checkGrid13Sentinels(value: Int): Grid13SentinelCheck {
+fun checkGrid13SentinelsSlow(value: Int): Grid13SentinelCheck {
     require(value in 0..GRID13_MAX_VALUE) {
         "Grid13 value must fit within $GRID13_BIT_COUNT bits"
     }
@@ -40,13 +40,13 @@ fun checkGrid13Sentinels(value: Int): Grid13SentinelCheck {
     )
 }
 
-fun checkGrid13Sentinels(bits13: String): Grid13SentinelCheck {
-    validateGrid13Bits(bits13)
-    return checkGrid13Sentinels(bits13.toInt(radix = 2))
+fun checkGrid13SentinelsSlow(bits13: String): Grid13SentinelCheck {
+    validateGrid13BitsSlow(bits13)
+    return checkGrid13SentinelsSlow(bits13.toInt(radix = 2))
 }
 
-fun normalizeGrid13Sentinels(bits13: String): String {
-    validateGrid13Bits(bits13)
+fun normalizeGrid13SentinelsSlow(bits13: String): String {
+    validateGrid13BitsSlow(bits13)
     return buildString(capacity = GRID13_BIT_COUNT) {
         append('1')
         append('0')
@@ -56,13 +56,13 @@ fun normalizeGrid13Sentinels(bits13: String): String {
     }
 }
 
-fun hasInvalidGrid13RunCandidate(bits13: String): Boolean {
-    validateGrid13Bits(bits13)
+fun hasInvalidGrid13RunCandidateSlow(bits13: String): Boolean {
+    validateGrid13BitsSlow(bits13)
     return "111" in bits13 || "0000" in bits13
 }
 
-fun grid13RunLengthSignature(bits13: String): String {
-    validateGrid13Bits(bits13)
+fun grid13RunLengthSignatureSlow(bits13: String): String {
+    validateGrid13BitsSlow(bits13)
     val runs = mutableListOf<String>()
     var currentBit = bits13.first()
     var currentLength = 1
@@ -80,8 +80,8 @@ fun grid13RunLengthSignature(bits13: String): String {
     return runs.joinToString("-")
 }
 
-fun grid13BitsToHex(bits13: String): String {
-    validateGrid13Bits(bits13)
+fun grid13BitsToHexSlow(bits13: String): String {
+    validateGrid13BitsSlow(bits13)
     val paddedBits = bits13.padStart(length = 16, padChar = '0')
     return paddedBits
         .toInt(radix = 2)
@@ -90,16 +90,16 @@ fun grid13BitsToHex(bits13: String): String {
         .padStart(length = 4, padChar = '0')
 }
 
-fun forwardMealSignature(bits13: String): String = "bfm${grid13BitsToHex(bits13)}"
+fun forwardMealSignatureSlow(bits13: String): String = "bfm${grid13BitsToHexSlow(bits13)}"
 
-fun reverseMealSignature(bits13: String): String = "brm${grid13BitsToHex(bits13)}"
+fun reverseMealSignatureSlow(bits13: String): String = "brm${grid13BitsToHexSlow(bits13)}"
 
-fun reverseBits(bits13: String): String {
-    validateGrid13Bits(bits13)
+fun reverseBitsSlow(bits13: String): String {
+    validateGrid13BitsSlow(bits13)
     return bits13.reversed()
 }
 
-private fun validateGrid13Bits(bits13: String) {
+private fun validateGrid13BitsSlow(bits13: String) {
     require(bits13.length == GRID13_BIT_COUNT) {
         "Grid13 bits must contain exactly $GRID13_BIT_COUNT bits"
     }

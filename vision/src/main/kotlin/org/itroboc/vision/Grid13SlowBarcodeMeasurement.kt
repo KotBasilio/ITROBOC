@@ -48,10 +48,10 @@ fun measureGrid13SlowBarcodeProjection(
         activeSpan = activeSpan,
         threshold = threshold,
     )
-    if (hasInvalidGrid13RunCandidate(fwdBits)) {
+    if (hasInvalidGrid13RunCandidateSlow(fwdBits)) {
         return null
     }
-    val revBits = reverseBits(fwdBits)
+    val revBits = reverseBitsSlow(fwdBits)
 
     return Grid13SlowBarcodeMeasurement(
         blackRunsPx = blackRuns.map { it.width },
@@ -61,13 +61,13 @@ fun measureGrid13SlowBarcodeProjection(
         activeStartX = activeSpan.first,
         activeEndX = activeSpan.last,
         activeSpanPx = activeSpan.width,
-        rl2 = grid13RunLengthSignature(fwdBits),
+        rl2 = grid13RunLengthSignatureSlow(fwdBits),
         grid13FwdBits = fwdBits,
         grid13RevBits = revBits,
-        grid13FwdHex = grid13BitsToHex(fwdBits),
-        grid13RevHex = grid13BitsToHex(revBits),
-        rawSignature = forwardMealSignature(fwdBits),
-        reverseSignature = reverseMealSignature(revBits),
+        grid13FwdHex = grid13BitsToHexSlow(fwdBits),
+        grid13RevHex = grid13BitsToHexSlow(revBits),
+        rawSignature = forwardMealSignatureSlow(fwdBits),
+        reverseSignature = reverseMealSignatureSlow(revBits),
         confidence = confidenceForSlowMeasurement(blackRuns = blackRuns, activeSpan = activeSpan),
         warnings = warningsForSlowMeasurement(blackRuns),
     )
