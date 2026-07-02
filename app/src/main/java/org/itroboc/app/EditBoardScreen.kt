@@ -71,6 +71,7 @@ fun EditBoardScreen(
     val boardState = boardEditState.boardState
     val selectedSeat = boardEditState.selectedSeat
     val isBoardComplete = BoardProgressSummary.from(boardState).boardComplete
+    val currentIsBoardComplete by rememberUpdatedState(isBoardComplete)
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var lastResultMessage by remember { mutableStateOf<String?>(null) }
@@ -97,6 +98,11 @@ fun EditBoardScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
+            // Clear out to idle when the camera is inactive.
+            if (currentIsBoardComplete) {
+                scanDeltas = emptyList()
+            }
+
             // Fade-out: prune deltas that correspond to scans older than 1s
             // We reconstruct a timeline by walking backwards from now
             var cumulative = 0L
@@ -111,13 +117,13 @@ fun EditBoardScreen(
             // Compute average rate while active, otherwise expose idle loop count.
             if (scanDeltas.isNotEmpty()) {
                 val avgDelta = scanDeltas.average()
-                scansPerSecond = if (avgDelta > 0) cumulative / avgDelta else 0.0
+                scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
                 scansIdleCount = 0
             } else {
                 scansPerSecond = - scansIdleCount.toDouble()
                 scansIdleCount++
             }
-            delay(250L)
+            delay(500L)
         }
     }
 
