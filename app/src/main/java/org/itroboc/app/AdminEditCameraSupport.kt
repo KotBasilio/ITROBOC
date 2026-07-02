@@ -113,7 +113,7 @@ internal class AdminEditCameraFrameDecoder(
         Log.d(
             ANALYZER_TIMING_TAG,
             "Analyzer timings roiCopyMs=${roiCopyNanos.toMillisString()} " +
-                "verdictDecodeMs=${decodeNanos.toMillisString()} " +
+                "decodeMs=${decodeNanos.toMillisString()} " +
                 "totalAnalyzeMs=${totalNanos.toMillisString()}",
         )
     }

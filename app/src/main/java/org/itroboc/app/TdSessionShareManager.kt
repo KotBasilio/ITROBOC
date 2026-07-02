@@ -26,7 +26,7 @@ internal class TdSessionShareManager(
         return Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "ITROBOC TD board export")
+            putExtra(Intent.EXTRA_SUBJECT, "ITROBOC-export.pbn")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
