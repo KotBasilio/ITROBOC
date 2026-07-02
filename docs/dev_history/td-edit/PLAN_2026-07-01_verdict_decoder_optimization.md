@@ -30,6 +30,45 @@ This is a strong base.
 The fast path is now real, but still early.
 It duplicates parts of the slow path logic in a leaner form, which is fine for now, but it means we should be deliberate about where parity and divergence are allowed.
 
+## Status Snapshot (2026-07-02)
+
+To avoid stale assumptions, here is the current optimization picture after the
+latest TD / verdict work.
+
+### Already Done
+
+- `Grid13VerdictDecoder` is no longer just a debug-stripping wrapper.
+  It is a real independent fast path.
+- verdict path now uses compact bitwise Grid13 handling rather than string-only
+  bit derivation
+- strict invalid-run rejection is active in the verdict path
+- slow-path naming split is done:
+  - `Grid13SlowDecoder`
+  - `Grid13SlowBarcodeMeasurement`
+- TD live scanning uses the verdict path
+- analyzer preprocessing no longer copies the whole luma plane before ROI work;
+  it now extracts only the ROI bytes needed for decode
+- TD has practical `scansPerSecond` field telemetry
+- slow path remains available as the alignment oracle
+
+### Partially Done / Still Crude
+
+- projection still allocates a fresh `DoubleArray` per decode
+- ROI extraction still copies ROI bytes into a fresh `ByteArray` per frame
+- SPS telemetry still prunes and rebuilds a small recent-delta list on a timer
+- verdict confidence is intentionally simple, not heavily tuned
+- section-level benchmarking is still light / ad hoc rather than formal
+
+### Not Done Yet
+
+- reusable scratch buffers across frames
+- fixed-size primitive run storage tuned specifically for verdict path
+- deeper projection-loop optimization beyond the current straightforward scan
+- more formal latency / percentile instrumentation
+- native / C++ experiments
+
+Interpret the rest of this note through that status lens.
+
 ## Optimization Priorities
 
 My recommended priority order is:
