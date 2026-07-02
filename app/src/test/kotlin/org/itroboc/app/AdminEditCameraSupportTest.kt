@@ -7,6 +7,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class AdminEditCameraSupportTest {
     @Test
@@ -118,6 +119,30 @@ class AdminEditCameraSupportTest {
         assertContentEquals(byteArrayOf(1, 2, 5, 6), topLeft.pixels)
         assertContentEquals(byteArrayOf(11, 12, 15, 16), bottomRight.pixels)
         assertContentEquals(byteArrayOf(8), singlePixel.pixels)
+    }
+
+    @Test
+    fun `roi only buffer copy can reuse exact size destination pixels`() {
+        val roi = BarcodeRoi(x = 1, y = 1, width = 3, height = 2)
+        val lumaBytes = byteArrayOf(
+            1, 2, 3, 4, 5, 99,
+            6, 7, 8, 9, 10, 99,
+            11, 12, 13, 14, 15, 99,
+        )
+        val reusablePixels = ByteArray(roi.width * roi.height) { 42 }
+
+        val image = extractGrayImageFromLumaPlaneBuffer(
+            imageWidth = 5,
+            imageHeight = 3,
+            lumaBuffer = ByteBuffer.wrap(lumaBytes),
+            rowStride = 6,
+            pixelStride = 1,
+            roi = roi,
+            reusablePixels = reusablePixels,
+        )
+
+        assertTrue(image.pixels === reusablePixels)
+        assertContentEquals(byteArrayOf(7, 8, 9, 12, 13, 14), reusablePixels)
     }
 
     @Test

@@ -2,6 +2,7 @@ package org.itroboc.vision
 
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 /**
  * An optimized decoder for the "Verdict" path.
@@ -13,6 +14,8 @@ import kotlin.math.max
 class Grid13VerdictDecoder(
     private val minimumFoundConfidence: Double = 0.60,
 ) : BarcodeDecoder {
+    private var projectionScratch = DoubleArray(0)
+
     init {
         require(minimumFoundConfidence in 0.0..1.0) {
             "minimumFoundConfidence must be within [0, 1]"
@@ -20,24 +23,25 @@ class Grid13VerdictDecoder(
     }
 
     override fun decode(image: GrayImage): BarcodeDecodeResult {
-        // Phase A keeps the projection allocation, but removes string-shaped bit work
-        // and list-heavy run analysis from the verdict hot path.
-        val projection = DoubleArray(image.width) { x ->
+        projectionScratch = ensureProjectionCapacity(projectionScratch, image.width)
+        val projection = projectionScratch
+
+        for (x in 0 until image.width) {
             var total = 0
             for (y in 0 until image.height) {
                 total += 255 - (image.pixels[(y * image.width) + x].toInt() and 0xFF)
             }
-            total.toDouble() / image.height
+            projection[x] = total.toDouble() / image.height
         }
 
-        if (projection.isEmpty()) {
+        if (image.width == 0) {
             return BarcodeDecodeResult.NotFound("Empty image projection")
         }
 
-        if (projection.inkRange < 1.0) {
+        if (projection.inkRange(image.width) < 1.0) {
             return BarcodeDecodeResult.NotFound("Insufficient ink contrast")
         }
-        val threshold = adaptiveInkThreshold(projection)
+        val threshold = adaptiveInkThreshold(projection, image.width)
 
         var firstBlack = -1
         var lastBlackExclusive = -1
@@ -223,5 +227,34 @@ internal fun bits13ToForwardMealSignature(bits13: Int): String {
     return "bfm${bits13.toString(radix = 16).uppercase().padStart(4, '0')}"
 }
 
-private val DoubleArray.inkRange: Double
-    get() = (maxOrNull() ?: 0.0) - (minOrNull() ?: 0.0)
+private fun ensureProjectionCapacity(
+    current: DoubleArray,
+    requiredSize: Int,
+): DoubleArray = if (current.size >= requiredSize) current else DoubleArray(requiredSize)
+
+private fun adaptiveInkThreshold(
+    projection: DoubleArray,
+    width: Int,
+): Int {
+    require(width > 0) { "width must be positive" }
+    var minValue = projection[0]
+    var maxValue = projection[0]
+    for (index in 1 until width) {
+        val value = projection[index]
+        if (value < minValue) minValue = value
+        if (value > maxValue) maxValue = value
+    }
+    return (((minValue + maxValue) / 2.0).roundToInt()).coerceIn(0, 255)
+}
+
+private fun DoubleArray.inkRange(width: Int): Double {
+    require(width > 0) { "width must be positive" }
+    var minValue = this[0]
+    var maxValue = this[0]
+    for (index in 1 until width) {
+        val value = this[index]
+        if (value < minValue) minValue = value
+        if (value > maxValue) maxValue = value
+    }
+    return maxValue - minValue
+}

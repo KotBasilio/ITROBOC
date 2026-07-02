@@ -74,6 +74,21 @@ class Grid13VerdictDecoderTest {
     }
 
     @Test
+    fun `verdict decoder scratch buffers handle changing image widths`() {
+        val first = assertIs<BarcodeDecodeResult.Found>(
+            verdictDecoder.decode(grid13Image("1010101001001", cellWidth = 4)),
+        )
+        val second = assertIs<BarcodeDecodeResult.Found>(
+            verdictDecoder.decode(grid13Image("1010101001001", cellWidth = 7)),
+        )
+
+        assertEquals("bfm1549", first.signature.rawSignature)
+        assertEquals("bfm1549", second.signature.rawSignature)
+        assertNull(first.signature.debug)
+        assertNull(second.signature.debug)
+    }
+
+    @Test
     fun `bitwise helpers keep the same strict run gate rules`() {
         assertTrue(hasInvalidGrid13RunCandidate(0b1011101001001))
         assertTrue(hasInvalidGrid13RunCandidate(0b1000010101001))
@@ -85,9 +100,8 @@ class Grid13VerdictDecoderTest {
         assertEquals("1001010101001", bits13ToString(normalizeGrid13Sentinels(0b1101010101001)))
     }
 
-    private fun grid13Image(bits: String): GrayImage {
+    private fun grid13Image(bits: String, cellWidth: Int = 4): GrayImage {
         require(bits.length == 13)
-        val cellWidth = 4
         val height = 4
         val width = bits.length * cellWidth
         val pixels = ByteArray(width * height)
