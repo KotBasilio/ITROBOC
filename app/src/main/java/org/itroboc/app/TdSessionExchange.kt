@@ -31,6 +31,7 @@ internal object TdSessionExchange {
     fun exportCompleteBoards(sessionState: TdSessionState): String? {
         val exportedBoards = sessionState.boards.values
             .asSequence()
+            .filter { it.boardNumber <= sessionState.totalBoardsInGrid }
             .sortedBy { it.boardNumber }
             .mapNotNull { boardEditState ->
                 if (!BoardProgressSummary.from(boardEditState.boardState).boardComplete) {

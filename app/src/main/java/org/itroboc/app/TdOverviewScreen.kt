@@ -37,6 +37,7 @@ fun TdOverviewScreen(
     val latestSessionState by rememberUpdatedState(sessionState)
     val latestOnSessionStateChange by rememberUpdatedState(onSessionStateChange)
     var messageToDisplay by remember { mutableStateOf<String?>(null) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -85,15 +86,16 @@ fun TdOverviewScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 10-column Grid for 30 boards
+        // Dynamic-column Grid based on totalBoardsInGrid
+        val columns = sessionState.totalBoardsInGrid / 3
         LazyVerticalGrid(
-            columns = GridCells.Fixed(10),
+            columns = GridCells.Fixed(columns),
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(30) { index ->
+            items(sessionState.totalBoardsInGrid) { index ->
                 val boardNumber = index + 1
                 val boardEditState = sessionState.boards[boardNumber]
                 val boardState = boardEditState?.boardState
@@ -115,9 +117,13 @@ fun TdOverviewScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Session status text area
-        val filledCount = sessionState.boards.values.count { BoardProgressSummary.from(it.boardState).boardComplete }
+        val completedBoards = sessionState.boards.values.filter { 
+            it.boardNumber <= sessionState.totalBoardsInGrid &&
+            BoardProgressSummary.from(it.boardState).boardComplete 
+        }
+        val filledCount = completedBoards.size
         Text(
-            text = "Filled: $filledCount/30",
+            text = "Filled: $filledCount/${sessionState.totalBoardsInGrid}",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -166,13 +172,24 @@ fun TdOverviewScreen(
                 Text("Export")
             }
             Button(
-                onClick = { /* TODO: Settings */ },
+                onClick = { showSettingsDialog = true },
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text("Settings")
             }
         }
+    }
+
+    if (showSettingsDialog) {
+        TdSettingsDialog(
+            currentSize = sessionState.totalBoardsInGrid,
+            onDismiss = { showSettingsDialog = false },
+            onSizeSelected = { newSize ->
+                onSessionStateChange(sessionState.updateGridSize(newSize))
+                showSettingsDialog = false
+            }
+        )
     }
 
     messageToDisplay?.let { message ->
@@ -186,6 +203,48 @@ fun TdOverviewScreen(
             }
         )
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun TdSettingsDialog(
+    currentSize: Int,
+    onDismiss: () -> Unit,
+    onSizeSelected: (Int) -> Unit
+) {
+    val allowedSizes = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("TD Settings") },
+        text = {
+            Column {
+                Text(
+                    "Total boards in grid:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    allowedSizes.forEach { size ->
+                        FilterChip(
+                            selected = size == currentSize,
+                            onClick = { onSizeSelected(size) },
+                            label = { Text(size.toString()) },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable
