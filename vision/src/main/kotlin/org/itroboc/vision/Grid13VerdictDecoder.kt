@@ -38,8 +38,9 @@ class Grid13VerdictDecoder(
             }
         }
 
+        val invH = 1.0 / image.height
         for (x in 0 until image.width) {
-            projection[x] /= image.height
+            projection[x] *= invH
         }
 
         if (image.width == 0) {

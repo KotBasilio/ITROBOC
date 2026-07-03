@@ -100,6 +100,21 @@ class Grid13VerdictDecoderTest {
         assertEquals("1001010101001", bits13ToString(normalizeGrid13Sentinels(0b1101010101001)))
     }
 
+    @Test
+    fun `verdict decoder scratch buffers handle shrinking image widths`() {
+        val decoder = Grid13VerdictDecoder()
+
+        val wide = assertIs<BarcodeDecodeResult.Found>(
+            decoder.decode(grid13Image("1010101001001", cellWidth = 7)),
+        )
+        val narrow = assertIs<BarcodeDecodeResult.Found>(
+            decoder.decode(grid13Image("1010101001001", cellWidth = 4)),
+        )
+
+        assertEquals("bfm1549", wide.signature.rawSignature)
+        assertEquals("bfm1549", narrow.signature.rawSignature)
+    }
+
     private fun grid13Image(bits: String, cellWidth: Int = 4): GrayImage {
         require(bits.length == 13)
         val height = 4
