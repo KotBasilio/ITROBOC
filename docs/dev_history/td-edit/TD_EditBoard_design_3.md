@@ -1,8 +1,8 @@
-# TD::EditBoard Design 2 — Current State
+# TD::EditBoard Design 3 — Current State
 
 Audience: future AI instances working on ITROBOC.
 Status: lean current-state design note, not a ticket list.
-Last aligned with: source snapshot `0ec24a2`
+Last aligned with: source snapshot `6664b2d` plus local review decisions after recovery-controls implementation.
 
 ---
 
@@ -18,25 +18,21 @@ physical cards -> decoded card identities -> validated board -> usable PBN
 
 The screen exists to reduce TD hand-burden during real club/tournament conditions.
 
-Load-bearing rule:
+Load-bearing rules:
 
 ```text
 Every scan interaction should reduce the TD's cognitive load, or it has failed.
-```
-
-Related rule:
-
-```text
 Wrong card is worse than missed card.
+Mistakes must be locally recoverable.
 ```
 
-A missed scan costs another hand movement. A wrong accepted card mutates the board, damages trust, and forces cleanup.
+A missed scan costs another hand movement. A wrong accepted card mutates the board, damages trust, and forces cleanup. Current recovery controls exist because real tournament/card handling includes both scanner false positives and human seat mistakes.
 
 ---
 
 ## 2. Mode split
 
-The project currently uses this product split:
+The project uses this product split:
 
 ```text
 Admin = explanation
@@ -52,6 +48,7 @@ TD screens should give operational answers:
 - unknown signature
 - hand complete
 - board complete
+- recovery action completed
 - export/import status
 
 TD should not require the user to interpret forensic scanner details during tournament work.
@@ -66,6 +63,7 @@ Owns bridge/domain truth and pure edit rules:
 
 - `CardId`, `Suit`, `Rank`, `Seat`
 - `HandState`, `BoardState`, `BoardEditState`
+- `AddedCardRecord`, `DuplicateOverrideCandidate`
 - `BoardProgressSummary`, `HandProgressSummary`
 - `DuplicateBoardMetadata`
 - `PbnExporter`, `PbnExportOptions`
@@ -95,7 +93,7 @@ Important app files:
 
 - `MainActivity.kt` / `AppNavigation()` — in-memory app state and routing
 - `TdOverviewScreen.kt` — board grid, import/export/settings
-- `EditBoardScreen.kt` — live board cockpit
+- `EditBoardScreen.kt` — live board cockpit and recovery controls
 - `TdSessionState.kt` — current TD session state
 - `TdSessionExchange.kt` — cumulative PBN export/import
 - `TdSessionShareManager.kt` — Android share intent
@@ -159,7 +157,7 @@ Partial  = some cards but not complete
 Complete = `BoardProgressSummary.boardComplete`
 ```
 
-Settings opens a full-screen settings surface, not a small dialog. It offers only allowed board counts that are `>= highestNonEmptyBoardNumber`.
+Settings opens a full-screen settings surface. It offers only allowed board counts that are `>= highestNonEmptyBoardNumber`.
 
 ---
 
@@ -221,9 +219,9 @@ Board 0  -> ignored
 
 ## 7. EditBoard screen layout
 
-`EditBoardScreen` is currently a landscape-first cockpit.
+`EditBoardScreen` is currently a landscape-first cockpit with large field-readable labels.
 
-The screen is arranged as a 3x3-ish table:
+The screen is arranged as a 3x3-ish table.
 
 Top row:
 
@@ -234,13 +232,13 @@ Board controls | North hand | Last scanned | Status
 Middle row:
 
 ```text
-West hand / Back | Camera or BoardCompleteView | East hand
+West hand + Back + Swap | Camera or BoardCompleteView | East hand + Undo + Scissors
 ```
 
 Bottom row:
 
 ```text
-Feed mode | South hand | Orientation | PBN preview
+Feed mode | South hand | Orientation | SureArea
 ```
 
 Hand panels:
@@ -252,12 +250,31 @@ Hand panels:
 - selected hand has a visible blue border
 - tapping a hand selects it and may trigger fourth-hand auto-fill
 
-West panel currently also contains the Back button.
+West panel currently contains:
+
+- `Back`
+- West hand display
+- `Swap`
+
+East panel currently contains:
+
+- `Undo`
+- East hand display
+- `Scissors`
+
+The bottom-right area is `SureArea`, not `PBN preview`.
 
 Clear button behavior:
 
-- if selected hand has cards: label is `Clear hand`, and clears only that hand
-- if selected hand is empty: label is `Clear board`, opens confirmation, then clears all hands
+- label is always `Clear`
+- if selected hand has cards: clears only that hand
+- if selected hand is empty: opens confirmation to clear the whole board
+
+The label is intentionally short for larger font / field readability:
+
+```text
+Clear is there; context applies.
+```
 
 ---
 
@@ -322,7 +339,7 @@ This keeps unknown-signature noise from flooding the main TD status area.
 `EditBoardReducer.applyScannedCard(editState, card, signature)` handles:
 
 - same-hand duplicate: no board change, reports OK/already present
-- cross-hand duplicate: no board change, reports skipped/existing seat
+- cross-hand duplicate: no board change, creates `DuplicateOverrideCandidate`
 - selected hand already complete: no card added; selected seat advances
 - valid card: added to selected hand
 - auto-advance after selected hand reaches 13 cards
@@ -343,14 +360,138 @@ North -> East -> South -> West -> North
 - fills selected hand if exactly 13 cards remain
 - leaves selection on the auto-filled seat
 - reports board complete
+- does **not** add auto-filled cards to `addHistory`
 
-`clearSelectedHand(editState)` clears only the selected hand.
-
-`clearBoard(editState)` clears all four hands.
+Auto-fill cards are removable via `Scissors`; they are not expected to be undone via `Undo`.
 
 ---
 
-## 11. Board complete state
+## 11. Recovery controls
+
+The recovery controls exist to make scan/human mistakes locally recoverable without restarting the board.
+
+### Undo
+
+`Undo` is standard LIFO undo for the **currently selected hand**.
+
+Pure rule:
+
+```kotlin
+EditBoardReducer.undoAddForSelectedHand(editState)
+```
+
+Behavior:
+
+- finds the last `AddedCardRecord` whose `seat == selectedSeat`
+- removes that card from that hand
+- removes that history record
+- clears any pending `duplicateOverrideCandidate`
+- if no history exists for selected hand, returns “Nothing to undo...”
+
+Important no-fix decision:
+
+- after a hand reaches 13 cards, selection auto-advances to the next seat
+- therefore immediate `Undo` affects the new selected seat, not the just-completed seat
+- this is accepted because the usual next hand is empty, so the button is disabled; the TD can tap the previous hand if needed
+
+### Scissors
+
+`Scissors` opens a full-screen selected-hand card view.
+
+Pure rule:
+
+```kotlin
+EditBoardReducer.removeCardFromSelectedHand(editState, card)
+```
+
+Behavior:
+
+- only removes cards from the currently selected hand
+- each displayed card is clickable
+- removing a card clears matching history for that selected hand/card
+- removing a card clears any pending `duplicateOverrideCandidate`
+- useful for manual cleanup and for auto-filled fourth-hand cards
+
+### Swap
+
+`Swap` opens a full-screen seat chooser and swaps the currently selected hand with another hand.
+
+Pure rule:
+
+```kotlin
+EditBoardReducer.swapSelectedHandWith(editState, targetSeat)
+```
+
+Behavior:
+
+- swaps the two hand contents
+- clears all `addHistory`
+- clears any pending `duplicateOverrideCandidate`
+- keeps selected seat unchanged
+
+Reason: after a hand swap, historical “added card” records no longer have reliable undo semantics.
+
+### I'm sure / SureArea
+
+`SureArea` is the bottom-right TD recovery area.
+
+`I'm sure` is enabled only when:
+
+```kotlin
+duplicateOverrideCandidate?.targetSeat == selectedSeat
+```
+
+Pure rule:
+
+```kotlin
+EditBoardReducer.confirmDuplicateOverride(editState)
+```
+
+Use case:
+
+- scanner sees a card for the selected hand
+- the same card is already present in another hand
+- reducer rejects normal add and creates a duplicate override candidate
+- TD says `I'm sure` when the previous occurrence was a false positive
+
+Behavior:
+
+- if no candidate exists: no mutation
+- if candidate is stale: clears the candidate and reports no longer actionable
+- if candidate is valid: moves the card from existing seat to target seat
+- updates history by removing the existing-seat record for that card and appending a target-seat record
+- clears the candidate
+
+Stale cases include:
+
+- existing seat no longer contains the card
+- target seat already contains the card
+- target hand is complete
+
+---
+
+## 12. LastScannedCardArea and StatusArea
+
+`LastScannedCardArea` displays:
+
+- title: `Last scanned`
+- last accepted/scanned `CardId`, if present
+- otherwise the pending duplicate candidate card, if present
+
+This lets a rejected duplicate candidate remain visible while `I'm sure` is available.
+
+`StatusArea` displays:
+
+- `Cards: X/52`
+- current barcode orientation mode
+- recent scan/callback cadence as `FPS` or idle count as `IDLE`
+- last result message
+
+Current status is string-based rather than a typed TD event model.
+
+---
+
+## 13. Board complete state
 
 A board is complete when `BoardProgressSummary.from(boardState).boardComplete` is true.
 
@@ -359,15 +500,25 @@ When the current board is complete:
 - scan mutation is ignored by `handleScan`
 - the central camera area switches to `BoardCompleteView`
 - camera feed is no longer shown in the center
-- the complete-board view shows a large PBN preview
-- the side `PBNArea` also shows PBN while complete
-- clearing a hand or board returns the board to incomplete state and scanning can resume
+- `BoardCompleteView` shows a large PBN preview
+- side recovery controls remain reachable outside the central area
+- clearing/removing a card returns the board to incomplete state and scanning can resume
+
+There is no separate side `PBNArea` in the current layout.
 
 This visual transition is part of the TD workflow: it tells the TD the board has landed.
 
+Implementation rule:
+
+```text
+Do not mutate Compose state directly inside a render branch.
+```
+
+If scan-rate state needs reset on board completion, use `LaunchedEffect` / effect-side logic, not assignment inside the `BoardCompleteView` composition branch.
+
 ---
 
-## 12. Scan rate telemetry
+## 14. Scan rate telemetry
 
 `EditBoardScreen` maintains `scansPerSecond` as field telemetry.
 
@@ -382,7 +533,7 @@ Current UI label says `FPS`, but the design meaning is closer to recent scan/cal
 
 ---
 
-## 13. Current placeholders / non-goals
+## 15. Current placeholders / non-goals
 
 These are current facts, not active tickets in this file:
 
@@ -392,12 +543,13 @@ These are current facts, not active tickets in this file:
 - layout is landscape/tablet-first
 - Admin diagnostics are intentionally richer than TD diagnostics
 - `TdScanAccumulator` and `TdScanSessionPresentation` still exist as pure scan/presentation helpers, but live `EditBoardScreen` currently uses `EditBoardReducer` for board mutation
+- current TD status is string-based; typed event/status model is a possible future improvement, not current doctrine
 
 Do not convert these facts into architecture doctrine unless they become permanent.
 
 ---
 
-## 14. Test anchors
+## 16. Test anchors
 
 Tests should protect behavior, not historical ticket wording.
 
@@ -406,11 +558,16 @@ Important behavior anchors:
 - `EditBoardReducerTest`
   - add new card
   - reject same-hand duplicate without mutation
-  - reject cross-hand duplicate without mutation
+  - reject cross-hand duplicate without mutation and create candidate
   - auto-advance after hand completion
   - auto-fill fourth hand
   - clear selected hand
   - clear board
+  - LIFO undo for selected hand
+  - scissors/removal clears selected hand card and matching history
+  - swap clears history and pending duplicate candidate
+  - duplicate override valid move
+  - duplicate override stale cases
 
 - `TdSessionStateTest`
   - default grid size
@@ -435,7 +592,7 @@ Important behavior anchors:
 
 ---
 
-## 15. Lean-doc rule for this directory
+## 17. Lean-doc rule for this directory
 
 `docs/dev_history/td-edit/` should not be a graveyard of completed tickets.
 

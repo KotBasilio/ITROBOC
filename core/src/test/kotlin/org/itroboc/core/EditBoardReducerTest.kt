@@ -223,4 +223,154 @@ class EditBoardReducerTest {
         assertEquals(1, clearUpdate.state.addHistory.size)
         assertEquals(Seat.EAST, clearUpdate.state.addHistory[0].seat)
     }
+
+    @Test
+    fun `undo removes last added card for selected hand across mixed history`() {
+        val northFirst = CardId(Suit.SPADES, Rank.ACE)
+        val eastCard = CardId(Suit.HEARTS, Rank.KING)
+        val northSecond = CardId(Suit.SPADES, Rank.QUEEN)
+
+        val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)
+        val update1 = EditBoardReducer.applyScannedCard(state, northFirst, "sigN1")
+        val update2 = EditBoardReducer.applyScannedCard(
+            update1.state.copy(selectedSeat = Seat.EAST),
+            eastCard,
+            "sigE1",
+        )
+        val update3 = EditBoardReducer.applyScannedCard(
+            update2.state.copy(selectedSeat = Seat.NORTH),
+            northSecond,
+            "sigN2",
+        )
+
+        val undoUpdate = EditBoardReducer.undoAddForSelectedHand(update3.state)
+
+        assertEquals(true, undoUpdate.state.boardState.handOf(Seat.NORTH).contains(northFirst))
+        assertEquals(false, undoUpdate.state.boardState.handOf(Seat.NORTH).contains(northSecond))
+        assertEquals(true, undoUpdate.state.boardState.handOf(Seat.EAST).contains(eastCard))
+        assertEquals(2, undoUpdate.state.addHistory.size)
+        assertEquals(listOf(northFirst, eastCard), undoUpdate.state.addHistory.map { it.card })
+    }
+
+    @Test
+    fun `confirm duplicate override clears stale candidate when existing seat no longer contains card`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val state = BoardEditState(
+            boardNumber = 1,
+            selectedSeat = Seat.NORTH,
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = card,
+                signature = "sig1",
+                existingSeat = Seat.EAST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.confirmDuplicateOverride(state)
+
+        assertEquals(0, update.state.boardState.totalCardCount())
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+    }
+
+    @Test
+    fun `confirm duplicate override clears stale candidate when target already contains card`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val board = BoardState().addCard(Seat.NORTH, card)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = card,
+                signature = "sig1",
+                existingSeat = Seat.EAST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.confirmDuplicateOverride(state)
+
+        assertEquals(1, update.state.boardState.totalCardCount())
+        assertEquals(Seat.NORTH, update.state.boardState.seatContaining(card))
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+    }
+
+    @Test
+    fun `confirm duplicate override clears stale candidate when target hand is complete`() {
+        val duplicateCard = CardId(Suit.SPADES, Rank.ACE)
+        var board = BoardState().addCard(Seat.EAST, duplicateCard)
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.HEARTS, rank))
+        }
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = duplicateCard,
+                signature = "sig1",
+                existingSeat = Seat.EAST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.confirmDuplicateOverride(state)
+
+        assertEquals(14, update.state.boardState.totalCardCount())
+        assertEquals(Seat.EAST, update.state.boardState.seatContaining(duplicateCard))
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+    }
+
+    @Test
+    fun `swap clears pending duplicate candidate`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val board = BoardState().addCard(Seat.NORTH, card)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = CardId(Suit.HEARTS, Rank.ACE),
+                signature = "sigH1",
+                existingSeat = Seat.EAST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.swapSelectedHandWith(state, Seat.SOUTH)
+
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+        assertEquals(Seat.SOUTH, update.state.boardState.seatContaining(card))
+    }
+
+    @Test
+    fun `remove card from selected hand clears candidate and matching history only`() {
+        val northCard = CardId(Suit.SPADES, Rank.ACE)
+        val eastCard = CardId(Suit.HEARTS, Rank.ACE)
+        var board = BoardState()
+            .addCard(Seat.NORTH, northCard)
+            .addCard(Seat.EAST, eastCard)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+            addHistory = listOf(
+                AddedCardRecord(Seat.NORTH, northCard),
+                AddedCardRecord(Seat.EAST, eastCard),
+            ),
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = CardId(Suit.DIAMONDS, Rank.ACE),
+                signature = "sigD1",
+                existingSeat = Seat.WEST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.removeCardFromSelectedHand(state, northCard)
+
+        assertEquals(false, update.state.boardState.handOf(Seat.NORTH).contains(northCard))
+        assertEquals(true, update.state.boardState.handOf(Seat.EAST).contains(eastCard))
+        assertEquals(listOf(AddedCardRecord(Seat.EAST, eastCard)), update.state.addHistory)
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+    }
 }
