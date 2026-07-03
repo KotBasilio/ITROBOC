@@ -7,6 +7,10 @@ data class HandState(private val cards: Set<CardId> = emptySet()) {
         return HandState(cards + card)
     }
 
+    fun removeCard(card: CardId): HandState {
+        return HandState(cards - card)
+    }
+
     fun contains(card: CardId): Boolean = card in cards
 
     fun count(): Int = cards.size
