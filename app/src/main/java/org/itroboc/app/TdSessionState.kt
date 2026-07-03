@@ -19,4 +19,8 @@ data class TdSessionState(
     fun updateGridSize(newSize: Int): TdSessionState {
         return copy(totalBoardsInGrid = newSize)
     }
+
+    companion object {
+        val ALLOWED_GRID_SIZES = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
+    }
 }
