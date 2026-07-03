@@ -184,6 +184,7 @@ fun TdOverviewScreen(
     if (showSettingsDialog) {
         TdSettingsDialog(
             currentSize = sessionState.totalBoardsInGrid,
+            minAllowedSize = sessionState.highestNonEmptyBoardNumber,
             onDismiss = { showSettingsDialog = false },
             onSizeSelected = { newSize ->
                 onSessionStateChange(sessionState.updateGridSize(newSize))
@@ -209,10 +210,11 @@ fun TdOverviewScreen(
 @Composable
 fun TdSettingsDialog(
     currentSize: Int,
+    minAllowedSize: Int,
     onDismiss: () -> Unit,
     onSizeSelected: (Int) -> Unit
 ) {
-    val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES
+    val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES.filter { it >= minAllowedSize }
 
     AlertDialog(
         onDismissRequest = onDismiss,
