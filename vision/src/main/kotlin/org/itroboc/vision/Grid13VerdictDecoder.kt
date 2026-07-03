@@ -67,13 +67,13 @@ class Grid13VerdictDecoder(
             currentRunStart = -1
         }
 
-        for (x in projection.indices) {
+        for (x in 0 until image.width) {
             when {
                 projection[x] >= threshold && currentRunStart == -1 -> currentRunStart = x
                 projection[x] < threshold && currentRunStart != -1 -> commitRun(x)
             }
         }
-        commitRun(projection.size)
+        commitRun(image.width)
 
         if (blackRunCount == 0) {
             return BarcodeDecodeResult.NotFound("No black bars detected")

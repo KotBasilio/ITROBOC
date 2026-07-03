@@ -17,6 +17,8 @@ data class TdSessionState(
     }
 
     fun updateGridSize(newSize: Int): TdSessionState {
+        require(newSize in ALLOWED_GRID_SIZES)
+        require(newSize >= highestNonEmptyBoardNumber)
         return copy(totalBoardsInGrid = newSize)
     }
 
