@@ -208,12 +208,6 @@ fun EditBoardScreen(
                 selectedSeat = selectedSeat,
                 boardState = boardState,
                 onClear = { onClearClick() },
-                onUndo = {
-                    val update = EditBoardReducer.undoAddForSelectedHand(boardEditState)
-                    onBoardEditStateChange(update.state)
-                    lastResultMessage = update.message
-                },
-                canUndo = boardEditState.addHistory.any { it.seat == selectedSeat },
                 onImSure = {
                     val update = EditBoardReducer.confirmDuplicateOverride(boardEditState)
                     onBoardEditStateChange(update.state)
@@ -300,6 +294,12 @@ fun EditBoardScreen(
                 onClick = { onSeatClick(Seat.EAST) },
                 onScissors = { showScissorsScreen = true },
                 canScissors = boardState.handOf(selectedSeat).count() > 0,
+                onUndo = {
+                    val update = EditBoardReducer.undoAddForSelectedHand(boardEditState)
+                    onBoardEditStateChange(update.state)
+                    lastResultMessage = update.message
+                },
+                canUndo = boardEditState.addHistory.any { it.seat == selectedSeat },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -426,8 +426,6 @@ fun BoardControlsArea(
     selectedSeat: Seat,
     boardState: org.itroboc.core.BoardState,
     onClear: () -> Unit,
-    onUndo: () -> Unit,
-    canUndo: Boolean,
     onImSure: () -> Unit,
     canImSure: Boolean,
     modifier: Modifier = Modifier
@@ -453,14 +451,6 @@ fun BoardControlsArea(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
             Text("I'm sure", fontSize = 24.sp)
-        }
-        Button(
-            onClick = onUndo,
-            enabled = canUndo,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-        ) {
-            Text("Undo", fontSize = 24.sp)
         }
         Button(
             onClick = onClear,
@@ -570,6 +560,8 @@ fun EastArea(
     onClick: () -> Unit,
     onScissors: () -> Unit,
     canScissors: Boolean,
+    onUndo: () -> Unit,
+    canUndo: Boolean,
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (handState.isComplete()) Color(0xFFC8E6C9) else Color(0xFFFFF9C4)
@@ -586,6 +578,15 @@ fun EastArea(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(
+                onClick = onUndo,
+                enabled = canUndo,
+                modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+            ) {
+                Text("Undo", fontSize = 24.sp)
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             HandContent(handState = handState)
@@ -724,14 +725,33 @@ fun PBNArea(
             .padding(8.dp),
         contentAlignment = Alignment.TopStart
     ) {
-        // placeholder
         Column {
             Text(
-                " ",
+                "PBN Preview",
                 color = Color(0xFF4CAF50),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
+            
+            if (isComplete) {
+                val pbn = TdSessionExchange.exportCompleteBoard(
+                    boardState = boardState,
+                    boardNumber = boardNumber,
+                )
+                Text(
+                    text = pbn,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            } else {
+                Text(
+                    text = "Complete board to see PBN.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
     }
 }
@@ -922,58 +942,48 @@ fun ScissorsScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Scissors for ${seat.displayName}",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Click on cards to remove them",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Normal,
-            )
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Start
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                    Row(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        Text(
-                            text = suitCards.suit.prettySymbol,
-                            color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                            fontSize = 50.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(44.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        suitCards.cards.forEach { card ->
-                            Text(
-                                text = card.rank.symbol.toString(),
-                                fontSize = 50.sp,
-                                color = Color.Black,
-                                modifier = Modifier
-                                    .clickable { onRemoveCard(card) }
-                                    .padding(horizontal = 12.dp)
-                            )
-                        }
-                    }
+                Text(
+                    text = "Remove card from ${seat.displayName}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Button(onClick = onDismiss) {
+                    Text("Close")
                 }
             }
 
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(onClick = onDismiss) {
-                Text( fontSize = 30.sp, text = "Close" )
+            handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+                Row(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = suitCards.suit.prettySymbol,
+                        color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
+                        fontSize = 50.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.width(44.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    suitCards.cards.forEach { card ->
+                        Text(
+                            text = card.rank.symbol.toString(),
+                            fontSize = 50.sp,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .clickable { onRemoveCard(card) }
+                                .padding(horizontal = 8.dp)
+                        )
+                    }
+                }
             }
-
         }
     }
 }
@@ -994,12 +1004,20 @@ fun SwapScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Swap ${currentSeat.displayName} with...",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 40.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Swap ${currentSeat.displayName} with...",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Button(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -1013,12 +1031,6 @@ fun SwapScreen(
                 ) {
                     Text(text = seat.displayName, fontSize = 40.sp)
                 }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            Button(onClick = onDismiss) {
-                Text( fontSize = 30.sp, text = "Cancel" )
             }
         }
     }
