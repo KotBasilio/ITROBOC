@@ -38,4 +38,23 @@ class TdSessionStateTest {
         assertEquals(board1, newState.boards[1])
         assertEquals(board31, newState.boards[31])
     }
+
+    @Test
+    fun `highestNonEmptyBoardNumber returns the correct board number`() {
+        val board1 = BoardEditState(1, BoardState().addCard(Seat.NORTH, CardId.parse("SA")))
+        val board5 = BoardEditState(5, BoardState().addCard(Seat.SOUTH, CardId.parse("HA")))
+        val board10 = BoardEditState(10, BoardState()) // Empty board
+        
+        val state = TdSessionState(
+            boards = mapOf(1 to board1, 5 to board5, 10 to board10)
+        )
+        
+        assertEquals(5, state.highestNonEmptyBoardNumber)
+    }
+
+    @Test
+    fun `highestNonEmptyBoardNumber returns 0 for empty session`() {
+        val state = TdSessionState()
+        assertEquals(0, state.highestNonEmptyBoardNumber)
+    }
 }

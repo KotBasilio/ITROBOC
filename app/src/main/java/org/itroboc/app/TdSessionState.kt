@@ -20,6 +20,10 @@ data class TdSessionState(
         return copy(totalBoardsInGrid = newSize)
     }
 
+    val highestNonEmptyBoardNumber: Int
+        get() = boards.filterValues { it.boardState.totalCardCount() > 0 }
+            .keys.maxOrNull() ?: 0
+
     companion object {
         val ALLOWED_GRID_SIZES = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
     }
