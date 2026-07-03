@@ -12,7 +12,6 @@ object PbnExporter {
 
         return buildString {
             options.event?.let { appendLine("[Event \"$it\"]") }
-            options.site?.let { appendLine("[Site \"$it\"]") }
             options.boardNumber?.let { appendLine("[Board \"$it\"]") }
             appendLine("[Dealer \"${options.dealer.symbol}\"]")
             options.vulnerability?.let { appendLine("[Vulnerable \"${it.pbnValue}\"]") }
