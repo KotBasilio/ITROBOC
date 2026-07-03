@@ -10,6 +10,7 @@ import org.itroboc.core.Seat
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class TdSessionExchangeTest {
     private val boardOne = boardOf(
@@ -123,6 +124,60 @@ class TdSessionExchangeTest {
         )
 
         assertNull(TdSessionExchange.exportCompleteBoards(sessionState))
+    }
+
+    @Test
+    fun `import expands grid size based on largest valid board number`() {
+        val initialSessionState = TdSessionState(totalBoardsInGrid = 30)
+        
+        // Board 31 should expand grid to 33
+        val board31 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 31))
+        val result1 = TdSessionExchange.importCumulative(initialSessionState, board31)
+        assertEquals(33, result1.sessionState.totalBoardsInGrid)
+
+        // Board 34 should expand grid to 36
+        val board34 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 34))
+        val result2 = TdSessionExchange.importCumulative(initialSessionState, board34)
+        assertEquals(36, result2.sessionState.totalBoardsInGrid)
+
+        // Board 39 should expand grid to 39
+        val board39 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 39))
+        val result3 = TdSessionExchange.importCumulative(initialSessionState, board39)
+        assertEquals(39, result3.sessionState.totalBoardsInGrid)
+    }
+
+    @Test
+    fun `import skips invalid board numbers and does not expand grid`() {
+        val initialSessionState = TdSessionState(totalBoardsInGrid = 30)
+        
+        // Board 40 is invalid and should be skipped
+        val board40 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 40))
+        val result1 = TdSessionExchange.importCumulative(initialSessionState, board40)
+        assertTrue(result1.importedBoardNumbers.isEmpty())
+        assertEquals(30, result1.sessionState.totalBoardsInGrid)
+        assertEquals(1, result1.ignoredBlockCount)
+
+        // Board 0 is invalid and should be skipped
+        val board0 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 0))
+        val result2 = TdSessionExchange.importCumulative(initialSessionState, board0)
+        assertTrue(result2.importedBoardNumbers.isEmpty())
+        assertEquals(30, result2.sessionState.totalBoardsInGrid)
+        assertEquals(1, result2.ignoredBlockCount)
+    }
+
+    @Test
+    fun `mixed import with valid and invalid boards expands only for valid ones`() {
+        val initialSessionState = TdSessionState(totalBoardsInGrid = 30)
+        
+        val board32 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 32))
+        val board99 = PbnExporter.export(boardOne, PbnExportOptions(boardNumber = 99))
+        val importedText = listOf(board32, board99).joinToString(separator = "\n\n")
+
+        val result = TdSessionExchange.importCumulative(initialSessionState, importedText)
+        
+        assertEquals(listOf(32), result.importedBoardNumbers)
+        assertEquals(1, result.ignoredBlockCount)
+        assertEquals(33, result.sessionState.totalBoardsInGrid)
     }
 
     private fun boardOf(vararg seatCards: Pair<Seat, List<String>>): BoardState =

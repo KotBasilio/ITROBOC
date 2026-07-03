@@ -51,14 +51,15 @@ internal object TdSessionExchange {
         sessionState: TdSessionState,
         rawText: String,
     ): TdSessionImportResult {
-        val parsedBoards = parseTaggedBlocks(rawText)
+        val parsedBlocks = parseTaggedBlocks(rawText)
         var mergedState = sessionState
         val importedBoardNumbers = mutableListOf<Int>()
         var ignoredBlockCount = 0
+        var maxValidBoardNumber = sessionState.totalBoardsInGrid
 
-        parsedBoards.forEach { block ->
+        parsedBlocks.forEach { block ->
             val importedBoard = parseCompleteBoard(block)
-            if (importedBoard == null) {
+            if (importedBoard == null || !isSupportedTdBoardNumber(importedBoard.boardNumber)) {
                 ignoredBlockCount += 1
                 return@forEach
             }
@@ -72,6 +73,16 @@ internal object TdSessionExchange {
                 )
             )
             importedBoardNumbers += importedBoard.boardNumber
+            if (importedBoard.boardNumber > maxValidBoardNumber) {
+                maxValidBoardNumber = importedBoard.boardNumber
+            }
+        }
+
+        val finalGridSize = TdSessionState.ALLOWED_GRID_SIZES.firstOrNull { it >= maxValidBoardNumber }
+            ?: TdSessionState.ALLOWED_GRID_SIZES.last()
+        
+        if (finalGridSize > mergedState.totalBoardsInGrid) {
+            mergedState = mergedState.updateGridSize(finalGridSize)
         }
 
         return TdSessionImportResult(
@@ -80,6 +91,9 @@ internal object TdSessionExchange {
             ignoredBlockCount = ignoredBlockCount,
         )
     }
+
+    private fun isSupportedTdBoardNumber(boardNumber: Int): Boolean =
+        boardNumber in 1..39
 
     private fun parseTaggedBlocks(rawText: String): List<List<String>> {
         val blocks = mutableListOf<MutableList<String>>()

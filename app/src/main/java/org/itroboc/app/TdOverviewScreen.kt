@@ -212,7 +212,7 @@ fun TdSettingsDialog(
     onDismiss: () -> Unit,
     onSizeSelected: (Int) -> Unit
 ) {
-    val allowedSizes = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
+    val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES
 
     AlertDialog(
         onDismissRequest = onDismiss,
