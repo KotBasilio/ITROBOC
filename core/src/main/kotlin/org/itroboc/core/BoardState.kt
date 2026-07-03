@@ -16,6 +16,16 @@ data class BoardState(
         return copy(hands = hands + (seat to hands.getValue(seat).addCard(card)))
     }
 
+    fun removeCard(seat: Seat, card: CardId): BoardState {
+        return copy(hands = hands + (seat to hands.getValue(seat).removeCard(card)))
+    }
+
+    fun swapHands(a: Seat, b: Seat): BoardState {
+        val handA = hands.getValue(a)
+        val handB = hands.getValue(b)
+        return copy(hands = hands + (a to handB) + (b to handA))
+    }
+
     fun totalCardCount(): Int = allCards().size
 
     fun seatContaining(card: CardId): Seat? =
