@@ -255,7 +255,6 @@ fun EditBoardScreen(
                 } else if (showScissorsScreen || showSwapScreen) {
                     Text("Modal screen is coming", color = Color.White)
                 } else if (isBoardComplete) {
-                    scanDeltas = emptyList()
                     BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
                 } else {
                     CameraPreview(
@@ -717,7 +716,7 @@ fun SureArea(
         contentAlignment = Alignment.TopStart
     ) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(8.dp),
             verticalArrangement = Arrangement.Center
