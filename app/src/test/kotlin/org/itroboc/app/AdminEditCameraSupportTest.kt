@@ -146,6 +146,26 @@ class AdminEditCameraSupportTest {
     }
 
     @Test
+    fun `roi only buffer copy still supports non unit pixel stride`() {
+        val roi = BarcodeRoi(x = 1, y = 0, width = 3, height = 2)
+        val lumaBytes = byteArrayOf(
+            1, 90, 2, 91, 3, 92, 4, 93,
+            5, 94, 6, 95, 7, 96, 8, 97,
+        )
+
+        val image = extractGrayImageFromLumaPlaneBuffer(
+            imageWidth = 4,
+            imageHeight = 2,
+            lumaBuffer = ByteBuffer.wrap(lumaBytes),
+            rowStride = 8,
+            pixelStride = 2,
+            roi = roi,
+        )
+
+        assertContentEquals(byteArrayOf(2, 3, 4, 6, 7, 8), image.pixels)
+    }
+
+    @Test
     fun `roi only buffer copy rejects invalid roi clearly`() {
         val buffer = ByteBuffer.wrap(ByteArray(24))
 

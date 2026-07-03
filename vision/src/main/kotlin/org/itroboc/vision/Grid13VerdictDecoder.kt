@@ -25,13 +25,21 @@ class Grid13VerdictDecoder(
     override fun decode(image: GrayImage): BarcodeDecodeResult {
         projectionScratch = ensureProjectionCapacity(projectionScratch, image.width)
         val projection = projectionScratch
+        val pixels = image.pixels
 
         for (x in 0 until image.width) {
-            var total = 0
-            for (y in 0 until image.height) {
-                total += 255 - (image.pixels[(y * image.width) + x].toInt() and 0xFF)
+            projection[x] = 0.0
+        }
+
+        for (y in 0 until image.height) {
+            val rowOffset = y * image.width
+            for (x in 0 until image.width) {
+                projection[x] += 255 - (pixels[rowOffset + x].toInt() and 0xFF)
             }
-            projection[x] = total.toDouble() / image.height
+        }
+
+        for (x in 0 until image.width) {
+            projection[x] /= image.height
         }
 
         if (image.width == 0) {
