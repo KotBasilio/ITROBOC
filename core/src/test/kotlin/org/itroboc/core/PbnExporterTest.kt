@@ -15,7 +15,6 @@ class PbnExporterTest {
     fun `exports a simple pbn deal for a complete board`() {
         val expected = """
             [Event "ITROBOC Export"]
-            [Site "Local"]
             [Dealer "N"]
             [Deal "N:AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T ..T9872.KQJ98765"]
         """.trimIndent()
@@ -27,7 +26,6 @@ class PbnExporterTest {
     fun `exports pbn with optional metadata dealer rotation and vulnerability`() {
         val expected = """
             [Event "Club Duplicate"]
-            [Site "Budapest"]
             [Board "12"]
             [Dealer "E"]
             [Vulnerable "NS"]
