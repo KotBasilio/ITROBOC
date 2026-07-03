@@ -208,12 +208,6 @@ fun EditBoardScreen(
                 selectedSeat = selectedSeat,
                 boardState = boardState,
                 onClear = { onClearClick() },
-                onImSure = {
-                    val update = EditBoardReducer.confirmDuplicateOverride(boardEditState)
-                    onBoardEditStateChange(update.state)
-                    lastResultMessage = update.message
-                },
-                canImSure = boardEditState.duplicateOverrideCandidate?.targetSeat == selectedSeat,
                 modifier = Modifier.weight(1f)
             )
             HandArea(
@@ -256,10 +250,14 @@ fun EditBoardScreen(
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
-                if (isBoardComplete) {
+                if (!hasCameraPermission) {
+                    Text("Camera permission required", color = Color.White)
+                } else if (showScissorsScreen || showSwapScreen) {
+                    Text("Modal screen is coming", color = Color.White)
+                } else if (isBoardComplete) {
                     scanDeltas = emptyList()
                     BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
-                } else if (hasCameraPermission && !showScissorsScreen && !showSwapScreen) {
+                } else {
                     CameraPreview(
                         consumeScanRequest = { pendingScanRequest.get() },
                         frameDecoder = frameDecoder,
@@ -284,8 +282,6 @@ fun EditBoardScreen(
                         }
                     )
                     BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
-                } else if (!hasCameraPermission) {
-                    Text("Camera permission required", color = Color.White)
                 }
             }
             EastArea(
@@ -321,9 +317,13 @@ fun EditBoardScreen(
                 onModeChange = onOrientationModeChange,
                 modifier = Modifier.weight(1.5f)
             )
-            PBNArea(
-                boardState = boardState,
-                boardNumber = boardNumber,
+            SureArea(
+                onImSure = {
+                    val update = EditBoardReducer.confirmDuplicateOverride(boardEditState)
+                    onBoardEditStateChange(update.state)
+                    lastResultMessage = update.message
+                },
+                canImSure = boardEditState.duplicateOverrideCandidate?.targetSeat == selectedSeat,
                 modifier = Modifier.weight(1.5f)
             )
         }
@@ -426,8 +426,6 @@ fun BoardControlsArea(
     selectedSeat: Seat,
     boardState: org.itroboc.core.BoardState,
     onClear: () -> Unit,
-    onImSure: () -> Unit,
-    canImSure: Boolean,
     modifier: Modifier = Modifier
 ) {
     val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
@@ -445,19 +443,11 @@ fun BoardControlsArea(
             fontWeight = FontWeight.Bold
         )
         Button(
-            onClick = onImSure,
-            enabled = canImSure,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-        ) {
-            Text("I'm sure", fontSize = 24.sp)
-        }
-        Button(
             onClick = onClear,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Text(clearLabel, fontSize = 24.sp)
+            Text(clearLabel, fontSize = 28.sp)
         }
     }
 }
@@ -472,7 +462,7 @@ fun BoardBackButtonArea(
         modifier = modifier.fillMaxWidth().height(48.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
-        Text("Back", fontSize = 24.sp)
+        Text("Back", fontSize = 28.sp)
     }
 }
 
@@ -547,7 +537,7 @@ fun WestArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Swap", fontSize = 24.sp)
+                Text("Swap", fontSize = 28.sp)
             }
         }
     }
@@ -584,7 +574,7 @@ fun EastArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Undo", fontSize = 24.sp)
+                Text("Undo", fontSize = 28.sp)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -599,7 +589,7 @@ fun EastArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Scissors", fontSize = 24.sp)
+                Text("Scissors", fontSize = 28.sp)
             }
         }
     }
@@ -712,13 +702,11 @@ fun LastScannedCardArea(
 
 
 @Composable
-fun PBNArea(
-    boardState: BoardState,
-    boardNumber: Int,
+fun SureArea(
+    onImSure: () -> Unit,
+    canImSure: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val isComplete = BoardProgressSummary.from(boardState).boardComplete
-    
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -726,31 +714,13 @@ fun PBNArea(
         contentAlignment = Alignment.TopStart
     ) {
         Column {
-            Text(
-                "PBN Preview",
-                color = Color(0xFF4CAF50),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            
-            if (isComplete) {
-                val pbn = TdSessionExchange.exportCompleteBoard(
-                    boardState = boardState,
-                    boardNumber = boardNumber,
-                )
-                Text(
-                    text = pbn,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            } else {
-                Text(
-                    text = "Complete board to see PBN.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            Button(
+                onClick = onImSure,
+                enabled = canImSure,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+            ) {
+                Text("I'm sure", fontSize = 28.sp)
             }
         }
     }
@@ -864,7 +834,7 @@ fun OrientationArea(
         Text(
             "Barcode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold, fontSize = 28.sp
         )
         Row(modifier = Modifier.selectableGroup()) {
             BarcodeOrientationMode.entries.forEach { mode ->
@@ -885,7 +855,7 @@ fun OrientationArea(
                     )
                     Text(
                         text = mode.label,
-                        fontSize = 24.sp,
+                        fontSize = 28.sp,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (enabled) Color.Unspecified else Color.Gray
                     )
@@ -906,12 +876,12 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
         Text(
             "Feed mode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold, fontSize = 28.sp
         )
         Row {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = true, onClick = null)
-                Text("stream", fontSize = 24.sp, style = MaterialTheme.typography.bodyMedium)
+                Text("stream", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Row(
