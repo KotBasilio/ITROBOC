@@ -182,7 +182,7 @@ fun TdOverviewScreen(
     }
 
     if (showSettingsDialog) {
-        TdSettingsDialog(
+        TdSettingsScreen(
             currentSize = sessionState.totalBoardsInGrid,
             minAllowedSize = sessionState.highestNonEmptyBoardNumber,
             onDismiss = { showSettingsDialog = false },
@@ -208,7 +208,7 @@ fun TdOverviewScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TdSettingsDialog(
+fun TdSettingsScreen(
     currentSize: Int,
     minAllowedSize: Int,
     onDismiss: () -> Unit,
@@ -216,37 +216,59 @@ fun TdSettingsDialog(
 ) {
     val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES.filter { it >= minAllowedSize }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("TD Settings") },
-        text = {
-            Column {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    "Total boards in grid:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = "TD Settings",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    allowedSizes.forEach { size ->
-                        FilterChip(
-                            selected = size == currentSize,
-                            onClick = { onSizeSelected(size) },
-                            label = { Text(size.toString()) },
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
+                Button(onClick = onDismiss) {
+                    Text("Close")
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                "Total boards in grid:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                allowedSizes.forEach { size ->
+                    FilterChip(
+                        selected = size == currentSize,
+                        onClick = { onSizeSelected(size) },
+                        label = { 
+                            Text(
+                                text = size.toString(),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) 
+                        }
+                    )
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
