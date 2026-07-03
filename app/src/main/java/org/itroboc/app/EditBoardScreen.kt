@@ -90,8 +90,6 @@ fun EditBoardScreen(
     val unknownThrottleMillis = 3000L
 
     // EBT-8: Scan rate measurement using inter-scan deltas.
-    // During idle periods we expose a negative value derived from scansIdleCount
-    // so manual field measurements can distinguish "camera quiet" from "camera active".
     var scanDeltas by remember { mutableStateOf<List<Long>>(emptyList()) }
     var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
     var scansIdleCount by remember { mutableLongStateOf(0L) }
@@ -100,13 +98,10 @@ fun EditBoardScreen(
 
     LaunchedEffect(Unit) {
         while (true) {
-            // Clear out to idle when the camera is inactive.
             if (currentIsBoardComplete) {
                 scanDeltas = emptyList()
             }
 
-            // Fade-out: prune deltas that correspond to scans older than 1s
-            // We reconstruct a timeline by walking backwards from now
             var cumulative = 0L
             val pruned = mutableListOf<Long>()
             for (delta in scanDeltas.asReversed()) {
@@ -116,7 +111,6 @@ fun EditBoardScreen(
             }
             scanDeltas = pruned.asReversed()
 
-            // Compute average rate while active, otherwise expose idle loop count.
             if (scanDeltas.isNotEmpty()) {
                 val avgDelta = scanDeltas.average()
                 scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
@@ -169,7 +163,6 @@ fun EditBoardScreen(
             return
         }
 
-        // EBT-4: Simple stream debounce
         val now = System.currentTimeMillis()
         if (signature == lastRawSignature && (now - lastScanTimeMillis) < debounceWindowMillis) {
             return
@@ -178,7 +171,6 @@ fun EditBoardScreen(
         lastScanTimeMillis = now
 
         val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
-            // EBT-T4: Handle unknown signature with throttling
             unknownSignatureCount++
             if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
                 lastResultMessage = "Unknown signature seen: $signature (Total: $unknownSignatureCount). Check orientation/profile."
@@ -200,7 +192,6 @@ fun EditBoardScreen(
             val update = EditBoardReducer.clearSelectedHand(boardEditState)
             onBoardEditStateChange(update.state)
             lastResultMessage = update.message
-            // EBT-6: Clear last scanned card on clear
             lastScannedCard = null
         } else {
             showClearBoardDialog = true
@@ -326,12 +317,11 @@ fun EditBoardScreen(
                 if (isBoardComplete) {
                     scanDeltas = emptyList()
                     BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
-                } else if (hasCameraPermission) {
+                } else if (hasCameraPermission && !showScissorsScreen && !showSwapScreen) {
                     CameraPreview(
                         consumeScanRequest = { pendingScanRequest.get() },
                         frameDecoder = frameDecoder,
                         onScanProcessed = { scanOutcome ->
-                            // EBT-8: Measure decoder throughput (every scan counts)
                             val now = System.currentTimeMillis()
                             val delta = now - lastScanTimestamp
                             scanDeltas = scanDeltas + delta
@@ -352,7 +342,7 @@ fun EditBoardScreen(
                         }
                     )
                     BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
-                } else {
+                } else if (!hasCameraPermission) {
                     Text("Camera permission required", color = Color.White)
                 }
             }
