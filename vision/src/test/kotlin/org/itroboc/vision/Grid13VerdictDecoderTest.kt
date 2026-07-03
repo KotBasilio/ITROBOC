@@ -75,15 +75,16 @@ class Grid13VerdictDecoderTest {
 
     @Test
     fun `verdict decoder scratch buffers handle changing image widths`() {
+        val bits = "1010110101101"
         val first = assertIs<BarcodeDecodeResult.Found>(
-            verdictDecoder.decode(grid13Image("1010101001001", cellWidth = 7)),
+            verdictDecoder.decode(grid13Image(bits, cellWidth = 7)),
         )
         val second = assertIs<BarcodeDecodeResult.Found>(
-            verdictDecoder.decode(grid13Image("1010101001001", cellWidth = 4)),
+            verdictDecoder.decode(grid13Image(bits, cellWidth = 4)),
         )
 
-        assertEquals("bfm1549", first.signature.rawSignature)
-        assertEquals("bfm1549", second.signature.rawSignature)
+        assertEquals("bfm15AD", first.signature.rawSignature)
+        assertEquals("bfm15AD", second.signature.rawSignature)
         assertNull(first.signature.debug)
         assertNull(second.signature.debug)
     }
