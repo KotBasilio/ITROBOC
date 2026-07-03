@@ -113,6 +113,18 @@ class TdSessionExchangeTest {
         assertEquals(Seat.SOUTH, result.sessionState.boards.getValue(9).selectedSeat)
     }
 
+    @Test
+    fun `export excludes boards outside the grid range`() {
+        val sessionState = TdSessionState(
+            boards = mapOf(
+                31 to BoardEditState(boardNumber = 31, boardState = boardOne),
+            ),
+            totalBoardsInGrid = 30
+        )
+
+        assertNull(TdSessionExchange.exportCompleteBoards(sessionState))
+    }
+
     private fun boardOf(vararg seatCards: Pair<Seat, List<String>>): BoardState =
         seatCards.fold(BoardState()) { board, (seat, cards) ->
             cards.fold(board) { currentBoard, rawCard ->

@@ -5,7 +5,8 @@ import org.itroboc.core.BoardState
 import org.itroboc.core.Seat
 
 data class TdSessionState(
-    val boards: Map<Int, BoardEditState> = emptyMap()
+    val boards: Map<Int, BoardEditState> = emptyMap(),
+    val totalBoardsInGrid: Int = 30,
 ) {
     fun getOrInitBoard(boardNumber: Int): BoardEditState {
         return boards[boardNumber] ?: BoardEditState(boardNumber)
@@ -13,5 +14,9 @@ data class TdSessionState(
 
     fun updateBoard(boardEditState: BoardEditState): TdSessionState {
         return copy(boards = boards + (boardEditState.boardNumber to boardEditState))
+    }
+
+    fun updateGridSize(newSize: Int): TdSessionState {
+        return copy(totalBoardsInGrid = newSize)
     }
 }
