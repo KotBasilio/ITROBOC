@@ -251,14 +251,14 @@ fun EditBoardScreen(
             )
             LastScannedCardArea(
                 cardId = lastScannedCard,
-                modifier = Modifier.weight(0.5f)
+                modifier = Modifier.weight(0.7f)
             )
             StatusArea(
                 boardState = boardState,
                 orientationMode = orientationMode,
                 message = lastResultMessage,
                 sps = scansPerSecond,
-                modifier = Modifier.weight(2.5f)
+                modifier = Modifier.weight(2.3f)
             )
         }
 
@@ -447,13 +447,13 @@ fun HandContent(
                 Text(
                     text = suitCards.suit.prettySymbol,
                     color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                    fontSize = 17.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(22.dp)
                 )
                 Text(
-                    text = if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString(" ") { it.rank.symbol.toString() },
-                    fontSize = 17.sp,
+                    text = " " + if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString("") { it.rank.symbol.toString() },
+                    fontSize = 24.sp,
                     color = Color.Black
                 )
             }
@@ -588,6 +588,7 @@ fun LastScannedCardArea(cardId: CardId?, modifier: Modifier = Modifier) {
                     text = "${cardId.suit.prettySymbol}${cardId.rank.symbol}",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
+                    fontSize = 50.sp,
                     color = if (cardId.suit == Suit.HEARTS || cardId.suit == Suit.DIAMONDS) Color.Red else Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
                 )
