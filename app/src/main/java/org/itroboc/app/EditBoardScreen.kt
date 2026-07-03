@@ -429,7 +429,7 @@ fun BoardControlsArea(
     modifier: Modifier = Modifier
 ) {
     val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
-    val clearLabel = if (isHandEmpty) "Clear board" else "Clear hand"
+    val clearLabel = "Clear" // old version if (isHandEmpty) "Clear board" else "Clear hand"
 
     Column(
         modifier = modifier
@@ -440,8 +440,11 @@ fun BoardControlsArea(
         Text(
             text = "Board: $boardNumber",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold, fontSize = 28.sp
         )
+
+        Spacer(modifier = Modifier.height(30.dp))
+
         Button(
             onClick = onClear,
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -713,7 +716,12 @@ fun SureArea(
             .padding(8.dp),
         contentAlignment = Alignment.TopStart
     ) {
-        Column {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
             Button(
                 onClick = onImSure,
                 enabled = canImSure,
@@ -912,48 +920,58 @@ fun ScissorsScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Text(
+                text = "Scissors for ${seat.displayName}",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "Click on cards to remove them",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Normal,
+            )
+
+            Spacer(modifier = Modifier.height(60.dp))
+
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
             ) {
-                Text(
-                    text = "Remove card from ${seat.displayName}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Button(onClick = onDismiss) {
-                    Text("Close")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                Row(
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = suitCards.suit.prettySymbol,
-                        color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                        fontSize = 50.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.width(44.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    suitCards.cards.forEach { card ->
+                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
                         Text(
-                            text = card.rank.symbol.toString(),
+                            text = suitCards.suit.prettySymbol,
+                            color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
                             fontSize = 50.sp,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .clickable { onRemoveCard(card) }
-                                .padding(horizontal = 8.dp)
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.width(44.dp)
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        suitCards.cards.forEach { card ->
+                            Text(
+                                text = card.rank.symbol.toString(),
+                                fontSize = 50.sp,
+                                color = Color.Black,
+                                modifier = Modifier
+                                    .clickable { onRemoveCard(card) }
+                                    .padding(horizontal = 12.dp)
+                            )
+                        }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(60.dp))
+
+            Button(onClick = onDismiss) {
+                Text( fontSize = 30.sp, text = "Close" )
+            }
+
         }
     }
 }
@@ -974,20 +992,12 @@ fun SwapScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Swap ${currentSeat.displayName} with...",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Button(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-            }
+            Text(
+                text = "Swap ${currentSeat.displayName} with...",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 40.sp
+            )
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -1001,6 +1011,12 @@ fun SwapScreen(
                 ) {
                     Text(text = seat.displayName, fontSize = 40.sp)
                 }
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            Button(onClick = onDismiss) {
+                Text( fontSize = 30.sp, text = "Cancel" )
             }
         }
     }
