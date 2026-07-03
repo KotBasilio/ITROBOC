@@ -174,15 +174,30 @@ internal fun extractGrayImageFromLumaBytes(
     roi: BarcodeRoi,
 ): GrayImage {
     val pixels = ByteArray(roi.width * roi.height)
-    copyLumaRoiIntoBuffer(
+    validateLumaRoiSource(
         imageWidth = imageWidth,
         imageHeight = imageHeight,
         rowStride = rowStride,
         pixelStride = pixelStride,
         roi = roi,
         sourceLimit = lumaBytes.size,
-    ) { sourceIndex, destinationIndex ->
-        pixels[destinationIndex] = lumaBytes[sourceIndex]
+    )
+
+    if (pixelStride == 1) {
+        var destinationIndex = 0
+        for (y in roi.y until roi.y + roi.height) {
+            val sourceIndex = (y * rowStride) + roi.x
+            System.arraycopy(lumaBytes, sourceIndex, pixels, destinationIndex, roi.width)
+            destinationIndex += roi.width
+        }
+    } else {
+        copyLumaRoiIntoBuffer(
+            rowStride = rowStride,
+            pixelStride = pixelStride,
+            roi = roi,
+        ) { sourceIndex, destinationIndex ->
+            pixels[destinationIndex] = lumaBytes[sourceIndex]
+        }
     }
 
     return GrayImage(
@@ -200,29 +215,32 @@ internal fun extractGrayImageFromLumaPlaneBuffer(
     pixelStride: Int,
     roi: BarcodeRoi,
 ): GrayImage {
-    require(pixelStride > 0) { "pixelStride must be positive" }
-    require(rowStride > 0) { "rowStride must be positive" }
-    require(roi.x >= 0 && roi.y >= 0) { "ROI origin must be non-negative" }
-    require(roi.x + roi.width <= imageWidth) { "ROI exceeds image width" }
-    require(roi.y + roi.height <= imageHeight) { "ROI exceeds image height" }
-
-    val expectedLastIndex = ((roi.y + roi.height - 1) * rowStride) +
-        ((roi.x + roi.width - 1) * pixelStride)
-    require(expectedLastIndex < lumaBuffer.limit()) {
-        "Luma plane buffer does not cover requested ROI"
-    }
-
-    val source = lumaBuffer.duplicate()
-    val pixels = ByteArray(roi.width * roi.height)
-    copyLumaRoiIntoBuffer(
+    validateLumaRoiSource(
         imageWidth = imageWidth,
         imageHeight = imageHeight,
         rowStride = rowStride,
         pixelStride = pixelStride,
         roi = roi,
         sourceLimit = lumaBuffer.limit(),
-    ) { sourceIndex, destinationIndex ->
-        pixels[destinationIndex] = source.get(sourceIndex)
+    )
+    val source = lumaBuffer.duplicate()
+    val pixels = ByteArray(roi.width * roi.height)
+
+    if (pixelStride == 1) {
+        var destinationIndex = 0
+        for (y in roi.y until roi.y + roi.height) {
+            source.position((y * rowStride) + roi.x)
+            source.get(pixels, destinationIndex, roi.width)
+            destinationIndex += roi.width
+        }
+    } else {
+        copyLumaRoiIntoBuffer(
+            rowStride = rowStride,
+            pixelStride = pixelStride,
+            roi = roi,
+        ) { sourceIndex, destinationIndex ->
+            pixels[destinationIndex] = source.get(sourceIndex)
+        }
     }
 
     return GrayImage(
@@ -246,15 +264,30 @@ internal fun extractGrayImageFromLumaPlaneBuffer(
     }
 
     val source = lumaBuffer.duplicate()
-    copyLumaRoiIntoBuffer(
+    validateLumaRoiSource(
         imageWidth = imageWidth,
         imageHeight = imageHeight,
         rowStride = rowStride,
         pixelStride = pixelStride,
         roi = roi,
         sourceLimit = lumaBuffer.limit(),
-    ) { sourceIndex, destinationIndex ->
-        reusablePixels[destinationIndex] = source.get(sourceIndex)
+    )
+
+    if (pixelStride == 1) {
+        var destinationIndex = 0
+        for (y in roi.y until roi.y + roi.height) {
+            source.position((y * rowStride) + roi.x)
+            source.get(reusablePixels, destinationIndex, roi.width)
+            destinationIndex += roi.width
+        }
+    } else {
+        copyLumaRoiIntoBuffer(
+            rowStride = rowStride,
+            pixelStride = pixelStride,
+            roi = roi,
+        ) { sourceIndex, destinationIndex ->
+            reusablePixels[destinationIndex] = source.get(sourceIndex)
+        }
     }
 
     return GrayImage(
@@ -323,14 +356,13 @@ private fun Double.formatConfidence(): String = "%.2f".format(this)
 
 private fun Long.toMillisString(): String = "%.3f".format(this / 1_000_000.0)
 
-private inline fun copyLumaRoiIntoBuffer(
+private fun validateLumaRoiSource(
     imageWidth: Int,
     imageHeight: Int,
     rowStride: Int,
     pixelStride: Int,
     roi: BarcodeRoi,
     sourceLimit: Int,
-    copyPixel: (sourceIndex: Int, destinationIndex: Int) -> Unit,
 ) {
     require(pixelStride > 0) { "pixelStride must be positive" }
     require(rowStride > 0) { "rowStride must be positive" }
@@ -343,7 +375,14 @@ private inline fun copyLumaRoiIntoBuffer(
     require(expectedLastIndex < sourceLimit) {
         "Luma plane source does not cover requested ROI"
     }
+}
 
+private inline fun copyLumaRoiIntoBuffer(
+    rowStride: Int,
+    pixelStride: Int,
+    roi: BarcodeRoi,
+    copyPixel: (sourceIndex: Int, destinationIndex: Int) -> Unit,
+) {
     var destinationIndex = 0
     for (y in roi.y until roi.y + roi.height) {
         val rowOffset = y * rowStride
