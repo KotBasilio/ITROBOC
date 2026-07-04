@@ -33,7 +33,7 @@ fun MainMenuScreen(
                 onClick = { onNavigate(Screen.AdminActions) },
                 modifier = Modifier.weight(1f).aspectRatio(4f)
             ) {
-                Text("Admin actions", fontSize = 60.sp)
+                Text("Admin", fontSize = 60.sp)
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -42,7 +42,7 @@ fun MainMenuScreen(
                 onClick = { onNavigate(Screen.TdActions) },
                 modifier = Modifier.weight(1f).aspectRatio(4f)
             ) {
-                Text("TD actions", fontSize = 60.sp)
+                Text("TD eye", fontSize = 60.sp)
             }
         }
         

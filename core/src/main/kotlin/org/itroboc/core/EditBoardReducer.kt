@@ -201,7 +201,7 @@ object EditBoardReducer {
         val otherSeats = Seat.entries.filter { it != seat }
         val otherHandsComplete = otherSeats.all { boardState.handOf(it).isComplete() }
 
-        if (selectedHand.count() == 0 && otherHandsComplete) {
+        if (otherHandsComplete) {
             val allCards = Suit.entries.flatMap { s -> Rank.entries.map { r -> CardId(s, r) } }.toSet()
             val assignedCards = boardState.allCards()
             val remainingCards = allCards - assignedCards
