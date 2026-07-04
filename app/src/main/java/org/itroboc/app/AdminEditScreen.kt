@@ -550,6 +550,8 @@ private fun CameraPreview(
     val currentConsumeScanRequest by rememberUpdatedState(consumeScanRequest)
     val currentOnScanProcessed by rememberUpdatedState(onScanProcessed)
 
+    var reusableRoiPixels = remember { ByteArray(0) }
+
     DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor) {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -567,7 +569,12 @@ private fun CameraPreview(
                         return@setAnalyzer
                     }
 
-                    val scanOutcome = frameDecoder.decode(imageProxy)
+                    val requiredSize = imageProxy.width * imageProxy.height
+                    if (reusableRoiPixels.size < requiredSize) {
+                        reusableRoiPixels = ByteArray(requiredSize)
+                    }
+
+                    val scanOutcome = frameDecoder.decode(imageProxy, reusableRoiPixels)
                     mainExecutor.execute {
                         currentOnScanProcessed(scanOutcome)
                     }
