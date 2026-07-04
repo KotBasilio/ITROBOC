@@ -148,7 +148,7 @@ fun EditBoardScreen(
             )
         }
 
-        // Middle Row: West hand | Camera Area | East hand
+        // Middle Row: West + 2 buttons | Camera Area | East + 2 buttons
         Row(modifier = Modifier.weight(3f).fillMaxWidth()) {
             WestArea(
                 handState = boardState.handOf(Seat.WEST),
@@ -183,7 +183,7 @@ fun EditBoardScreen(
             )
         }
 
-        // Bottom Row: Feed Mode | South hand | Orientation | PBN
+        // Bottom Row: Feed Mode | South hand | Orientation | I'm sure
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             FeedModeArea(
                 modifier = Modifier.weight(1f)
