@@ -16,6 +16,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
@@ -176,7 +177,11 @@ fun EditBoardScreen(
         val update = EditBoardReducer.applyScannedCard(currentBoardEditState, currentDeckProfile.lookup(signature) ?: run {
             unknownSignatureCount++
             if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
-                lastResultMessage = "Unknown signature seen: $signature (Total: $unknownSignatureCount). Check orientation/profile."
+                if (unknownSignatureCount > 1) {
+                    lastResultMessage = "Unknown signatures total: $unknownSignatureCount."
+                } else {
+                    lastResultMessage = "Unknown signature: $signature"
+                }
                 lastUnknownMessageTimeMillis = now
             }
             return
@@ -221,7 +226,7 @@ fun EditBoardScreen(
         }
     }
 
-    // 3x3 Cockpit Layout using Row/Column
+    // 3 rows Cockpit Layout using Row/Column: 4+3+4
     Column(modifier = Modifier.fillMaxSize()) {
         // Top Row: Board controls | North hand | Last Scanned | Status
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -229,7 +234,7 @@ fun EditBoardScreen(
                 boardNumber = boardNumber,
                 selectedSeat = selectedSeat,
                 boardState = boardState,
-                onClear = { onClearClick() },
+                onBack = onBack,
                 modifier = Modifier.weight(1f)
             )
             HandArea(
@@ -259,7 +264,7 @@ fun EditBoardScreen(
                 handState = boardState.handOf(Seat.WEST),
                 isSelected = selectedSeat == Seat.WEST,
                 onClick = { onSeatClick(Seat.WEST) },
-                onBack = onBack,
+                onClear = { onClearClick() },
                 onSwap = { showSwapScreen = true },
                 canSwap = boardState.handOf(selectedSeat).count() > 0,
                 modifier = Modifier.weight(1f)
@@ -454,50 +459,31 @@ fun BoardControlsArea(
     boardNumber: Int,
     selectedSeat: Seat,
     boardState: org.itroboc.core.BoardState,
-    onClear: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
-    val clearLabel = "Clear" // old version if (isHandEmpty) "Clear board" else "Clear hand"
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Board: $boardNumber",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 28.sp
+            fontWeight = FontWeight.Bold, fontSize = 32.sp,
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
-
         Button(
-            onClick = onClear,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            onClick = onBack,
+            modifier = modifier.fillMaxWidth().aspectRatio(3f),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Text(clearLabel, fontSize = 28.sp)
+            Text("Back", fontSize = 32.sp)
         }
     }
 }
-
-@Composable
-fun BoardBackButtonArea(
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onBack,
-        modifier = modifier.fillMaxWidth().height(48.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-    ) {
-        Text("Back", fontSize = 28.sp)
-    }
-}
-
 
 @Composable
 fun HandContent(
@@ -533,7 +519,7 @@ fun WestArea(
     handState: HandState,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onBack: () -> Unit,
+    onClear: () -> Unit,
     onSwap: () -> Unit,
     canSwap: Boolean,
     modifier: Modifier = Modifier
@@ -552,10 +538,15 @@ fun WestArea(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            BoardBackButtonArea(
-                onBack = onBack,
-                modifier = Modifier.padding(8.dp)
-            )
+            Button(
+                onClick = onClear,
+                modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+            ) {
+                val clearLabel = "Clear" // old version: if (isHandEmpty) "Clear board" else "Clear hand"
+                // val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
+                Text(clearLabel, fontSize = 32.sp)
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -566,10 +557,10 @@ fun WestArea(
             Button(
                 onClick = onSwap,
                 enabled = canSwap,
-                modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
+                modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Swap", fontSize = 28.sp)
+                Text("Swap", fontSize = 32.sp)
             }
         }
     }
@@ -603,10 +594,10 @@ fun EastArea(
             Button(
                 onClick = onUndo,
                 enabled = canUndo,
-                modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
+                modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Undo", fontSize = 28.sp)
+                Text("Undo", fontSize = 32.sp)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -618,10 +609,10 @@ fun EastArea(
             Button(
                 onClick = onScissors,
                 enabled = canScissors,
-                modifier = Modifier.padding(8.dp).fillMaxWidth().height(48.dp),
+                modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Scissors", fontSize = 28.sp)
+                Text("Scissors", fontSize = 32.sp)
             }
         }
     }
@@ -747,7 +738,7 @@ fun SureArea(
             .padding(8.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
-        Text("I'm sure", fontSize = 28.sp)
+        Text("I'm sure", fontSize = 32.sp)
     }
 }
 
@@ -866,13 +857,13 @@ fun OrientationArea(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Barcode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 28.sp,
+            fontWeight = FontWeight.Bold, fontSize = 30.sp,
         )
         Spacer(modifier = Modifier.height(10.dp))
         Row(modifier = Modifier.selectableGroup()) {
@@ -911,28 +902,41 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Feed mode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 28.sp,
+            fontWeight = FontWeight.Bold, fontSize = 30.sp,
         )
-        Spacer(modifier = Modifier.height(10.dp))
-        Row {
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(1.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = true, onClick = null)
                 Text("stream", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.alpha(0.5f)
-            ) {
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.alpha(0.5f)) {
                 RadioButton(selected = false, onClick = null, enabled = false)
-                Text("snap", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                Text(
+                    "snap",
+                    fontSize = 28.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -1003,7 +1007,7 @@ fun ScissorsScreen(
             Spacer(modifier = Modifier.height(60.dp))
 
             Button(onClick = onDismiss) {
-                Text( fontSize = 30.sp, text = "Close" )
+                Text( fontSize = 32.sp, text = "Close" )
             }
 
         }
@@ -1050,7 +1054,7 @@ fun SwapScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             Button(onClick = onDismiss) {
-                Text( fontSize = 30.sp, text = "Cancel" )
+                Text( fontSize = 32.sp, text = "Cancel" )
             }
         }
     }
