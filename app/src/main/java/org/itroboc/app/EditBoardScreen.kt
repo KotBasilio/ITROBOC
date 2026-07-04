@@ -242,6 +242,7 @@ fun EditBoardScreen(
                 canSwap = boardState.handOf(selectedSeat).count() > 0,
                 modifier = Modifier.weight(1f)
             )
+            // BOB TODO: CentralArea from here
             Box(
                 modifier = Modifier
                     .weight(3f)
@@ -283,6 +284,9 @@ fun EditBoardScreen(
                     BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
                 }
             }
+            // BOB TODO: CentralArea till here
+
+
             EastArea(
                 handState = boardState.handOf(Seat.EAST),
                 isSelected = selectedSeat == Seat.EAST,
@@ -709,27 +713,15 @@ fun SureArea(
     canImSure: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Button(
+        onClick = onImSure,
+        enabled = canImSure,
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        contentAlignment = Alignment.TopStart
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Button(
-                onClick = onImSure,
-                enabled = canImSure,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-            ) {
-                Text("I'm sure", fontSize = 28.sp)
-            }
-        }
+        Text("I'm sure", fontSize = 28.sp)
     }
 }
 
@@ -836,13 +828,15 @@ fun OrientationArea(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Barcode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 28.sp
+            fontWeight = FontWeight.Bold, fontSize = 28.sp,
         )
+        Spacer(modifier = Modifier.height(10.dp))
         Row(modifier = Modifier.selectableGroup()) {
             BarcodeOrientationMode.entries.forEach { mode ->
                 val enabled = mode != BarcodeOrientationMode.AUTO
@@ -867,6 +861,7 @@ fun OrientationArea(
                         color = if (enabled) Color.Unspecified else Color.Gray
                     )
                 }
+                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }
@@ -878,25 +873,27 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Feed mode",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 28.sp
+            fontWeight = FontWeight.Bold, fontSize = 28.sp,
         )
+        Spacer(modifier = Modifier.height(10.dp))
         Row {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = true, onClick = null)
                 Text("stream", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.alpha(0.5f)
             ) {
                 RadioButton(selected = false, onClick = null, enabled = false)
-                Text("snap", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                Text("snap", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             }
         }
     }
