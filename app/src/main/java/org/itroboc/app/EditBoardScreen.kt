@@ -39,7 +39,6 @@ import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import kotlinx.coroutines.delay
 import org.itroboc.core.*
 import org.itroboc.vision.*
 import java.util.concurrent.Executors
@@ -69,63 +68,21 @@ fun EditBoardScreen(
     onBoardEditStateChange: (BoardEditState) -> Unit,
     onBack: () -> Unit
 ) {
+    val controller = rememberEditBoardController(
+        boardEditState = boardEditState,
+        deckProfile = deckProfile,
+        orientationMode = orientationMode,
+        onBoardEditStateChange = onBoardEditStateChange
+    )
+
     val boardNumber = boardEditState.boardNumber
     val boardState = boardEditState.boardState
     val selectedSeat = boardEditState.selectedSeat
     val isBoardComplete = BoardProgressSummary.from(boardState).boardComplete
-    val currentIsBoardComplete by rememberUpdatedState(isBoardComplete)
-    val currentBoardEditState by rememberUpdatedState(boardEditState)
-    val currentDeckProfile by rememberUpdatedState(deckProfile)
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var showScissorsScreen by remember { mutableStateOf(false) }
     var showSwapScreen by remember { mutableStateOf(false) }
-    var lastResultMessage by remember { mutableStateOf<String?>(null) }
-    var lastScannedCard by remember { mutableStateOf<CardId?>(null) }
-    
-    // EBT-4: Debounce state
-    var lastRawSignature by remember { mutableStateOf<String?>(null) }
-    var lastScanTimeMillis by remember { mutableLongStateOf(0L) }
-    val debounceWindowMillis = 1000L
-
-    // EBT-T4: Unknown signature throttling
-    var unknownSignatureCount by remember { mutableIntStateOf(0) }
-    var lastUnknownMessageTimeMillis by remember { mutableLongStateOf(0L) }
-    val unknownThrottleMillis = 3000L
-
-    // EBT-8: Scan rate measurement using inter-scan deltas.
-    var scanDeltas by remember { mutableStateOf<List<Long>>(emptyList()) }
-    var scansPerSecond by remember { mutableDoubleStateOf(0.0) }
-    var scansIdleCount by remember { mutableLongStateOf(0L) }
-    val initialNow = System.currentTimeMillis()
-    var lastScanTimestamp by remember { mutableStateOf(initialNow) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            if (currentIsBoardComplete) {
-                scanDeltas = emptyList()
-            }
-
-            var cumulative = 0L
-            val pruned = mutableListOf<Long>()
-            for (delta in scanDeltas.asReversed()) {
-                cumulative += delta
-                pruned.add(delta)
-                if (cumulative > 1000L) break
-            }
-            scanDeltas = pruned.asReversed()
-
-            if (scanDeltas.isNotEmpty()) {
-                val avgDelta = scanDeltas.average()
-                scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
-                scansIdleCount = 0
-            } else {
-                scansPerSecond = - scansIdleCount.toDouble()
-                scansIdleCount++
-            }
-            delay(500L)
-        }
-    }
 
     val context = LocalContext.current
     var hasCameraPermission by remember {
@@ -153,76 +110,12 @@ fun EditBoardScreen(
     val pendingScanRequest = remember { AtomicBoolean(true) }
     val frameDecoder = remember { AdminEditCameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
 
-    fun onSeatClick(seat: Seat) {
-        val nextBoardEditState = boardEditState.copy(selectedSeat = seat)
-        val update = EditBoardReducer.tryAutoFillFourthHand(nextBoardEditState)
-        onBoardEditStateChange(update.state)
-        if (update.message != null) {
-            lastResultMessage = update.message
-        }
-    }
-
-    fun handleScan(signature: String) {
-        if (currentIsBoardComplete) {
-            return
-        }
-
-        val now = System.currentTimeMillis()
-        if (signature == lastRawSignature && (now - lastScanTimeMillis) < debounceWindowMillis) {
-            return
-        }
-        lastRawSignature = signature
-        lastScanTimeMillis = now
-
-        val update = EditBoardReducer.applyScannedCard(currentBoardEditState, currentDeckProfile.lookup(signature) ?: run {
-            unknownSignatureCount++
-            if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
-                if (unknownSignatureCount > 1) {
-                    lastResultMessage = "Unknown signatures total: $unknownSignatureCount."
-                } else {
-                    lastResultMessage = "Unknown signature: $signature"
-                }
-                lastUnknownMessageTimeMillis = now
-            }
-            return
-        }, signature)
-        
-        onBoardEditStateChange(update.state)
-        lastResultMessage = update.message
-        if (update.lastScannedCard != null) {
-            lastScannedCard = update.lastScannedCard
-        }
-    }
-
     fun onClearClick() {
         val selectedHand = boardState.handOf(selectedSeat)
         if (selectedHand.count() > 0) {
-            val update = EditBoardReducer.clearSelectedHand(boardEditState)
-            onBoardEditStateChange(update.state)
-            lastResultMessage = update.message
-            lastScannedCard = null
+            controller.onClearHand()
         } else {
             showClearBoardDialog = true
-        }
-    }
-
-    fun handleCameraScan(scanOutcome: CameraScanOutcome) {
-        val now = System.currentTimeMillis()
-        val delta = now - lastScanTimestamp
-        scanDeltas = scanDeltas + delta
-        lastScanTimestamp = now
-
-        when (scanOutcome) {
-            is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
-                is BarcodeDecodeResult.Found -> {
-                    val signature = decodeResult.signature.viewedAs(orientationMode)
-                    if (signature != null) {
-                        handleScan(signature)
-                    }
-                }
-                else -> {}
-            }
-            else -> {}
         }
     }
 
@@ -232,28 +125,25 @@ fun EditBoardScreen(
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             BoardControlsArea(
                 boardNumber = boardNumber,
-                selectedSeat = selectedSeat,
-                boardState = boardState,
                 onBack = onBack,
                 modifier = Modifier.weight(1f)
             )
             HandArea(
-                seat = Seat.NORTH,
                 handState = boardState.handOf(Seat.NORTH),
                 isSelected = selectedSeat == Seat.NORTH,
-                onClick = { onSeatClick(Seat.NORTH) },
+                onClick = { controller.onSeatClick(Seat.NORTH) },
                 modifier = Modifier.weight(1f)
             )
             LastScannedCardArea(
-                cardId = lastScannedCard,
+                cardId = controller.lastScannedCard,
                 duplicateOverrideCandidate = boardEditState.duplicateOverrideCandidate,
                 modifier = Modifier.weight(0.7f)
             )
             StatusArea(
                 boardState = boardState,
                 orientationMode = orientationMode,
-                message = lastResultMessage,
-                sps = scansPerSecond,
+                message = controller.lastResultMessage,
+                sps = controller.scansPerSecond,
                 modifier = Modifier.weight(2.3f)
             )
         }
@@ -263,7 +153,7 @@ fun EditBoardScreen(
             WestArea(
                 handState = boardState.handOf(Seat.WEST),
                 isSelected = selectedSeat == Seat.WEST,
-                onClick = { onSeatClick(Seat.WEST) },
+                onClick = { controller.onSeatClick(Seat.WEST) },
                 onClear = { onClearClick() },
                 onSwap = { showSwapScreen = true },
                 canSwap = boardState.handOf(selectedSeat).count() > 0,
@@ -278,20 +168,16 @@ fun EditBoardScreen(
                 boardNumber = boardNumber,
                 pendingScanRequest = pendingScanRequest,
                 frameDecoder = frameDecoder,
-                onScanProcessed = ::handleCameraScan,
+                onScanProcessed = controller::handleCameraScan,
                 modifier = Modifier.weight(3f)
             )
             EastArea(
                 handState = boardState.handOf(Seat.EAST),
                 isSelected = selectedSeat == Seat.EAST,
-                onClick = { onSeatClick(Seat.EAST) },
+                onClick = { controller.onSeatClick(Seat.EAST) },
                 onScissors = { showScissorsScreen = true },
                 canScissors = boardState.handOf(selectedSeat).count() > 0,
-                onUndo = {
-                    val update = EditBoardReducer.undoAddForSelectedHand(boardEditState)
-                    onBoardEditStateChange(update.state)
-                    lastResultMessage = update.message
-                },
+                onUndo = { controller.onUndo() },
                 canUndo = boardEditState.addHistory.any { it.seat == selectedSeat },
                 modifier = Modifier.weight(1f)
             )
@@ -303,10 +189,9 @@ fun EditBoardScreen(
                 modifier = Modifier.weight(1f)
             )
             HandArea(
-                seat = Seat.SOUTH,
                 handState = boardState.handOf(Seat.SOUTH),
                 isSelected = selectedSeat == Seat.SOUTH,
-                onClick = { onSeatClick(Seat.SOUTH) },
+                onClick = { controller.onSeatClick(Seat.SOUTH) },
                 modifier = Modifier.weight(1f)
             )
             OrientationArea(
@@ -315,11 +200,7 @@ fun EditBoardScreen(
                 modifier = Modifier.weight(1.5f)
             )
             SureArea(
-                onImSure = {
-                    val update = EditBoardReducer.confirmDuplicateOverride(boardEditState)
-                    onBoardEditStateChange(update.state)
-                    lastResultMessage = update.message
-                },
+                onImSure = { controller.onConfirmDuplicate() },
                 canImSure = boardEditState.duplicateOverrideCandidate?.targetSeat == selectedSeat,
                 modifier = Modifier.weight(1.5f)
             )
@@ -332,9 +213,7 @@ fun EditBoardScreen(
             handState = boardState.handOf(selectedSeat),
             onDismiss = { showScissorsScreen = false },
             onRemoveCard = { card ->
-                val update = EditBoardReducer.removeCardFromSelectedHand(boardEditState, card)
-                onBoardEditStateChange(update.state)
-                lastResultMessage = update.message
+                controller.onRemoveCard(card)
             }
         )
     }
@@ -344,9 +223,7 @@ fun EditBoardScreen(
             currentSeat = selectedSeat,
             onDismiss = { showSwapScreen = false },
             onSwapWith = { targetSeat ->
-                val update = EditBoardReducer.swapSelectedHandWith(boardEditState, targetSeat)
-                onBoardEditStateChange(update.state)
-                lastResultMessage = update.message
+                controller.onSwapHands(targetSeat)
                 showSwapScreen = false
             }
         )
@@ -360,10 +237,7 @@ fun EditBoardScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val update = EditBoardReducer.clearBoard(boardEditState)
-                        onBoardEditStateChange(update.state)
-                        lastResultMessage = update.message
-                        lastScannedCard = null
+                        controller.onClearBoard()
                         showClearBoardDialog = false
                     }
                 ) {
@@ -457,8 +331,6 @@ fun BoardCompleteView(boardState: BoardState, boardNumber: Int) {
 @Composable
 fun BoardControlsArea(
     boardNumber: Int,
-    selectedSeat: Seat,
-    boardState: org.itroboc.core.BoardState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -477,7 +349,7 @@ fun BoardControlsArea(
 
         Button(
             onClick = onBack,
-            modifier = modifier.fillMaxWidth().aspectRatio(3f),
+            modifier = Modifier.fillMaxWidth().aspectRatio(3f),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
             Text("Back", fontSize = 32.sp)
@@ -543,9 +415,7 @@ fun WestArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                val clearLabel = "Clear" // old version: if (isHandEmpty) "Clear board" else "Clear hand"
-                // val isHandEmpty = boardState.handOf(selectedSeat).count() == 0
-                Text(clearLabel, fontSize = 32.sp)
+                Text("Clear", fontSize = 32.sp)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -621,7 +491,6 @@ fun EastArea(
 
 @Composable
 fun HandArea(
-    seat: Seat,
     handState: HandState,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -853,6 +722,7 @@ fun OrientationArea(
     onModeChange: (BarcodeOrientationMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val latestOnModeChange by rememberUpdatedState(onModeChange)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -872,7 +742,7 @@ fun OrientationArea(
                 Row(
                     modifier = Modifier.selectable(
                         selected = currentMode == mode,
-                        onClick = { if (enabled) onModeChange(mode) },
+                        onClick = { if (enabled) latestOnModeChange(mode) },
                         role = Role.RadioButton,
                         enabled = enabled
                     ),
