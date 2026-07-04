@@ -70,38 +70,45 @@ class EditBoardControllerTest {
     }
 
     @Test
-    fun `unknown signatures are throttled and counted cumulatively`() {
+    fun `unknown signatures never stabilize`() {
         val time = FakeTime(5_000L)
+        val appliedStates = mutableListOf<BoardEditState>()
         val controller = EditBoardController(
-            onBoardEditStateChange = {},
+            onBoardEditStateChange = appliedStates::add,
             nowMillis = time::now,
         )
         controller.update(
             state = BoardEditState(boardNumber = 1),
             profile = DeckProfile(emptyMap()),
             mode = BarcodeOrientationMode.BFM,
-            onBoardEditStateChange = {},
+            onBoardEditStateChange = appliedStates::add,
         )
 
         repeat(4) {
             controller.handleCameraScan(foundOutcome("bfm1549"))
             time.current += 50L
         }
-        assertEquals("Unknown signature: bfm1549", controller.lastResultMessage)
+        assertTrue(appliedStates.isEmpty())
+        assertEquals("bfm1549?", controller.thoughts)
+        assertEquals(null, controller.lastResultMessage)
 
         time.current = 6_000L
         repeat(4) {
             controller.handleCameraScan(foundOutcome("bfm154A"))
             time.current += 50L
         }
-        assertEquals("Unknown signature: bfm1549", controller.lastResultMessage)
+        assertTrue(appliedStates.isEmpty())
+        assertEquals("bfm154A?", controller.thoughts)
+        assertEquals(null, controller.lastResultMessage)
 
         time.current = 9_100L
         repeat(4) {
             controller.handleCameraScan(foundOutcome("bfm154B"))
             time.current += 50L
         }
-        assertEquals("Unknown signatures total: 3.", controller.lastResultMessage)
+        assertTrue(appliedStates.isEmpty())
+        assertEquals("bfm154B?", controller.thoughts)
+        assertEquals(null, controller.lastResultMessage)
     }
 
     @Test
