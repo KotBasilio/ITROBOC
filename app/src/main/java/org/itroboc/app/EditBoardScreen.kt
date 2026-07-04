@@ -73,6 +73,8 @@ fun EditBoardScreen(
     val selectedSeat = boardEditState.selectedSeat
     val isBoardComplete = BoardProgressSummary.from(boardState).boardComplete
     val currentIsBoardComplete by rememberUpdatedState(isBoardComplete)
+    val currentBoardEditState by rememberUpdatedState(boardEditState)
+    val currentDeckProfile by rememberUpdatedState(deckProfile)
 
     var showClearBoardDialog by remember { mutableStateOf(false) }
     var showScissorsScreen by remember { mutableStateOf(false) }
@@ -160,7 +162,7 @@ fun EditBoardScreen(
     }
 
     fun handleScan(signature: String) {
-        if (isBoardComplete) {
+        if (currentIsBoardComplete) {
             return
         }
 
@@ -171,7 +173,7 @@ fun EditBoardScreen(
         lastRawSignature = signature
         lastScanTimeMillis = now
 
-        val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
+        val update = EditBoardReducer.applyScannedCard(currentBoardEditState, currentDeckProfile.lookup(signature) ?: run {
             unknownSignatureCount++
             if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
                 lastResultMessage = "Unknown signature seen: $signature (Total: $unknownSignatureCount). Check orientation/profile."
