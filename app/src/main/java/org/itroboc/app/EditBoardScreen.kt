@@ -141,9 +141,9 @@ fun EditBoardScreen(
             )
             StatusArea(
                 boardState = boardState,
-                orientationMode = orientationMode,
                 message = controller.lastResultMessage,
                 sps = controller.scansPerSecond,
+                thoughts = controller.thoughts,
                 modifier = Modifier.weight(2.3f)
             )
         }
@@ -516,9 +516,9 @@ fun HandArea(
 @Composable
 fun StatusArea(
     boardState: BoardState,
-    orientationMode: BarcodeOrientationMode,
     message: String?,
     sps: Double,
+    thoughts: String,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -545,7 +545,7 @@ fun StatusArea(
                         fontSize = 24.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
                     )
                     Text(
-                        "Thoughts: 0", // placeholder
+                        "Thoughts: " + thoughts,
                         fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
                     )
                 }

@@ -23,6 +23,12 @@ internal class EditBoardController(
     // --- Scan State ---
     var lastResultMessage by mutableStateOf<String?>(null)
     var lastScannedCard by mutableStateOf<CardId?>(null)
+    var thoughts by mutableStateOf("0")
+    
+    // Pondering State (🪲🧠)
+    private var ponderingSignature: String? = null
+    private var ponderingCount = 0
+    private val requiredConsensusFrames = 4
     
     // Debounce state
     private var lastRawSignature: String? = null
@@ -46,6 +52,12 @@ internal class EditBoardController(
         this.onBoardEditStateChange = onBoardEditStateChange
     }
 
+    fun blankMind() {
+        thoughts = "0"
+        ponderingSignature = null
+        ponderingCount = 0
+    }
+
     fun handleCameraScan(scanOutcome: CameraScanOutcome) {
         val now = nowMillis()
         val delta = now - lastScanTimestamp
@@ -57,12 +69,47 @@ internal class EditBoardController(
                 is BarcodeDecodeResult.Found -> {
                     val signature = decodeResult.signature.viewedAs(orientationMode)
                     if (signature != null) {
-                        handleScan(signature)
+                        processPondering(signature)
                     }
                 }
-                else -> {}
+                is BarcodeDecodeResult.Ambiguous -> {
+                    blankMind()
+                    val firstCandidate: DetectedSignature? = decodeResult.candidates.firstOrNull()
+                    if (firstCandidate != null) {
+                        thoughts = firstCandidate.viewedAs(orientationMode) + "~"
+                    }
+                }
+                else -> {
+                    blankMind()
+                }
             }
-            else -> {}
+            else -> {
+                blankMind()
+            }
+        }
+    }
+
+    private fun processPondering(signature: String) {
+        val cardId = deckProfile.lookup(signature)
+
+        if (signature == ponderingSignature) {
+            ponderingCount++
+        } else {
+            ponderingSignature = cardId?.let { signature } ?: "No"
+            ponderingCount = 1
+        }
+
+        val cardName = cardId?.let { "${it.suit.prettySymbol}${it.rank.symbol}" } ?: signature
+
+        if (ponderingCount < requiredConsensusFrames) {
+            thoughts = when (ponderingCount) {
+                1 -> "$cardName?"
+                2 -> "$cardName??"
+                else -> "$cardName???"
+            }
+        } else {
+            thoughts = "$cardName."
+            handleScan(signature)
         }
     }
 
