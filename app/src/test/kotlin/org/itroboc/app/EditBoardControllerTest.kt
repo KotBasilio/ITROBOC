@@ -34,7 +34,10 @@ class EditBoardControllerTest {
             onBoardEditStateChange = secondSink::add,
         )
 
-        controller.handleCameraScan(foundOutcome("bfm1549"))
+        repeat(4) {
+            controller.handleCameraScan(foundOutcome("bfm1549"))
+            time.current += 50L
+        }
 
         assertTrue(firstSink.isEmpty())
         assertEquals(1, secondSink.size)
@@ -56,8 +59,10 @@ class EditBoardControllerTest {
             onBoardEditStateChange = appliedStates::add,
         )
 
-        controller.handleCameraScan(foundOutcome("bfm1549"))
-        time.current = 1_500L
+        repeat(4) {
+            controller.handleCameraScan(foundOutcome("bfm1549"))
+            time.current += 50L
+        }
         controller.handleCameraScan(foundOutcome("bfm1549"))
 
         assertEquals(1, appliedStates.size)
@@ -78,16 +83,54 @@ class EditBoardControllerTest {
             onBoardEditStateChange = {},
         )
 
-        controller.handleCameraScan(foundOutcome("bfm1549"))
+        repeat(4) {
+            controller.handleCameraScan(foundOutcome("bfm1549"))
+            time.current += 50L
+        }
         assertEquals("Unknown signature: bfm1549", controller.lastResultMessage)
 
         time.current = 6_000L
-        controller.handleCameraScan(foundOutcome("bfm154A"))
+        repeat(4) {
+            controller.handleCameraScan(foundOutcome("bfm154A"))
+            time.current += 50L
+        }
         assertEquals("Unknown signature: bfm1549", controller.lastResultMessage)
 
         time.current = 9_100L
-        controller.handleCameraScan(foundOutcome("bfm154B"))
+        repeat(4) {
+            controller.handleCameraScan(foundOutcome("bfm154B"))
+            time.current += 50L
+        }
         assertEquals("Unknown signatures total: 3.", controller.lastResultMessage)
+    }
+
+    @Test
+    fun `found scans require consensus before mutating board state`() {
+        val time = FakeTime(5_000L)
+        val appliedStates = mutableListOf<BoardEditState>()
+        val controller = EditBoardController(
+            onBoardEditStateChange = appliedStates::add,
+            nowMillis = time::now,
+        )
+        controller.update(
+            state = BoardEditState(boardNumber = 1),
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            onBoardEditStateChange = appliedStates::add,
+        )
+
+        repeat(3) {
+            controller.handleCameraScan(foundOutcome("bfm1549"))
+            time.current += 50L
+        }
+
+        assertTrue(appliedStates.isEmpty())
+        assertEquals("♠A???", controller.thoughts)
+
+        controller.handleCameraScan(foundOutcome("bfm1549"))
+
+        assertEquals(1, appliedStates.size)
+        assertEquals("♠A.", controller.thoughts)
     }
 
     @Test
