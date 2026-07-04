@@ -95,7 +95,7 @@ internal class EditBoardController(
         if (signature == ponderingSignature) {
             ponderingCount++
         } else {
-            ponderingSignature = signature
+            ponderingSignature = cardId?.let { signature } ?: "No"
             ponderingCount = 1
         }
 
