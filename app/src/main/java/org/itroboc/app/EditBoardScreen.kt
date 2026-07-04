@@ -762,6 +762,9 @@ private fun CameraPreview(
     val previewView = remember { PreviewView(context) }
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    
+    // EBT-9: Buffer for analyzer ROI extraction, managed on analysis thread
+    var reusableRoiPixels = remember { ByteArray(0) }
 
     // Use rememberUpdatedState to avoid stale closures in the analyzer
     val currentConsumeScanRequest by rememberUpdatedState(consumeScanRequest)
@@ -784,7 +787,12 @@ private fun CameraPreview(
                         return@setAnalyzer
                     }
 
-                    val scanOutcome = frameDecoder.decode(imageProxy)
+                    val requiredSize = imageProxy.width * imageProxy.height // Max possible ROI
+                    if (reusableRoiPixels.size < requiredSize) {
+                        reusableRoiPixels = ByteArray(requiredSize)
+                    }
+
+                    val scanOutcome = frameDecoder.decode(imageProxy, reusableRoiPixels)
                     mainExecutor.execute {
                         currentOnScanProcessed(scanOutcome)
                     }

@@ -67,9 +67,7 @@ internal class AdminEditCameraFrameDecoder(
     private val decoder: BarcodeDecoder = Grid13SlowDecoder(),
     private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
 ) {
-    private var reusableRoiPixels = ByteArray(0)
-
-    fun decode(imageProxy: ImageProxy): CameraScanOutcome {
+    fun decode(imageProxy: ImageProxy, reusablePixels: ByteArray): CameraScanOutcome {
         val startedAtNanos = System.nanoTime()
         val frameDebugInfo = imageProxy.toFrameDebugInfo()
         val roi = centeredBarcodeRoi(
@@ -80,10 +78,9 @@ internal class AdminEditCameraFrameDecoder(
 
         return try {
             val roiCopyStartedAtNanos = System.nanoTime()
-            reusableRoiPixels = ensurePixelCapacity(reusableRoiPixels, roi.width * roi.height)
             val grayImage = imageProxy.toGrayImage(
                 roi = roi,
-                reusablePixels = reusableRoiPixels,
+                reusablePixels = reusablePixels,
             )
             val roiCopyEndedAtNanos = System.nanoTime()
             val decodeStartedAtNanos = roiCopyEndedAtNanos
@@ -392,11 +389,6 @@ private inline fun copyLumaRoiIntoBuffer(
         }
     }
 }
-
-private fun ensurePixelCapacity(
-    current: ByteArray,
-    requiredSize: Int,
-): ByteArray = if (current.size == requiredSize) current else ByteArray(requiredSize)
 
 private const val ANALYZER_TIMING_TAG = "AnalyzerTiming"
 
