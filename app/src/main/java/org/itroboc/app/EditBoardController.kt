@@ -18,7 +18,7 @@ internal class EditBoardController(
     var scanDeltas by mutableStateOf<List<Long>>(emptyList())
     var scansPerSecond by mutableDoubleStateOf(0.0)
     var scansIdleCount by mutableLongStateOf(0L)
-    var lastScanTimestamp by mutableLongStateOf(System.currentTimeMillis())
+    var lastScanTimestamp by mutableLongStateOf(nowMillis())
 
     // --- Scan State ---
     var lastResultMessage by mutableStateOf<String?>(null)
@@ -95,7 +95,7 @@ internal class EditBoardController(
         if (signature == ponderingSignature) {
             ponderingCount++
         } else {
-            ponderingSignature = cardId?.let { signature } ?: "No"
+            ponderingSignature = signature
             ponderingCount = 1
         }
 
