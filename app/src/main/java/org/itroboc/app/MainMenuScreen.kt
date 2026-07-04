@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainMenuScreen(
@@ -24,39 +25,27 @@ fun MainMenuScreen(
         Image(
             painter = painterResource(id = R.drawable.logo_small),
             contentDescription = "ITROBOC Logo",
-            modifier = Modifier.size(160.dp)
+            modifier = Modifier.weight(4f).fillMaxSize()
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "ITROBOC Main Menu",
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Button(
-            onClick = { onNavigate(Screen.TdActions) },
-            modifier = Modifier.fillMaxWidth().height(64.dp)
-        ) {
-            Text("TD actions")
+
+        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Button(
+                onClick = { onNavigate(Screen.AdminActions) },
+                modifier = Modifier.weight(1f).aspectRatio(4f)
+            ) {
+                Text("Admin actions", fontSize = 60.sp)
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = { onNavigate(Screen.TdActions) },
+                modifier = Modifier.weight(1f).aspectRatio(4f)
+            ) {
+                Text("TD actions", fontSize = 60.sp)
+            }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Button(
-            onClick = { onNavigate(Screen.AdminActions) },
-            modifier = Modifier.fillMaxWidth().height(64.dp)
-        ) {
-            Text("Admin actions")
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Button(
-            onClick = { onNavigate(Screen.MockActions) },
-            modifier = Modifier.fillMaxWidth().height(64.dp)
-        ) {
-            Text("Mock actions")
-        }
     }
 }
 
