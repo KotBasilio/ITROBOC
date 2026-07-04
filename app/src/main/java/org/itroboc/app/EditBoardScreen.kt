@@ -199,6 +199,26 @@ fun EditBoardScreen(
         }
     }
 
+    fun handleCameraScan(scanOutcome: CameraScanOutcome) {
+        val now = System.currentTimeMillis()
+        val delta = now - lastScanTimestamp
+        scanDeltas = scanDeltas + delta
+        lastScanTimestamp = now
+
+        when (scanOutcome) {
+            is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
+                is BarcodeDecodeResult.Found -> {
+                    val signature = decodeResult.signature.viewedAs(orientationMode)
+                    if (signature != null) {
+                        handleScan(signature)
+                    }
+                }
+                else -> {}
+            }
+            else -> {}
+        }
+    }
+
     // 3x3 Cockpit Layout using Row/Column
     Column(modifier = Modifier.fillMaxSize()) {
         // Top Row: Board controls | North hand | Last Scanned | Status
@@ -251,29 +271,9 @@ fun EditBoardScreen(
                 boardNumber = boardNumber,
                 pendingScanRequest = pendingScanRequest,
                 frameDecoder = frameDecoder,
-                onScanProcessed = { scanOutcome ->
-                    val now = System.currentTimeMillis()
-                    val delta = now - lastScanTimestamp
-                    scanDeltas = scanDeltas + delta
-                    lastScanTimestamp = now
-
-                    when (scanOutcome) {
-                        is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
-                            is BarcodeDecodeResult.Found -> {
-                                val signature = decodeResult.signature.viewedAs(orientationMode)
-                                if (signature != null) {
-                                    handleScan(signature)
-                                }
-                            }
-                            else -> {}
-                        }
-                        else -> {}
-                    }
-                },
+                onScanProcessed = ::handleCameraScan,
                 modifier = Modifier.weight(3f)
             )
-
-
             EastArea(
                 handState = boardState.handOf(Seat.EAST),
                 isSelected = selectedSeat == Seat.EAST,
