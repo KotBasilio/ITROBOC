@@ -37,7 +37,7 @@ object EditBoardReducer {
                         targetSeat = selectedSeat
                     )
                 ),
-                message = "Skipped: $card -- ${existingSeat.displayName} has it. Use I'm sure to move it to ${selectedSeat.displayName}.",
+                message = "Skipped: $card -- ${existingSeat.displayName} has it.\nUse `I'm sure` to move it to ${selectedSeat.displayName}.",
                 lastScannedCard = card
             )
         }
@@ -163,7 +163,7 @@ object EditBoardReducer {
                 addHistory = updatedHistory,
                 duplicateOverrideCandidate = null
             ),
-            message = "Moved ${candidate.card} from ${candidate.existingSeat.displayName} to ${candidate.targetSeat.displayName}. Marked previous ${candidate.existingSeat.displayName} hit as false positive."
+            message = "Moved ${candidate.card} from ${candidate.existingSeat.displayName} to ${candidate.targetSeat.displayName}."
         )
     }
 
