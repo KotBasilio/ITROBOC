@@ -242,49 +242,36 @@ fun EditBoardScreen(
                 canSwap = boardState.handOf(selectedSeat).count() > 0,
                 modifier = Modifier.weight(1f)
             )
-            // BOB TODO: CentralArea from here
-            Box(
-                modifier = Modifier
-                    .weight(3f)
-                    .fillMaxHeight()
-                    .padding(8.dp)
-                    .background(Color.DarkGray),
-                contentAlignment = Alignment.Center
-            ) {
-                if (!hasCameraPermission) {
-                    Text("Camera permission required", color = Color.White)
-                } else if (showScissorsScreen || showSwapScreen) {
-                    Text("Modal screen is coming", color = Color.White)
-                } else if (isBoardComplete) {
-                    BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
-                } else {
-                    CameraPreview(
-                        consumeScanRequest = { pendingScanRequest.get() },
-                        frameDecoder = frameDecoder,
-                        onScanProcessed = { scanOutcome ->
-                            val now = System.currentTimeMillis()
-                            val delta = now - lastScanTimestamp
-                            scanDeltas = scanDeltas + delta
-                            lastScanTimestamp = now
+            CentralArea(
+                hasCameraPermission = hasCameraPermission,
+                showScissorsScreen = showScissorsScreen,
+                showSwapScreen = showSwapScreen,
+                isBoardComplete = isBoardComplete,
+                boardState = boardState,
+                boardNumber = boardNumber,
+                pendingScanRequest = pendingScanRequest,
+                frameDecoder = frameDecoder,
+                onScanProcessed = { scanOutcome ->
+                    val now = System.currentTimeMillis()
+                    val delta = now - lastScanTimestamp
+                    scanDeltas = scanDeltas + delta
+                    lastScanTimestamp = now
 
-                            when (scanOutcome) {
-                                is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
-                                    is BarcodeDecodeResult.Found -> {
-                                        val signature = decodeResult.signature.viewedAs(orientationMode)
-                                        if (signature != null) {
-                                            handleScan(signature)
-                                        }
-                                    }
-                                    else -> {}
+                    when (scanOutcome) {
+                        is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
+                            is BarcodeDecodeResult.Found -> {
+                                val signature = decodeResult.signature.viewedAs(orientationMode)
+                                if (signature != null) {
+                                    handleScan(signature)
                                 }
-                                else -> {}
                             }
+                            else -> {}
                         }
-                    )
-                    BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
-                }
-            }
-            // BOB TODO: CentralArea till here
+                        else -> {}
+                    }
+                },
+                modifier = Modifier.weight(3f)
+            )
 
 
             EastArea(
@@ -384,6 +371,43 @@ fun EditBoardScreen(
         )
     }
 
+}
+
+@Composable
+internal fun CentralArea(
+    hasCameraPermission: Boolean,
+    showScissorsScreen: Boolean,
+    showSwapScreen: Boolean,
+    isBoardComplete: Boolean,
+    boardState: BoardState,
+    boardNumber: Int,
+    pendingScanRequest: AtomicBoolean,
+    frameDecoder: AdminEditCameraFrameDecoder,
+    onScanProcessed: (CameraScanOutcome) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(8.dp)
+            .background(Color.DarkGray),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!hasCameraPermission) {
+            Text("Camera permission required", color = Color.White)
+        } else if (showScissorsScreen || showSwapScreen) {
+            Text("Modal screen is coming", color = Color.White)
+        } else if (isBoardComplete) {
+            BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
+        } else {
+            CameraPreview(
+                consumeScanRequest = { pendingScanRequest.get() },
+                frameDecoder = frameDecoder,
+                onScanProcessed = onScanProcessed
+            )
+            BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
+        }
+    }
 }
 
 @Composable
