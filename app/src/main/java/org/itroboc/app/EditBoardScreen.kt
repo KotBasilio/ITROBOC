@@ -584,7 +584,7 @@ fun LastScannedCardArea(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
-            val displayCard = cardId ?: duplicateOverrideCandidate?.card
+            val displayCard = duplicateOverrideCandidate?.card ?: cardId
             if (displayCard != null) {
                 Text(
                     text = "${displayCard.suit.prettySymbol}${displayCard.rank.symbol}",
