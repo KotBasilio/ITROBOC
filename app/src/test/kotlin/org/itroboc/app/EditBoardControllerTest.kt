@@ -1,8 +1,12 @@
 package org.itroboc.app
 
 import org.itroboc.core.BoardEditState
+import org.itroboc.core.BoardState
 import org.itroboc.core.CardId
 import org.itroboc.core.DeckProfile
+import org.itroboc.core.Rank
+import org.itroboc.core.Seat
+import org.itroboc.core.Suit
 import org.itroboc.vision.BarcodeDecodeResult
 import org.itroboc.vision.BarcodeRoi
 import org.itroboc.vision.DetectedSignature
@@ -138,6 +142,77 @@ class EditBoardControllerTest {
 
         assertEquals(1, appliedStates.size)
         assertEquals("♠A.", controller.thoughts)
+    }
+
+    @Test
+    fun `manual add bypasses stabilization and updates immediately`() {
+        val appliedStates = mutableListOf<BoardEditState>()
+        val controller = EditBoardController(
+            onBoardEditStateChange = appliedStates::add,
+        )
+        controller.update(
+            state = BoardEditState(boardNumber = 1),
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            onBoardEditStateChange = appliedStates::add,
+        )
+
+        controller.onManualAddCard(CardId.parse("SA"))
+
+        assertEquals(1, appliedStates.size)
+        assertEquals("Added SA to North manually.", controller.lastResultMessage)
+        assertEquals(CardId.parse("SA"), controller.lastScannedCard)
+        assertEquals("0", controller.thoughts)
+    }
+
+    @Test
+    fun `manual add moves card from another hand immediately`() {
+        var latestState = BoardEditState(
+            boardNumber = 1,
+            boardState = BoardState().addCard(Seat.EAST, CardId.parse("SA")),
+        )
+        val controller = EditBoardController(
+            onBoardEditStateChange = {
+                latestState = it
+            },
+        )
+        controller.update(
+            state = latestState,
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            onBoardEditStateChange = { latestState = it },
+        )
+
+        controller.onManualAddCard(CardId.parse("SA"))
+
+        assertEquals(Seat.NORTH, latestState.boardState.seatContaining(CardId.parse("SA")))
+        assertEquals("Moved SA from East to North.", controller.lastResultMessage)
+    }
+
+    @Test
+    fun `manual add blocks when selected hand is full and keeps seat`() {
+        var board = BoardState()
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, rank))
+        }
+        val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.NORTH)
+        val appliedStates = mutableListOf<BoardEditState>()
+        val controller = EditBoardController(
+            onBoardEditStateChange = appliedStates::add,
+        )
+        controller.update(
+            state = state,
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            onBoardEditStateChange = appliedStates::add,
+        )
+
+        controller.onManualAddCard(CardId.parse("HA"))
+
+        assertEquals(1, appliedStates.size)
+        assertEquals(state.boardState, appliedStates.single().boardState)
+        assertEquals("North already has 13 cards. Remove one first.", controller.lastResultMessage)
+        assertEquals(Seat.NORTH, controller.boardEditState.selectedSeat)
     }
 
     @Test

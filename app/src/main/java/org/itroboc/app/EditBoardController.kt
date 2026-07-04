@@ -182,6 +182,16 @@ internal class EditBoardController(
         lastResultMessage = update.message
     }
 
+    fun onManualAddCard(card: CardId) {
+        blankMind()
+        val update = EditBoardReducer.addManualCardToSelectedHand(boardEditState, card)
+        onBoardEditStateChange(update.state)
+        lastResultMessage = update.message
+        if (update.lastScannedCard != null) {
+            lastScannedCard = update.lastScannedCard
+        }
+    }
+
     fun onSwapHands(targetSeat: Seat) {
         val update = EditBoardReducer.swapSelectedHandWith(boardEditState, targetSeat)
         onBoardEditStateChange(update.state)
