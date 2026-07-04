@@ -6,7 +6,8 @@ import org.itroboc.vision.*
 import kotlinx.coroutines.*
 
 internal class EditBoardController(
-    private val onBoardEditStateChange: (BoardEditState) -> Unit
+    private var onBoardEditStateChange: (BoardEditState) -> Unit,
+    private val nowMillis: () -> Long = System::currentTimeMillis,
 ) {
     // --- Inputs updated every recomposition ---
     var boardEditState by mutableStateOf(BoardEditState(0))
@@ -37,14 +38,16 @@ internal class EditBoardController(
         state: BoardEditState,
         profile: DeckProfile,
         mode: BarcodeOrientationMode,
+        onBoardEditStateChange: (BoardEditState) -> Unit,
     ) {
         boardEditState = state
         deckProfile = profile
         orientationMode = mode
+        this.onBoardEditStateChange = onBoardEditStateChange
     }
 
     fun handleCameraScan(scanOutcome: CameraScanOutcome) {
-        val now = System.currentTimeMillis()
+        val now = nowMillis()
         val delta = now - lastScanTimestamp
         scanDeltas = scanDeltas + delta
         lastScanTimestamp = now
@@ -67,7 +70,7 @@ internal class EditBoardController(
         val isBoardComplete = BoardProgressSummary.from(boardEditState.boardState).boardComplete
         if (isBoardComplete) return
 
-        val now = System.currentTimeMillis()
+        val now = nowMillis()
         if (signature == lastRawSignature && (now - lastScanTimeMillis) < debounceWindowMillis) {
             return
         }
@@ -146,29 +149,33 @@ internal class EditBoardController(
 
     suspend fun runMetricsLoop() {
         while (true) {
-            val isBoardComplete = BoardProgressSummary.from(boardEditState.boardState).boardComplete
-            if (isBoardComplete) {
-                scanDeltas = emptyList()
-            }
-
-            var cumulative = 0L
-            val pruned = mutableListOf<Long>()
-            for (delta in scanDeltas.asReversed()) {
-                cumulative += delta
-                pruned.add(delta)
-                if (cumulative > 1000L) break
-            }
-            scanDeltas = pruned.asReversed()
-
-            if (scanDeltas.isNotEmpty()) {
-                val avgDelta = scanDeltas.average()
-                scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
-                scansIdleCount = 0
-            } else {
-                scansPerSecond = - scansIdleCount.toDouble()
-                scansIdleCount++
-            }
+            updateMetrics()
             delay(500L)
+        }
+    }
+
+    internal fun updateMetrics() {
+        val isBoardComplete = BoardProgressSummary.from(boardEditState.boardState).boardComplete
+        if (isBoardComplete) {
+            scanDeltas = emptyList()
+        }
+
+        var cumulative = 0L
+        val pruned = mutableListOf<Long>()
+        for (delta in scanDeltas.asReversed()) {
+            cumulative += delta
+            pruned.add(delta)
+            if (cumulative > 1000L) break
+        }
+        scanDeltas = pruned.asReversed()
+
+        if (scanDeltas.isNotEmpty()) {
+            val avgDelta = scanDeltas.average()
+            scansPerSecond = if (avgDelta > 0) 1000.0 / avgDelta else 0.0
+            scansIdleCount = 0
+        } else {
+            scansPerSecond = - scansIdleCount.toDouble()
+            scansIdleCount++
         }
     }
 }
@@ -181,7 +188,7 @@ internal fun rememberEditBoardController(
     onBoardEditStateChange: (BoardEditState) -> Unit
 ): EditBoardController {
     val controller = remember { EditBoardController(onBoardEditStateChange) }
-    controller.update(boardEditState, deckProfile, orientationMode)
+    controller.update(boardEditState, deckProfile, orientationMode, onBoardEditStateChange)
     
     LaunchedEffect(controller) {
         controller.runMetricsLoop()
