@@ -1,6 +1,6 @@
 # TD::EditBoard Design
 
-Last aligned with source snapshot: `d7318ca`.
+Last aligned with source snapshot: `2b180f5`.
 
 This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
 
@@ -69,7 +69,7 @@ Relevant code:
 
 `EditBoardScreen` owns Compose layout and camera UI.
 
-`EditBoardController` bridges camera scan outcomes, profile lookup, reducer calls, status messages, and scan-rate metrics.
+`EditBoardController` bridges camera scan outcomes, stabilization/thought state, profile lookup, reducer calls, status messages, and scan-rate metrics.
 
 `EditBoardReducer` owns pure board mutation logic.
 
@@ -120,7 +120,7 @@ Displays:
 
 - total card count: `Cards: n/52`;
 - SPS/IDLE telemetry;
-- `Thoughts: 0` placeholder;
+- `Thoughts` status from controller stabilization/mind state;
 - last result message.
 
 Current message source is string-based from `EditBoardController` / `EditBoardReducer`.
@@ -206,6 +206,7 @@ It confirms a duplicate override: the TD says the old occurrence was a false pos
 - scan deltas / SPS / IDLE telemetry;
 - last result message;
 - last scanned card;
+- thought/stabilization state;
 - debounce and unknown-signature throttling.
 
 Camera scan flow:
@@ -214,6 +215,9 @@ Camera scan flow:
 CameraScanOutcome
 -> BarcodeDecodeResult.Found
 -> viewedAs(orientationMode)
+-> processPondering(signature)
+-> consensus across repeated matching founds
+-> handleScan(signature)
 -> DeckProfile.lookup(signature)
 -> EditBoardReducer.applyScannedCard(...)
 -> onBoardEditStateChange(update.state)
@@ -221,6 +225,19 @@ CameraScanOutcome
 ```
 
 If the board is complete, scans are ignored.
+
+Current stabilization rule:
+
+- repeated `Found` verdicts must reach consensus before they mutate board state;
+- current controller uses a fixed small frame-count consensus;
+- this is stabilization, not semantic inference.
+
+Current unknown rule:
+
+- unknown signatures may appear in `thoughts`;
+- unknown signatures intentionally never stabilize;
+- they do not reach `handleScan(...)`;
+- they do not emit operational unknown-pocket messages in TD status.
 
 SPS state reset belongs in controller/effect-side logic, not inside a composable render branch.
 
