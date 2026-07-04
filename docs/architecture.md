@@ -1,642 +1,564 @@
 # ITROBOC Architecture
 
-Last aligned with source bundle: `918a15c`.
-Audience: AI instances entering the repo for design, review, implementation, or handoff work.
-Status: post-MVP. ITROBOC has survived first real tournament use and produced usable PBN from physical club cards.
+Last aligned with source snapshot: `d7318ca`.
 
-## One-line purpose
+Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls for common scan/human errors.
 
-ITROBOC is an Android-first bridge TD assistant that converts physical barcode-marked playing cards into validated duplicate-bridge board data and exports complete boards as PBN.
+This document is written for future AI instances. It is a current architecture map, not a ticket list and not a historical diary. Completed tickets should not remain here unless they changed a durable invariant, ownership rule, or system boundary.
 
-```text
-physical cards -> barcode strip -> raw signature -> Deck Profile -> CardId -> BoardState -> PBN
-```
+## 1. Product shape
 
-The product is not a generic bridge scorer. Its current center of gravity is the real-world bottleneck of building hand records from physical dealt cards.
+ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
-## Current product truth
-
-The project is no longer greenfield. Treat it as post-MVP hardening.
-
-The MVP has already been field-tested in a live club tournament. It processed a substantial part of a Wednesday session and produced usable PBN. That matters architecturally: prefer preserving proven field behavior over re-inventing cleaner but untested abstractions.
-
-Current major surfaces:
-
-- `Admin::Actions`: deck-profile selection, add/delete, import/export, entry into calibration.
-- `Admin::Edit`: barcode/profile calibration and inspection workshop.
-- `TD::Overview`: session board grid, import/export, board status overview.
-- `TD::EditBoard`: real-time board/hand scanning cockpit.
-- `Mock`: legacy fake-signature TD flow for dry-run and smoke testing.
-
-The current default built-in deck profile is `builtin-observed-v1`, not the synthetic demo profile.
-
-## Load-bearing maxims
-
-These are product and architecture rules, not decoration.
-
-### Admin = explanation; TD = verdict
-
-Admin may be rich, diagnostic, inspectable, and slow. TD must be fast, forgiving, and decisive under tournament pressure.
-
-Admin is allowed to show debug evidence, barcode runs, Grid13 bits, aliases, scan logs, and why a scan behaved as it did.
-
-TD should show operational results: what card was accepted, what was skipped, whether the board is complete, and whether PBN is ready.
-
-### Scanner does not know card meaning
-
-The barcode decoder produces raw signatures only.
-
-Correct:
+It is an Android-first bridge Tournament Director assistant:
 
 ```text
-camera crop -> bfm1549 -> Deck Profile -> SA
+physical barcode-marked cards
+-> camera/luma ROI
+-> Grid13 raw signature
+-> Deck Profile lookup
+-> CardId
+-> BoardState / BoardEditState
+-> complete board validation
+-> PBN export
 ```
 
-Incorrect:
+The real-world user is a TD under tournament pressure. The app exists to reduce repetitive manual hand-record work, not to demonstrate barcode cleverness for its own sake.
+
+Core product rule:
 
 ```text
-camera crop -> SA
+The real center is the TD at a live tournament table.
 ```
 
-Card meaning belongs to `DeckProfile`. Vision must remain card-semantic-free.
+## 2. Load-bearing maxims
 
-### Wrong card is worse than missed card
-
-In TD mode, a missed scan is recoverable by adjusting the card/camera and trying again. A wrong mutation can poison a board. Therefore strict rejection and uncertainty are acceptable costs.
-
-### Complete-board export only
-
-PBN export is gated on complete, valid boards: four 13-card hands and 52 unique cards.
-
-Partial boards may exist in session state and in UI, but should not be exported as complete PBN.
-
-### Orientation is data
-
-`bfm...` and `brm...` are orientation-bearing raw-signature families. Do not erase, canonicalize, sort, or merge them.
-
-Bad:
+These are architectural beams. Do not optimize against them accidentally.
 
 ```text
-canonical = min(bfmPayload, brmPayload)
+Admin = explanation; TD = verdict.
+Wrong card is worse than missed card.
+Scanner does not know card meaning.
+Profiles map raw signatures to cards.
+Orientation is data.
+Visible runs are evidence; normalized Grid13 cells are identity.
+TD flow must reduce hand-burden and babysitting.
+A verdict must be visible.
+Board complete means: stop scanning; trust the landing.
 ```
 
-Good:
+Interpretation:
 
-```text
-bfm1549 -> SA
-brm1255 -> SA
-```
+- Admin may show diagnostics, calibration evidence, grids, aliases, raw signatures, and reasons.
+- TD should show concise operational results: accepted card, skipped duplicate, unknown signature, board complete, export available.
+- A missed scan costs another hand movement. A wrong accepted card corrupts trust and board state.
+- Barcode/vision code emits signatures. Core/profile code assigns card meaning.
+- `bfm` and `brm` are feed-direction families, not arbitrary min/max canonicalization.
 
-The prefix is part of the raw signature identity.
-
-### Visible runs are evidence; normalized Grid13 cells are identity
-
-Black/white runs, pixel widths, and run forms are diagnostic evidence. The stored alias is the normalized Grid13 token such as `bfm1549` or `brm1255`.
-
-## Repository/module layout
-
-The Gradle project has three active modules:
-
-```text
-:core    pure Kotlin/JVM bridge domain and profile logic
-:vision  pure Kotlin/JVM image/signature decoding logic
-:app     Android / Compose / CameraX UI and device adapters
-```
-
-Repository-level docs and collaboration guidance live outside the modules:
-
-```text
-docs/product_context.md
-docs/architecture.md
-docs/MVP-state-reached-handoff.md
-docs/dev_history/**
-docs/new_tickets/**
-md-files/field.md
-AGENTS.md
-README.md
-```
-
-`docs/new_tickets/**` is the active place for ticket details. This architecture document should remain clean and should not duplicate ticket specs.
-
-## Module responsibilities
+## 3. Module ownership
 
 ### `:core`
 
-`core` owns bridge-domain truth and profile mapping. It must stay Android-free and vision-free.
+Pure Kotlin/JVM domain and reducer layer.
 
-Main responsibilities:
+Owns:
 
-- canonical bridge primitives: `Suit`, `Rank`, `CardId`, `Seat`
-- hand and board state: `HandState`, `BoardState`, `BoardEditState`
-- board progress summaries: `HandProgressSummary`, `BoardProgressSummary`
-- profile mapping: `DeckProfile`, `DeckProfileMetadata`, `DeckProfileEditor`
-- built-in profiles: `BuiltInDeckProfiles`
-- TD scan accumulation: `TdScanAccumulator`, `TdScanResult`, `TdBatchScanReport`
-- TD presentation summaries: `TdScanSessionPresentation`
-- pure board-edit reducer: `EditBoardReducer`
-- duplicate-board metadata: `DuplicateBoardMetadata`, `BoardVulnerability`
+- bridge domain: `Suit`, `Rank`, `CardId`, `Seat`
+- board domain: `HandState`, `BoardState`, `BoardEditState`
+- duplicate metadata: `DuplicateBoardMetadata`, `BoardVulnerability`
+- deck profiles: `DeckProfile`, `DeckProfileEditor`, `BuiltInDeckProfiles`
+- TD edit reducer: `EditBoardReducer`
 - PBN export: `PbnExporter`, `PbnExportOptions`
+- pure summaries: `HandProgressSummary`, `BoardProgressSummary`, `TdScanSessionPresentation`
 
-Core rules:
+Must not own:
 
-- keep logic deterministic and unit-testable;
-- prefer typed results over string-only status;
-- reject illegal duplicate cards;
-- validate complete boards before export;
-- never depend on Android classes, CameraX, Compose, or pixel/image types.
-
-Important current reducer behavior:
-
-- adding a new card to selected incomplete hand succeeds;
-- adding a card already in selected hand is treated as harmless/no mutation;
-- adding a card already on another hand is skipped/no mutation;
-- adding to a complete selected hand does not mutate and auto-advances selection;
-- completing a hand auto-advances `N -> E -> S -> W -> N`;
-- if three hands are complete and the selected fourth hand is empty, the fourth hand can be auto-filled from the remaining 13 cards;
-- clearing selected hand and clearing board are pure core operations.
+- Android UI
+- CameraX
+- Compose
+- `ImageProxy`
+- Android share/import APIs
+- visual diagnostics
 
 ### `:vision`
 
-`vision` owns pure barcode image/signature extraction. It must stay Android-free and card-semantic-free.
+Android-free barcode image interpretation.
 
-Main responsibilities:
+Owns:
 
-- image carrier: `GrayImage`
-- barcode result model: `BarcodeDecoder`, `BarcodeDecodeResult`, `DetectedSignature`, `BarcodeDebugInfo`, `BarcodeRoi`, `BarcodeBounds`
-- Grid13 measurement primitives: ink conversion, projection, thresholds, run extraction, active span
-- Grid13 signature helpers: sentinel checks, bit normalization, reverse bits, `bfm` / `brm` token formatting
-- slow/explanation path: `Grid13SlowDecoder`, `Grid13SlowBarcodeMeasurement`
-- fast/verdict path: `Grid13VerdictDecoder`
-- golden-manifest and degradation tests
+- `GrayImage`
+- `BarcodeDecoder`
+- decode result models
+- Grid13 measurement primitives
+- slow diagnostic Grid13 decoder
+- fast verdict Grid13 decoder
+- golden manifest tests for observed barcode profile
 
-Vision rules:
+Must not own:
 
-- output raw signatures, never `CardId`;
-- preserve enough debug in slow/Admin path to explain calibration;
-- keep verdict/TD path free of debug payloads;
-- keep accepted verdict signatures aligned with slow-path signatures for known/golden barcodes;
-- prefer rejection over unsafe acceptance.
+- bridge card meaning
+- deck profile lookup
+- Android camera APIs
+- TD state
 
 ### `:app`
 
-`app` owns Android UI, CameraX, permissions, share intents, in-memory navigation/session/profile state, and adapters between Android frames and pure modules.
+Android shell, Compose UI, CameraX adapters, session import/export/share.
 
-Main responsibilities:
+Owns:
 
-- navigation: `MainActivity`, `AppNavigation`, `Screen`
-- profile/admin UI: `AdminActionsScreen`, `AdminEditScreen`, `AdminProfileUiModels`, `AdminReadOnlyCardPreview`
-- camera adapter/support: `AdminEditCameraSupport`, `AdminEditCameraFrameDecoder`, ROI extraction from `ImageProxy`
-- TD board workflow UI: `TdOverviewScreen`, `EditBoardScreen`, `TdSessionState`
-- TD import/export/share: `TdSessionExchange`, `TdSessionShareManager`
-- orientation selection: `BarcodeOrientationMode`, `DetectedSignature.viewedAs(...)`
-- mock workflow: `MockTdScreen`
+- screens: Main, TD overview, TD edit board, Admin actions/edit/read-only, mock surfaces
+- `AdminEditCameraSupport` and CameraX frame adapters
+- `EditBoardController`
+- `EditBoardScreen`
+- `TdSessionState`
+- `TdSessionExchange`
+- `TdSessionShareManager`
+- Android import/export/share intents
 
-App rules:
+Must not move core domain rules into Compose branches.
 
-- Compose may own UI state, but domain decisions should delegate to `core` reducers/models where possible;
-- CameraX `ImageProxy` conversion must stay in `app`, not leak into `vision`;
-- session/profile state is currently in-memory at `AppNavigation` level;
-- app-level state currently does not survive process death/application relaunch unless exported/imported manually;
-- Android share/export concerns stay in `app`.
+### `Project/docs/**`
 
-## End-to-end flows
+Human/AI handoff layer. Keeps current maps and durable design anchors.
 
-### Admin calibration / profile editing
+Architecture carries beams. Design docs carry current behavior. Tickets carry temporary work. Tests carry executable evidence. Dev history carries meaningful road-dust only.
 
-```text
-Admin::Edit screen
--> selected CardId
--> CameraX preview
--> centered guide ROI
--> ImageProxy luma ROI extraction
--> GrayImage
--> Grid13SlowDecoder
--> BarcodeDecodeResult
--> DeckProfileEditor.assign(rawSignature, selectedCard)
--> aliases/profile state
--> optional debug JSONL share
-```
+## 4. Core domain invariants
 
-Admin uses the slow/explanation decoder by default. This is intentional.
+### Cards and hands
 
-Key Admin behaviors:
+- A `CardId` is suit + rank.
+- A `HandState` is a set of unique cards.
+- A hand cannot exceed 13 cards.
+- A `BoardState` contains all four seats.
+- A card cannot appear twice on the board.
+- A complete board has four complete 13-card hands and 52 unique cards.
 
-- a 4x13 card grid selects the card being calibrated;
-- `Scan` consumes one next camera frame;
-- successful `Found` assigns the observed `rawSignature` to the selected card;
-- `Ambiguous` and `NotFound` do not mutate the profile;
-- auto-advance can move to the next unmapped card;
-- aliases are shown as compact chips;
-- complete profiles can enter read-only visual inspection mode;
-- debug logs contain frame, ROI, threshold, bits, runs, sentinel, confidence, and profile-match evidence.
+### PBN
 
-### TD live board editing
+`PbnExporter.export(...)` requires complete board validation.
+
+Current MVP PBN output intentionally emits:
 
 ```text
-TD::Overview
--> select board number
--> TD::EditBoard
--> selected seat
--> CameraX stream frame
--> centered guide ROI
--> GrayImage
--> Grid13VerdictDecoder
--> DetectedSignature.rawSignature
--> BarcodeOrientationMode.viewedAs(...)
--> DeckProfile.lookup(...)
--> EditBoardReducer.applyScannedCard(...)
--> BoardEditState
--> BoardState
--> PBN preview when complete
+[Event "..."]
+[Board "..."]       when board number is supplied
+[Dealer "N|E|S|W"]
+[Vulnerable "..."]  when vulnerability is supplied
+[Deal "..."]
 ```
 
-TD uses the verdict decoder. This is intentional.
+Current MVP PBN output intentionally does **not** emit `[Site "..."]`, even though `PbnExportOptions.site` still exists in the type.
 
-Key TD behaviors:
+Duplicate board metadata is provided by `DuplicateBoardMetadata.forBoardNumber(boardNumber)` and feeds dealer/vulnerability into TD export.
 
-- landscape-first 3x3 cockpit layout;
-- North / East / South / West panels spatially surround the camera area;
-- tapping a hand selects the active seat;
-- scans feed the selected seat;
-- card displays are suit-grouped;
-- active hand has a visible border;
-- hand completion colors the hand green;
-- repeated same raw token is debounced for a short window;
-- unknown signatures are throttled to avoid status flood;
-- `bfm` / `brm` orientation mode is manually selectable;
-- `auto` orientation exists in UI/model but deliberately does not guess yet;
-- once the board is complete, the central camera area switches to a board-complete/PBN view;
-- clearing a hand makes the board incomplete again and scanning can resume.
+## 5. Deck Profile architecture
 
-### TD cumulative PBN exchange
+Deck Profiles are the translation boundary between raw observed signatures and card identities.
 
 ```text
-session state -> complete boards only -> PBN blocks sorted by board number -> Android share intent
+raw signature -> CardId
 ```
+
+Examples:
 
 ```text
-imported PBN text -> tagged blocks -> complete board parse -> merge into session state
+bfm1549 -> SA
+brm.... -> D8
 ```
 
-Current import/export behavior:
+`scanner/vision` code must not know that a signature means `SA` or `D8`.
 
-- export skips incomplete boards;
-- export returns `null` when no complete boards exist;
-- exported boards are sorted by board number;
-- duplicate-board `Dealer` and `Vulnerable` are derived from board number;
-- import ignores empty/partial/invalid blocks;
-- complete imported boards add or overwrite board state;
-- selected seat is preserved for an existing board when it is overwritten by import;
-- session state remains in memory unless user exports/imports.
+A profile contains metadata such as profile id/name and signature model. The current observed physical profile is `grid13-v2`-style and preserves physical orientation through `bfm` / `brm` families.
 
-## Deck profiles
+Built-in observed profile has 52-card coverage and is aligned with a golden manifest.
 
-A `DeckProfile` is an opaque raw-signature-to-card dictionary:
+## 6. Grid13 / barcode architecture
 
-```kotlin
-Map<String, CardId>
-```
+### Slow path
 
-Metadata includes:
+The slow Grid13 path is diagnostic/explanatory. It may allocate richer measurement/debug objects. It belongs mainly to Admin and tests.
 
-- `profileId`
-- `displayName`
-- `isBuiltIn`
-- `isDemo`
-- `notes`
-- `signatureModel`
+Use it when the app needs to explain barcode evidence.
 
-Current signature models:
+### Verdict path
 
-- `grid13-v2`: observed physical-card barcode signatures.
-- `synthetic-demo-bridge52-v1`: fake/demo signatures for tests and mock flows.
+`Grid13VerdictDecoder` is the fast TD path.
 
-Current built-ins:
-
-- `builtin-observed-v1`
-  - default profile;
-  - real observed `grid13-v2` aliases;
-  - complete 52-card coverage;
-  - includes `bfm` and `brm` orientation-bearing aliases;
-  - not an official claim about manufacturer mapping.
-- `builtin-demo-bridge52-v1`
-  - synthetic profile;
-  - useful for tests and fake flows;
-  - must not be treated as real physical barcode mapping.
-
-Profile invariants:
-
-- one raw signature maps to at most one `CardId`;
-- a card may have multiple aliases;
-- profile completeness means every one of the 52 cards has at least one alias;
-- core treats raw signatures as opaque strings;
-- `signatureModel` explains expected token shape but does not move barcode logic into core.
-
-## Grid13-v2 signature model
-
-Grid13-v2 is the current practical model for one cropped barcode strip.
-
-Conceptual pipeline:
+Current behavior:
 
 ```text
 GrayImage
--> ink signal
--> column projection
--> adaptive threshold
--> black runs and white gaps
--> active span
--> 13 equal cells
--> 13-bit occupancy
+-> width-bound reusable projection buffer
+-> row-major projection accumulation
+-> active black span
+-> 13-cell candidate
+-> strict Grid13 cell-run gate
 -> sentinel normalization
--> hex payload
--> bfm/brm raw signature
+-> raw signature
+-> confidence/verdict
 ```
 
-Bit/cell model:
+Important implementation invariant:
 
 ```text
-left visual cell  -> bit12
-right visual cell -> bit0
+Reusable scratch buffers must be scanned only over the current logical image width.
 ```
 
-Sentinel/control structure:
+After a wide frame then narrow frame, stale scratch tail data must not influence detection. Loops that analyze projection data should use `0 until image.width`; final run closure should use `commitRun(image.width)`.
+
+### Strict cell-run gate
+
+The strict gate applies to the **13-cell bit candidate**, not raw pixel runs:
 
 ```text
-10.........01
+reject 13-cell candidates with black run length >= 3
+reject 13-cell candidates with white run length >= 4
 ```
 
-Numeric check:
+### Orientation
 
-```kotlin
-(value and 0x1803) == 0x1001
-```
-
-That means:
-
-- `bit12 = 1`
-- `bit11 = 0`
-- `bit1 = 0`
-- `bit0 = 1`
-
-Control-bit normalization is deliberate. The decoder may normalize malformed outer control cells to the expected sentinel frame while keeping evidence/warnings in debug output on the slow path.
-
-Strict run gate:
-
-- reject raw candidates with black run length `>= 3`;
-- reject raw candidates with white run length `>= 4`.
-
-Durable formula:
+Orientation is part of the signature family:
 
 ```text
-Physical card -> orientation -> bits -> token -> run form
+same visible payload + chosen feed direction = bfmHHHH or brmHHHH
 ```
 
-## Slow path vs verdict path
+Do not replace this with min/max canonicalization or blind bit reversal.
 
-### `Grid13SlowDecoder`
+## 7. Admin architecture
 
-Use it for Admin, calibration, explanations, debug logs, golden/oracle alignment, and future diagnostics.
+Admin is the explanation side.
 
-It returns rich `BarcodeDebugInfo` including:
+### Admin::Actions
 
-- threshold;
-- black run ranges;
-- black/white run pixel widths;
-- active span;
-- pre/post sentinel bits;
-- forward/reverse hex;
-- reverse signature;
-- `rl2` run form;
-- sentinel repair flags/reasons;
-- warnings.
+Profile management surface:
 
-### `Grid13VerdictDecoder`
+- shows active/imported profiles;
+- supports profile selection;
+- imports/exports profile JSON;
+- adds/deletes imported profiles;
+- opens edit/read-only profile surfaces.
 
-Use it for TD runtime.
+### Admin::Edit
 
-It independently computes the minimal answer needed for field mutation:
-
-- projection;
-- threshold;
-- black run count/span;
-- 13-bit value;
-- strict invalid-run rejection;
-- sentinel normalization;
-- confidence;
-- `rawSignature`.
-
-Verdict path intentionally returns `debug = null` for accepted signatures.
-
-Verdict contract:
-
-- accepted known/golden barcode should produce the same `rawSignature` as slow path;
-- confidence does not need to equal slow-path confidence;
-- `debug` stays absent;
-- unsafe candidates are rejected or ambiguous rather than accepted.
-
-## Camera and ROI architecture
-
-Android camera access lives in `:app`.
-
-Current camera adapter flow:
+Calibration and evidence workspace:
 
 ```text
-CameraX ImageAnalysis
--> ImageProxy
--> centeredBarcodeRoi(...)
--> luma plane ROI extraction
--> GrayImage(width, height, pixels)
--> BarcodeDecoder.decode(...)
+CameraX ImageProxy
+-> centered barcode ROI
+-> luma GrayImage
+-> slow Grid13 decode/evidence
+-> signature assignment to selected card / orientation
+-> DeckProfileEditor update
 ```
 
-Important current optimization:
+Admin::Edit can show diagnostic detail that TD should not show.
 
-- ROI luma extraction copies only the guide ROI, not the whole frame.
+The CameraX adapter extracts only the ROI luma data. Dense `pixelStride == 1` paths use row bulk copy; non-unit pixel stride falls back to per-pixel extraction.
 
-Current guide:
+### Admin read-only / preview
 
-- centered rectangle;
-- width fraction `0.20`;
-- height fraction `0.08`.
+Read-only profile inspection shows card/signature mapping and Grid13-style visual evidence. It is for understanding and verification, not TD operation.
 
-Threading model:
+## 8. TD session architecture
 
-- CameraX analyzer runs on a dedicated single-thread executor;
-- decoding runs on that analyzer executor;
-- only the scan outcome is posted back to the main executor for Compose state mutation.
+### `TdSessionState`
 
-## TD state model
-
-Current TD session state:
+Current shape:
 
 ```kotlin
 data class TdSessionState(
-    val boards: Map<Int, BoardEditState> = emptyMap()
+    val boards: Map<Int, BoardEditState> = emptyMap(),
+    val totalBoardsInGrid: Int = 30,
 )
 ```
 
-Current board edit state:
-
-```kotlin
-data class BoardEditState(
-    val boardNumber: Int,
-    val boardState: BoardState = BoardState(),
-    val selectedSeat: Seat = Seat.NORTH
-)
-```
-
-State ownership:
-
-- `AppNavigation` owns current screen, active profile state, edited profiles, `TdSessionState`, and barcode orientation mode;
-- `TdOverviewScreen` reads/writes `TdSessionState` through callbacks;
-- `EditBoardScreen` receives one `BoardEditState` and writes updates through callback;
-- incomplete boards are kept in the in-memory session map;
-- navigation back to overview preserves board state;
-- application relaunch persistence is not implemented yet.
-
-## PBN architecture
-
-Core PBN export lives in `PbnExporter`.
-
-PBN export requires complete board validation.
-
-Default export fields:
+Allowed grid sizes:
 
 ```text
-[Event "ITROBOC Export"]
-[Site "Local"]
-[Board "N"]          optional when board number is provided
-[Dealer "..."]
-[Vulnerable "..."]   optional when vulnerability is provided
-[Deal "D:..."]
+15, 18, 21, 24, 27, 30, 33, 36, 39
 ```
 
-Deal order starts from the dealer and proceeds clockwise through `Seat.next()`.
-
-For TD session export, `TdSessionExchange.exportCompleteBoard(...)` derives duplicate-board metadata from board number:
-
-- dealer cycle: `N, E, S, W, ...`
-- vulnerability cycle over 16 boards:
-  - `None, NS, EW, All, NS, EW, All, None, EW, All, None, NS, All, None, NS, EW`
-
-Import is intentionally conservative: it only accepts blocks that parse into complete valid boards.
-
-## Testing architecture
-
-Tests are part of the architecture. Do not bypass them when changing behavior.
-
-### Core tests cover
-
-- `CardId` parsing;
-- `HandState` and `BoardState` validity;
-- duplicate rejection;
-- board and hand progress summaries;
-- deck profile lookup, metadata, serialization, editor conflicts, and completeness;
-- built-in observed/default profile invariants;
-- duplicate-board dealer/vulnerability cycle;
-- TD scan accumulator typed outcomes and batch behavior;
-- `EditBoardReducer` add/duplicate/full/auto-advance/auto-fill/clear behavior;
-- PBN export.
-
-### Vision tests cover
-
-- Grid13 primitive functions;
-- Grid13 bit/signature helpers;
-- slow measurement/decoder behavior;
-- sentinel normalization;
-- strict invalid-run rejection;
-- golden manifest coverage and observed-profile parity;
-- verdict decoder parity against slow/golden signatures;
-- degradation and sheet-analysis behavior.
-
-### App tests cover
-
-- Admin alias/evidence display;
-- camera ROI extraction and ROI-only luma copy;
-- profile UI models;
-- read-only card/barcode preview helpers;
-- orientation mode `viewedAs(...)` behavior;
-- TD session import/export.
-
-## Current limitations and non-goals
-
-Keep this section architectural. Detailed tasks belong in `docs/new_tickets/**`.
-
-Current limitations:
-
-- TD overview grid is still structurally fixed around the current UI model unless changed by ticketed work;
-- `AUTO` barcode orientation is intentionally unresolved;
-- TD multi-card snap/OpenCV/perspective scanning is not implemented;
-- profile and session persistence are in-memory except explicit import/export;
-- app process death/relaunch recovery is not implemented;
-- vision is currently centered-ROI based and assumes the barcode strip is aligned with the guide;
-- verdict path is optimized enough for MVP but not allocation-free or benchmark-tuned;
-- Android share/export behavior may need compatibility improvements in ticketed work.
-
-Non-goals for this architecture file:
-
-- do not embed full ticket specs here;
-- do not replace `docs/product_context.md`;
-- do not replace dev-history handoffs;
-- do not document every UI pixel;
-- do not treat symbolic collaboration notes as technical requirements.
-
-## Guidance for future AI instances
-
-Before changing code:
-
-1. Read this file.
-2. Read `docs/product_context.md`.
-3. Read `docs/MVP-state-reached-handoff.md` if entering post-MVP work cold.
-4. Read the relevant ticket under `docs/new_tickets/**` if the task references one.
-5. Inspect the current source before assuming docs are newer than code.
-
-When implementing:
-
-- preserve module boundaries;
-- keep core pure;
-- keep vision card-semantic-free;
-- keep Android adapters in app;
-- keep Admin explanation-rich and TD verdict-focused;
-- prefer small, reviewable patches;
-- add or update tests for behavior changes;
-- run `./gradlew test` when a full checkout with wrapper is available.
-
-When uncertain:
-
-- choose missed scan over wrong card;
-- choose explicit raw-signature evidence over hidden inference;
-- choose preserving `bfm`/`brm` orientation over clever canonicalization;
-- choose pure reducer logic over Compose-local domain decisions;
-- choose ticket files for future work rather than bloating architecture.
-
-## Re-entry summary
-
-ITROBOC is a real, post-MVP Android/Kotlin bridge TD tool.
-
-Its core architecture is:
+`updateGridSize(newSize)` enforces:
 
 ```text
-:vision decodes barcode crops into raw signatures
-:core maps signatures through Deck Profiles and owns bridge board truth
-:app adapts Android camera/UI/session/share workflows around those pure modules
+newSize in ALLOWED_GRID_SIZES
+newSize >= highestNonEmptyBoardNumber
 ```
 
-The current durable product split is:
+This prevents valid non-empty boards from becoming hidden state.
+
+### TD overview
+
+The TD overview shows a dynamic board grid with three rows and `totalBoardsInGrid / 3` columns.
+
+It shows:
+
+- board buttons for visible board numbers;
+- color state for empty/partial/complete;
+- filled complete-board count;
+- active profile;
+- Import / Export / Settings.
+
+Settings only offers allowed sizes large enough not to hide non-empty boards.
+
+### Cumulative PBN exchange
+
+Export:
 
 ```text
-Admin = explanation
-TD    = verdict
+session state
+-> complete boards only
+-> board number <= totalBoardsInGrid
+-> PBN blocks sorted by board number
+-> Android share intent with EXTRA_STREAM and EXTRA_TEXT
 ```
 
-The main safety principle is:
+Import:
 
 ```text
-missed card is acceptable; wrong card mutation is dangerous
+raw PBN text
+-> tagged blocks
+-> complete board parse
+-> board number policy 1..39
+-> merge into TdSessionState
+-> expand grid to smallest allowed size that can show imported boards
 ```
 
-The main barcode principle is:
+Invalid, partial, or unsupported board blocks are ignored and counted.
+
+## 9. TD::EditBoard architecture
+
+TD::EditBoard is the field cockpit.
+
+Current layout is a 3-row cockpit:
 
 ```text
-visible runs are evidence; normalized Grid13 cells are identity; orientation is data
+Top:    Board controls | North hand | LastScannedCardArea | StatusArea
+Middle: West hand + Clear + Swap | CentralArea | East hand + Undo + Scissors
+Bottom: Feed mode | South hand | Orientation | SureArea
 ```
+
+The right-bottom area is `SureArea`; there is no side `PBNArea`.
+
+PBN preview appears only in the central `BoardCompleteView` when the board is complete.
+
+### Camera / central area
+
+`CentralArea` shows:
+
+- permission message if camera permission is absent;
+- modal placeholder while full-screen recovery UI is open;
+- `BoardCompleteView` when board is complete;
+- otherwise CameraX preview + barcode guide overlay.
+
+`BoardCompleteView` displays a large PBN preview produced through `TdSessionExchange.exportCompleteBoard(...)`.
+
+### Status and last scanned card
+
+`LastScannedCardArea` displays:
+
+- `Last scanned` label;
+- the last scanned card if available;
+- otherwise pending duplicate candidate card if relevant.
+
+`StatusArea` displays:
+
+- total card count `Cards: n/52`;
+- SPS/IDLE telemetry;
+- placeholder `Thoughts: 0`;
+- last result message.
+
+### Selected hand
+
+Card additions and most recovery controls operate on `selectedSeat`.
+
+Seat cards are rendered in bridge suit order. Completed hands are visually distinct.
+
+### Feed mode
+
+Current TD feed mode is effectively stream mode. Snap mode remains disabled/placeholder.
+
+## 10. TD reducer and recovery controls
+
+`EditBoardReducer` owns pure board mutation decisions.
+
+### Add scanned card
+
+`applyScannedCard(editState, card, signature)`:
+
+- if card is already in selected hand: no board mutation, OK message;
+- if card exists in another hand: no board mutation, create `DuplicateOverrideCandidate`;
+- if selected hand is complete: no mutation, auto-advance selected seat;
+- otherwise add card to selected hand;
+- record `AddedCardRecord(selectedSeat, card)`;
+- clear duplicate candidate;
+- auto-advance after hand completion;
+- try fourth-hand auto-fill when applicable.
+
+### Duplicate override / `I'm sure`
+
+`SureArea` enables `I'm sure` only when pending candidate target seat is the currently selected seat.
+
+`confirmDuplicateOverride(editState)`:
+
+- requires a pending candidate;
+- rejects stale candidate if existing seat no longer has card;
+- rejects stale candidate if target already has card;
+- rejects stale candidate if target hand is complete;
+- otherwise moves the card from existing seat to target seat;
+- removes matching old history record for existing seat/card;
+- adds new history record for target seat/card;
+- clears candidate.
+
+This is for false-positive recovery: the TD is saying the previous occurrence was wrong.
+
+### Undo
+
+`Undo` is standard LIFO undo for the **currently selected hand**.
+
+It:
+
+- finds the last `AddedCardRecord` whose seat equals selected seat;
+- removes that card from that hand;
+- removes that single history record;
+- clears duplicate candidate.
+
+Accepted no-fix behavior:
+
+- after a hand completes, auto-advance may select the next hand;
+- immediate `Undo` therefore applies to the new selected hand and may be disabled if that hand has no history;
+- TD can reselect the previous hand if needed.
+
+### Scissors
+
+`Scissors` opens a full-screen selected-hand view.
+
+Each visible card is clickable. Removing a card:
+
+- removes only from the selected hand;
+- removes matching history for that selected seat/card;
+- clears duplicate candidate;
+- does not dismiss the screen automatically.
+
+This is the main recovery route for auto-filled fourth-hand cards.
+
+### Swap
+
+`Swap` opens a full-screen seat chooser.
+
+Swapping:
+
+- swaps currently selected hand with target hand;
+- clears all `addHistory` because old history no longer maps cleanly;
+- clears duplicate candidate;
+- preserves selected seat.
+
+### Clear
+
+The button label is intentionally short:
+
+```text
+Clear
+```
+
+Context applies:
+
+- if selected hand has cards, clear selected hand;
+- if selected hand is empty, ask confirmation for clearing entire board.
+
+## 11. Auto-fill fourth hand
+
+`tryAutoFillFourthHand(...)` fills the selected hand with the remaining deck only when all other hands are complete and selected hand is empty.
+
+Auto-filled cards:
+
+- are not added to `addHistory`;
+- are not expected to be undone via `Undo`;
+- can be removed via `Scissors`.
+
+This is an accepted product decision.
+
+## 12. Compose/state rules
+
+Avoid mutating Compose state directly inside render branches.
+
+Example rule:
+
+```text
+Do not assign scanDeltas = emptyList() inside the BoardCompleteView composition branch.
+```
+
+If scan-rate state needs completion reset, keep it in controller/effect-side logic (`updateMetrics`, `LaunchedEffect`, or equivalent), not in plain composition.
+
+Modifier rule:
+
+- external `modifier` belongs to the outermost composable container;
+- inner child containers should usually start with fresh `Modifier` unless deliberately propagating caller sizing.
+
+## 13. Testing map
+
+Important test anchors:
+
+- `CardIdTest`
+- `HandStateTest`
+- `BoardStateTest`
+- `BoardProgressSummaryTest`
+- `DeckProfile*Test`
+- `PbnExporterTest`
+- `EditBoardReducerTest`
+- `TdSessionStateTest`
+- `TdSessionExchangeTest`
+- `TdSessionShareManagerTest`
+- `EditBoardControllerTest`
+- `AdminEditCameraSupportTest`
+- `Grid13*Test`
+
+Specific current regression anchors:
+
+- PBN exporter does not emit `[Site "..."]`.
+- TD grid cannot shrink below highest non-empty board.
+- Import accepts boards `1..39` and expands grid to fit.
+- Share intent includes `Intent.EXTRA_TEXT`.
+- Verdict decoder scratch buffers handle wide -> narrow image widths.
+- ROI extraction keeps dense and non-unit pixel stride paths covered.
+- Undo is LIFO within selected hand across mixed history.
+- Duplicate override stale cases clear candidate without mutation.
+- Swap clears duplicate candidate.
+- Scissors removal clears candidate and matching history.
+
+## 14. Current limitations / non-goals
+
+Current non-goals:
+
+- no traveller scoring;
+- no contract/result entry;
+- no Bridgemate replacement in MVP;
+- no online service dependency;
+- no generic retail barcode decoding;
+- no TD-side diagnostic deep dive;
+- no automatic correction of all user mistakes.
+
+Known placeholders / current rough edges:
+
+- `Thoughts: 0` is a placeholder in TD status.
+- Snap feed mode is disabled/placeholder.
+- TD screen layout is field-driven and may remain visually blunt while ergonomics are tested.
+- PBN preview inside `BoardCompleteView` is central-only; side PBN area is intentionally removed.
+
+## 15. Guidance for future AI instances
+
+When re-entering this project:
+
+1. Start from current docs and source snapshot, not old tickets.
+2. Preserve field-proven behavior unless explicitly changing it.
+3. Keep tickets temporary and actionable.
+4. When a ticket lands, absorb only durable truth into architecture/design docs.
+5. Do not move card meaning into scanner/vision.
+6. Do not make TD mode explain like Admin mode.
+7. Prefer missed scan over wrong card.
+8. Ask: does this reduce the TD's hand-burden?
+
+The beetle is not fluff. It encodes UX: small, focused, suspicious, helpful, and not the main event.

@@ -1,0 +1,404 @@
+# TD::EditBoard Design
+
+Last aligned with source snapshot: `d7318ca`.
+
+This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
+
+## 1. Purpose
+
+`TD::EditBoard` is the live Tournament Director cockpit for building one duplicate bridge board from physical barcode-marked cards.
+
+Main flow:
+
+```text
+physical card barcode
+-> camera frame / ROI
+-> raw signature
+-> active DeckProfile lookup
+-> CardId
+-> selected hand / BoardEditState
+-> complete board
+-> PBN preview/export path
+```
+
+Primary product goal:
+
+```text
+Help TD reach 52 correct cards quickly and safely.
+```
+
+The screen must reduce babysitting. It should not make the TD debug the scanner during club work.
+
+## 2. Load-bearing rules
+
+```text
+TD = verdict.
+Wrong card is worse than missed card.
+A verdict must be visible.
+Board complete means: stop scanning; trust the landing.
+Recovery controls should make human/scan mistakes locally fixable.
+```
+
+Admin can explain. TD should decide and show what happened.
+
+## 3. Current file ownership
+
+Relevant code:
+
+```text
+:app
+  EditBoardScreen.kt
+  EditBoardController.kt
+  TdSessionState.kt
+  TdSessionExchange.kt
+  TdSessionShareManager.kt
+
+:core
+  BoardEditState.kt
+  BoardState.kt
+  HandState.kt
+  EditBoardReducer.kt
+  PbnExporter.kt
+  DuplicateBoardMetadata.kt
+
+:vision
+  Grid13VerdictDecoder.kt
+  GrayImage.kt
+  BarcodeModels.kt
+```
+
+`EditBoardScreen` owns Compose layout and camera UI.
+
+`EditBoardController` bridges camera scan outcomes, profile lookup, reducer calls, status messages, and scan-rate metrics.
+
+`EditBoardReducer` owns pure board mutation logic.
+
+`TdSessionExchange` owns complete-board PBN export/import for TD session exchange.
+
+## 4. Current cockpit layout
+
+The screen is a 3-row cockpit.
+
+```text
+Top row:
+Board controls | North hand | LastScannedCardArea | StatusArea
+
+Middle row:
+West hand + Clear + Swap | CentralArea | East hand + Undo + Scissors
+
+Bottom row:
+Feed mode | South hand | Orientation | SureArea
+```
+
+There is no side `PBNArea` in the current layout.
+
+PBN preview appears in the central area only when the board is complete.
+
+## 5. Top row
+
+### BoardControlsArea
+
+Shows current board number and Back.
+
+### North HandArea
+
+Shows North hand and selected-hand border when North is selected.
+
+### LastScannedCardArea
+
+Displays:
+
+- `Last scanned` label;
+- last scanned accepted/reported card if available;
+- otherwise pending duplicate candidate card.
+
+This keeps a rejected duplicate visible while `I'm sure` is actionable.
+
+### StatusArea
+
+Displays:
+
+- total card count: `Cards: n/52`;
+- SPS/IDLE telemetry;
+- `Thoughts: 0` placeholder;
+- last result message.
+
+Current message source is string-based from `EditBoardController` / `EditBoardReducer`.
+
+## 6. Middle row
+
+### WestArea
+
+West hand panel also hosts:
+
+- `Clear`
+- `Swap`
+
+`Clear` is intentionally short. Context applies:
+
+- if selected hand has cards, clear selected hand;
+- if selected hand is empty, ask confirmation before clearing entire board.
+
+`Swap` opens a full-screen seat chooser and is enabled when selected hand has cards.
+
+### CentralArea
+
+Central area shows one of:
+
+- camera permission message;
+- modal placeholder while `Scissors` or `Swap` full-screen UI is open;
+- `BoardCompleteView` when the board is complete;
+- otherwise CameraX preview + barcode guide overlay.
+
+### BoardCompleteView
+
+When complete, central area shows:
+
+- `Board Complete`;
+- PBN preview generated through `TdSessionExchange.exportCompleteBoard(...)`.
+
+This view is a landing surface: the TD can stop scanning and trust that the board has landed.
+
+### EastArea
+
+East hand panel also hosts:
+
+- `Undo`
+- `Scissors`
+
+`Undo` is enabled if `addHistory` contains at least one card for the currently selected hand.
+
+`Scissors` is enabled when the selected hand has cards.
+
+## 7. Bottom row
+
+### FeedModeArea
+
+Current active mode is stream. Snap remains disabled/placeholder.
+
+### South HandArea
+
+Shows South hand and selected-hand border when South is selected.
+
+### OrientationArea
+
+Shows barcode orientation mode. `AUTO` exists in the enum but is disabled in the current UI.
+
+### SureArea
+
+Bottom-right recovery area.
+
+`I'm sure` is enabled only when:
+
+```text
+boardEditState.duplicateOverrideCandidate?.targetSeat == selectedSeat
+```
+
+It confirms a duplicate override: the TD says the old occurrence was a false positive and the candidate card belongs in the selected hand.
+
+## 8. Controller behavior
+
+`EditBoardController` owns UI-facing mutable state:
+
+- current `BoardEditState` input;
+- active `DeckProfile`;
+- orientation mode;
+- scan deltas / SPS / IDLE telemetry;
+- last result message;
+- last scanned card;
+- debounce and unknown-signature throttling.
+
+Camera scan flow:
+
+```text
+CameraScanOutcome
+-> BarcodeDecodeResult.Found
+-> viewedAs(orientationMode)
+-> DeckProfile.lookup(signature)
+-> EditBoardReducer.applyScannedCard(...)
+-> onBoardEditStateChange(update.state)
+-> lastResultMessage / lastScannedCard
+```
+
+If the board is complete, scans are ignored.
+
+SPS state reset belongs in controller/effect-side logic, not inside a composable render branch.
+
+Current `updateMetrics()` clears `scanDeltas` while board is complete.
+
+## 9. Reducer behavior
+
+### Add scanned card
+
+`EditBoardReducer.applyScannedCard(...)`:
+
+1. If selected hand already contains card:
+   - no mutation;
+   - clear duplicate candidate;
+   - OK message.
+2. If another hand contains card:
+   - no mutation;
+   - create `DuplicateOverrideCandidate`;
+   - show skip message with `I'm sure` hint.
+3. If selected hand is complete:
+   - no card add;
+   - auto-advance selected seat.
+4. Otherwise:
+   - add card to selected hand;
+   - append `AddedCardRecord(selectedSeat, card)`;
+   - clear duplicate candidate;
+   - auto-advance if hand completes;
+   - try fourth-hand auto-fill if applicable.
+
+### Auto-fill fourth hand
+
+When three other hands are complete and selected hand is empty, the reducer fills the selected hand with remaining deck cards.
+
+Accepted decision:
+
+- auto-filled cards are not added to `addHistory`;
+- `Undo` does not peel auto-filled cards;
+- `Scissors` is the recovery path for auto-filled cards.
+
+### Undo
+
+`Undo` is standard LIFO undo for the currently selected hand.
+
+It:
+
+- finds the last `AddedCardRecord` with `seat == selectedSeat`;
+- removes that card from that hand;
+- removes that one history record;
+- clears duplicate candidate;
+- reports message.
+
+Accepted decision:
+
+- after hand completion, auto-advance may select the next hand;
+- immediate `Undo` may be disabled because the new selected hand is empty;
+- TD can reselect the previous hand when needed.
+
+### Scissors
+
+`Scissors` opens a full-screen selected-hand view.
+
+Each displayed card is clickable. Removing a card:
+
+- removes it from selected hand;
+- removes matching selected-hand history for that card;
+- clears duplicate candidate;
+- keeps the Scissors screen open.
+
+### Swap
+
+`Swap` opens a full-screen seat chooser.
+
+Swapping:
+
+- swaps selected hand with target hand;
+- clears all `addHistory`;
+- clears duplicate candidate;
+- keeps selected seat as-is.
+
+Clearing all history is intentional: after a swap, old history no longer maps cleanly.
+
+### I'm sure / duplicate override
+
+`confirmDuplicateOverride(...)`:
+
+- requires a pending candidate;
+- rejects stale candidate if existing seat no longer contains card;
+- rejects stale candidate if target already contains card;
+- rejects stale candidate if target hand is complete;
+- otherwise removes the card from existing seat and adds it to target seat;
+- removes matching old history for existing seat/card;
+- appends history for target seat/card;
+- clears candidate.
+
+This recovers from false positives where a card was previously accepted into the wrong hand.
+
+## 10. Clear behavior
+
+The visible label is simply:
+
+```text
+Clear
+```
+
+Context applies.
+
+`onClearClick()`:
+
+- if selected hand has cards: clear selected hand immediately;
+- if selected hand is empty: open confirmation dialog for clearing entire board.
+
+The confirmation dialog still says `Clear entire board?` and confirm button says `Clear board`.
+
+## 11. Compose/state safety
+
+Rules:
+
+- Do not mutate Compose state in ordinary composition branches.
+- Use controller state, reducer state, `LaunchedEffect`, or effect-side loops for mutation.
+- External `modifier` should normally be consumed by the outermost container only; inner child layout should start from fresh `Modifier` unless deliberate.
+
+Current relevant fixes:
+
+- `CentralArea` no longer assigns `scanDeltas = emptyList()` inside the board-complete branch.
+- `SureArea` is now a direct `Button` consuming the caller modifier; there is no nested `Column` reusing the same external modifier.
+
+## 12. PBN behavior
+
+`BoardCompleteView` uses:
+
+```kotlin
+TdSessionExchange.exportCompleteBoard(boardState, boardNumber)
+```
+
+Cumulative export from TD overview uses complete boards only, sorted by board number, and shares via Android share intent.
+
+Current MVP PBN output intentionally does not emit `[Site "..."]`.
+
+## 13. Tests / regression anchors
+
+Important current TD/recovery tests should cover:
+
+- selected-hand LIFO undo across mixed history;
+- duplicate override happy path;
+- stale duplicate override when existing seat no longer contains card;
+- stale duplicate override when target already contains card;
+- stale duplicate override when target hand is complete;
+- swap clears duplicate candidate and history;
+- scissors removal clears candidate and matching history only;
+- clear selected hand preserves other-hand history;
+- grid resize rejects invalid sizes and sizes below highest non-empty board;
+- import accepts 1..39, rejects outside range, and expands grid;
+- share intent includes `Intent.EXTRA_TEXT`.
+
+## 14. Accepted current rough edges
+
+Accepted no-fix items:
+
+- immediate Undo after auto-advance may be disabled until TD reselects previous hand;
+- auto-filled fourth-hand cards are not undo-history items;
+- `Clear` relies on context rather than long label;
+- `Thoughts: 0` remains placeholder;
+- snap feed mode remains disabled.
+
+## 15. Future direction hints
+
+Possible future improvements, not current tickets by default:
+
+- more explicit status event rail;
+- more field-friendly status wording;
+- haptic/sound feedback;
+- copy/share action directly from board-complete view;
+- snap mode;
+- configurable status fade / persistence.
+
+Keep future TD changes judged by:
+
+```text
+Does this reduce the TD's hand-burden?
+Does this avoid making the TD babysit the beetle?
+```
