@@ -1,6 +1,6 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `d7318ca`.
+Last aligned with source snapshot: `2b180f5`.
 
 Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls for common scan/human errors.
 
@@ -50,7 +50,7 @@ Board complete means: stop scanning; trust the landing.
 Interpretation:
 
 - Admin may show diagnostics, calibration evidence, grids, aliases, raw signatures, and reasons.
-- TD should show concise operational results: accepted card, skipped duplicate, unknown signature, board complete, export available.
+- TD should show concise operational results: accepted card, skipped duplicate, board complete, export available, and visible in-progress stabilization thought when a scan has not landed yet.
 - A missed scan costs another hand movement. A wrong accepted card corrupts trust and board state.
 - Barcode/vision code emits signatures. Core/profile code assigns card meaning.
 - `bfm` and `brm` are feed-direction families, not arbitrary min/max canonicalization.
@@ -226,6 +226,33 @@ same visible payload + chosen feed direction = bfmHHHH or brmHHHH
 ```
 
 Do not replace this with min/max canonicalization or blind bit reversal.
+
+## 6.5 TD stabilization layer
+
+Between TD verdict decode and board mutation, the app now has a lightweight stabilization layer in `EditBoardController`.
+
+Current flow:
+
+```text
+CameraScanOutcome.Decoded
+-> BarcodeDecodeResult.Found
+-> viewedAs(orientationMode)
+-> processPondering(signature)
+-> repeated matching founds build consensus
+-> only after consensus: handleScan(...)
+-> DeckProfile.lookup(signature)
+-> EditBoardReducer.applyScannedCard(...)
+```
+
+This is intentionally not semantic guessing. It stabilizes repeated found verdicts before they reach board state.
+
+Current unknown-signature rule:
+
+```text
+unknowns may be seen in thoughts,
+but they do not enter handleScan()
+and do not produce an operational TD status result.
+```
 
 ## 7. Admin architecture
 

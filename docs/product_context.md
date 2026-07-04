@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `d7318ca`.
+Last aligned with source snapshot: `2b180f5`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -28,11 +28,12 @@ Current TD-side workflow is guided and cumulative:
 5. The app reads the barcode ROI and extracts a raw Grid13 signature.
 6. The active Deck Profile maps the raw signature to a canonical `CardId`.
 7. The selected hand accumulates unique cards.
-8. Unknown signatures are reported but do not change board state.
-9. Duplicates already present in another hand are rejected and can be corrected with `I'm sure` when the previous occurrence was a false positive.
-10. Human/scan mistakes can be recovered with `Undo`, `Scissors`, `Swap`, and `Clear`.
-11. When a board is complete, the central view shows a PBN preview.
-12. TD overview can export all complete boards as cumulative PBN.
+8. Repeated found signatures are stabilized before they mutate board state.
+9. Unknown signatures may appear in beetle-thought, but do not change board state.
+10. Duplicates already present in another hand are rejected and can be corrected with `I'm sure` when the previous occurrence was a false positive.
+11. Human/scan mistakes can be recovered with `Undo`, `Scissors`, `Swap`, and `Clear`.
+12. When a board is complete, the central view shows a PBN preview.
+13. TD overview can export all complete boards as cumulative PBN.
 
 The app does not need one perfect scan. It should support fast iterative convergence.
 
@@ -80,6 +81,7 @@ Current TD surfaces:
 
 - TD overview with dynamic board grid, Import, Export, Settings;
 - TD::EditBoard cockpit with four hands, camera area, orientation control, status, last scanned card, and recovery controls.
+- TD::EditBoard also includes a stabilization/thought layer before accepted scans mutate board state.
 
 Current TD recovery controls:
 
@@ -112,6 +114,7 @@ Grounded current state:
 - TD overview supports flexible board grid sizes 15..39 in 3-board increments;
 - TD import expands grid and rejects unsupported board numbers;
 - TD::EditBoard is live, with recovery controls for common field errors;
+- TD::EditBoard stabilizes repeated found verdicts before mutation and keeps unknowns in thought only;
 - board completion shows central PBN preview;
 - cumulative PBN export/share works from TD overview.
 
