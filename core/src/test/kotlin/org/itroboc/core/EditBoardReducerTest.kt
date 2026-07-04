@@ -197,6 +197,70 @@ class EditBoardReducerTest {
     }
 
     @Test
+    fun `manual add inserts unassigned card into selected hand`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)
+
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, card)
+
+        assertEquals(true, update.state.boardState.handOf(Seat.NORTH).contains(card))
+        assertEquals(1, update.state.addHistory.size)
+        assertEquals(card, update.lastScannedCard)
+        assertEquals("Added $card to North manually.", update.message)
+    }
+
+    @Test
+    fun `manual add does nothing when card already in selected hand`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = BoardState().addCard(Seat.NORTH, card),
+            selectedSeat = Seat.NORTH,
+        )
+
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, card)
+
+        assertEquals(state.boardState, update.state.boardState)
+        assertEquals("$card already in North.", update.message)
+        assertEquals(card, update.lastScannedCard)
+    }
+
+    @Test
+    fun `manual add moves card from another hand immediately`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = BoardState().addCard(Seat.EAST, card),
+            selectedSeat = Seat.NORTH,
+            addHistory = listOf(AddedCardRecord(Seat.EAST, card)),
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(card, "sig1", Seat.EAST, Seat.NORTH),
+        )
+
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, card)
+
+        assertEquals(Seat.NORTH, update.state.boardState.seatContaining(card))
+        assertEquals(listOf(AddedCardRecord(Seat.NORTH, card)), update.state.addHistory)
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+        assertEquals("Moved $card from East to North.", update.message)
+        assertEquals(card, update.lastScannedCard)
+    }
+
+    @Test
+    fun `manual add blocks when selected hand already has 13 cards`() {
+        var board = BoardState()
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, rank))
+        }
+        val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.NORTH)
+
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, CardId(Suit.HEARTS, Rank.ACE))
+
+        assertEquals(board, update.state.boardState)
+        assertEquals(Seat.NORTH, update.state.selectedSeat)
+        assertEquals("North already has 13 cards. Remove one first.", update.message)
+    }
+
+    @Test
     fun `swapping hands clears history`() {
         val card = CardId(Suit.SPADES, Rank.ACE)
         val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)

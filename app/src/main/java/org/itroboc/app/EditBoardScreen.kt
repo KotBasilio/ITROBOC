@@ -176,7 +176,7 @@ fun EditBoardScreen(
                 isSelected = selectedSeat == Seat.EAST,
                 onClick = { controller.onSeatClick(Seat.EAST) },
                 onScissors = { showScissorsScreen = true },
-                canScissors = boardState.handOf(selectedSeat).count() > 0,
+                canScissors = true,
                 onUndo = { controller.onUndo() },
                 canUndo = boardEditState.addHistory.any { it.seat == selectedSeat },
                 modifier = Modifier.weight(1f)
@@ -210,11 +210,15 @@ fun EditBoardScreen(
     if (showScissorsScreen) {
         ScissorsScreen(
             seat = selectedSeat,
+            boardState = boardState,
             handState = boardState.handOf(selectedSeat),
             onDismiss = { showScissorsScreen = false },
             onRemoveCard = { card ->
                 controller.onRemoveCard(card)
-            }
+            },
+            onAddCard = { card ->
+                controller.onManualAddCard(card)
+            },
         )
     }
 
@@ -814,79 +818,6 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-        }
-    }
-}
-
-@Composable
-fun ScissorsScreen(
-    seat: Seat,
-    handState: HandState,
-    onDismiss: () -> Unit,
-    onRemoveCard: (CardId) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Scissors for ${seat.displayName}",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Click on cards to remove them",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Normal,
-            )
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Start
-            ) {
-                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                    Row(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        Text(
-                            text = suitCards.suit.prettySymbol,
-                            color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                            fontSize = 50.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(44.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        suitCards.cards.forEach { card ->
-                            Text(
-                                text = card.rank.symbol.toString(),
-                                fontSize = 50.sp,
-                                color = Color.Black,
-                                modifier = Modifier
-                                    .clickable { onRemoveCard(card) }
-                                    .padding(horizontal = 12.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            Button(onClick = onDismiss) {
-                Text( fontSize = 32.sp, text = "Close" )
-            }
-
         }
     }
 }

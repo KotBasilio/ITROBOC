@@ -122,6 +122,58 @@ object EditBoardReducer {
         )
     }
 
+    fun addManualCardToSelectedHand(editState: BoardEditState, card: CardId): EditBoardUpdate {
+        val selectedSeat = editState.selectedSeat
+        val boardState = editState.boardState
+        val selectedHand = boardState.handOf(selectedSeat)
+
+        if (selectedHand.contains(card)) {
+            return EditBoardUpdate(
+                state = editState.copy(duplicateOverrideCandidate = null),
+                message = "$card already in ${selectedSeat.displayName}.",
+                lastScannedCard = card,
+            )
+        }
+
+        if (selectedHand.isComplete()) {
+            return EditBoardUpdate(
+                state = editState.copy(duplicateOverrideCandidate = null),
+                message = "${selectedSeat.displayName} already has 13 cards. Remove one first.",
+            )
+        }
+
+        val existingSeat = boardState.seatContaining(card)
+        if (existingSeat != null) {
+            val updatedBoard = boardState
+                .removeCard(existingSeat, card)
+                .addCard(selectedSeat, card)
+            val updatedHistory = editState.addHistory.filterNot {
+                it.seat == existingSeat && it.card == card
+            } + AddedCardRecord(selectedSeat, card)
+
+            return EditBoardUpdate(
+                state = editState.copy(
+                    boardState = updatedBoard,
+                    addHistory = updatedHistory,
+                    duplicateOverrideCandidate = null,
+                ),
+                message = "Moved $card from ${existingSeat.displayName} to ${selectedSeat.displayName}.",
+                lastScannedCard = card,
+            )
+        }
+
+        val updatedBoard = boardState.addCard(selectedSeat, card)
+        return EditBoardUpdate(
+            state = editState.copy(
+                boardState = updatedBoard,
+                addHistory = editState.addHistory + AddedCardRecord(selectedSeat, card),
+                duplicateOverrideCandidate = null,
+            ),
+            message = "Added $card to ${selectedSeat.displayName} manually.",
+            lastScannedCard = card,
+        )
+    }
+
     fun swapSelectedHandWith(editState: BoardEditState, targetSeat: Seat): EditBoardUpdate {
         val updatedBoard = editState.boardState.swapHands(editState.selectedSeat, targetSeat)
         return EditBoardUpdate(
