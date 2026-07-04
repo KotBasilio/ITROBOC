@@ -528,21 +528,28 @@ fun StatusArea(
         contentAlignment = Alignment.TopStart
     ) {
         Column {
-            val totalCount = boardState.totalCardCount()
-            Text(
-                text = "Cards: $totalCount/52",
-                fontSize = 40.sp,
-                color = Color(0xFF4CAF50),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            Row ( verticalAlignment = Alignment.CenterVertically ) {
+                val totalCount = boardState.totalCardCount()
+                Text(
+                    text = "Cards: $totalCount/52",
+                    fontSize = 40.sp,
+                    color = Color(0xFF4CAF50),
+                    style = MaterialTheme.typography.titleMedium,
+                )
 
-            val fpsText = if (sps > 0.0) "FPS %4.1f".format(sps) else "IDLE %.0f".format(- sps)
-            Text(
-                text = "Mode: ${orientationMode.label} | " + fpsText,
-                fontSize = 24.sp,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
-            )
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Column {
+                    Text(
+                        text = if (sps > 0.0) "SPS %4.1f".format(sps) else "IDLE %.0f".format(-sps),
+                        fontSize = 24.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                    )
+                    Text(
+                        "Thoughts: 0", // placeholder
+                        fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                    )
+                }
+            }
 
             if (message != null) {
                 Text(
