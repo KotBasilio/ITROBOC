@@ -53,10 +53,14 @@ internal class EditBoardController(
         this.onBoardEditStateChange = onBoardEditStateChange
     }
 
-    fun blankMind() {
-        thoughts = "0"
+    fun dream(topic: String) {
+        thoughts = topic
         ponderingSignature = null
         ponderingCount = 0
+    }
+
+    fun blankMind() {
+        dream( "0")
     }
 
     fun handleCameraScan(scanOutcome: CameraScanOutcome) {

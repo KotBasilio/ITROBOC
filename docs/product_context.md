@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `2b180f5`.
+Last aligned with source snapshot: `524265c`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -31,7 +31,7 @@ Current TD-side workflow is guided and cumulative:
 8. Repeated found signatures are stabilized before they mutate board state.
 9. Unknown signatures may appear in beetle-thought, but do not change board state.
 10. Duplicates already present in another hand are rejected and can be corrected with `I'm sure` when the previous occurrence was a false positive.
-11. Human/scan mistakes can be recovered with `Undo`, `Scissors`, `Swap`, and `Clear`.
+11. Human/scan mistakes and unreadable physical cards can be recovered with `Undo`, `Scissors`, `Swap`, `I'm sure`, and `Clear`.
 12. When a board is complete, the central view shows a PBN preview.
 13. TD overview can export all complete boards as cumulative PBN.
 
@@ -82,11 +82,12 @@ Current TD surfaces:
 - TD overview with dynamic board grid, Import, Export, Settings;
 - TD::EditBoard cockpit with four hands, camera area, orientation control, status, last scanned card, and recovery controls.
 - TD::EditBoard also includes a stabilization/thought layer before accepted scans mutate board state.
+- Scissors selected-hand repair screen for late correction, manual add of scratched/no-barcode cards, and moving cards from another hand when the previous placement was wrong.
 
 Current TD recovery controls:
 
 - `Undo`: LIFO undo for currently selected hand;
-- `Scissors`: full-screen selected-hand card removal;
+- `Scissors`: full-screen selected-hand repair; remove wrong cards, add unreadable/no-barcode cards from a 52-card grid, or move a card from another hand into the selected hand;
 - `Swap`: swap selected hand with another seat;
 - `I'm sure`: move a rejected duplicate card from previous seat to selected seat;
 - `Clear`: context-sensitive selected-hand clear or whole-board clear confirmation.
@@ -105,7 +106,7 @@ TD import accepts complete PBN boards numbered `1..39`, ignores unsupported/part
 
 Grounded current state:
 
-- app has Main, TD, Admin, and Mock entry surfaces;
+- app has Main, TD, and Admin entry surfaces; the visible main menu exposes two large actions, `Admin` and `TD eye`;
 - Admin::Edit can calibrate profiles from CameraX frames;
 - `grid13-v2` preserves `bfm`/`brm` physical orientation;
 - built-in observed profile has complete 52-card coverage;
@@ -113,7 +114,7 @@ Grounded current state:
 - fast verdict decoder uses row-major projection and logical-width scratch-buffer discipline;
 - TD overview supports flexible board grid sizes 15..39 in 3-board increments;
 - TD import expands grid and rejects unsupported board numbers;
-- TD::EditBoard is live, with recovery controls for common field errors;
+- TD::EditBoard is live, with recovery controls for common field errors and physical-card failures;
 - TD::EditBoard stabilizes repeated found verdicts before mutation and keeps unknowns in thought only;
 - board completion shows central PBN preview;
 - cumulative PBN export/share works from TD overview.

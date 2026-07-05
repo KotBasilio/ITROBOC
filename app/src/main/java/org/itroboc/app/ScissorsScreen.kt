@@ -379,7 +379,6 @@ private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat) {
     Box(
         modifier = Modifier
             .background(backgroundColor, RoundedCornerShape(6.dp))
-            .background(backgroundColor, RoundedCornerShape(6.dp))
             .border(6.dp, seat.borderColor, RoundedCornerShape(6.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
