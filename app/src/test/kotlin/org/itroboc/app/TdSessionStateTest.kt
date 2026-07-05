@@ -13,6 +13,7 @@ class TdSessionStateTest {
     fun `default total boards is 30`() {
         val state = TdSessionState()
         assertEquals(30, state.totalBoardsInGrid)
+        assertEquals(TdSessionState.DEFAULT_CONSENSUS_FRAMES, state.requiredConsensusFrames)
     }
 
     @Test
@@ -90,5 +91,18 @@ class TdSessionStateTest {
     fun `highestNonEmptyBoardNumber returns 0 for empty session`() {
         val state = TdSessionState()
         assertEquals(0, state.highestNonEmptyBoardNumber)
+    }
+
+    @Test
+    fun `valid consensus frame setting is stored`() {
+        val state = TdSessionState().updateRequiredConsensusFrames(2)
+        assertEquals(2, state.requiredConsensusFrames)
+    }
+
+    @Test
+    fun `invalid consensus frame setting is rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            TdSessionState().updateRequiredConsensusFrames(7)
+        }
     }
 }

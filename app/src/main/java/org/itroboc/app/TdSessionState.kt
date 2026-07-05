@@ -7,6 +7,7 @@ import org.itroboc.core.Seat
 data class TdSessionState(
     val boards: Map<Int, BoardEditState> = emptyMap(),
     val totalBoardsInGrid: Int = 30,
+    val requiredConsensusFrames: Int = DEFAULT_CONSENSUS_FRAMES,
 ) {
     fun getOrInitBoard(boardNumber: Int): BoardEditState {
         return boards[boardNumber] ?: BoardEditState(boardNumber)
@@ -22,11 +23,18 @@ data class TdSessionState(
         return copy(totalBoardsInGrid = newSize)
     }
 
+    fun updateRequiredConsensusFrames(newFrames: Int): TdSessionState {
+        require(newFrames in ALLOWED_CONSENSUS_FRAMES)
+        return copy(requiredConsensusFrames = newFrames)
+    }
+
     val highestNonEmptyBoardNumber: Int
         get() = boards.filterValues { it.boardState.totalCardCount() > 0 }
             .keys.maxOrNull() ?: 0
 
     companion object {
         val ALLOWED_GRID_SIZES = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
+        val ALLOWED_CONSENSUS_FRAMES = listOf(6, 5, 4, 3, 2)
+        const val DEFAULT_CONSENSUS_FRAMES = 4
     }
 }

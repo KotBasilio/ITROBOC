@@ -85,6 +85,7 @@ fun AppNavigation() {
                 boardEditState = boardEditState,
                 deckProfile = activeDeckProfile,
                 orientationMode = barcodeOrientationMode,
+                requiredConsensusFrames = sessionState.requiredConsensusFrames,
                 onOrientationModeChange = { barcodeOrientationMode = it },
                 onBoardEditStateChange = { updatedState ->
                     sessionState = sessionState.updateBoard(updatedState)
