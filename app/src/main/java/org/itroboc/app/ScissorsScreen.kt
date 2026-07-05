@@ -197,6 +197,17 @@ private fun ScissorsHandPane(
             OwnershipLegendChip("Unassigned", Color(0xFFE0E0E0))
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Seat.entries.forEach { seat ->
+                SeatBorderLegendChip(seat)
+            }
+        }
+
         Spacer(modifier = Modifier.height(60.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -295,13 +306,6 @@ private fun ManualEntryCardButton(
         ManualEntryCardState.IN_OTHER_HAND -> Color(0xFFFFCC80)
         ManualEntryCardState.UNASSIGNED -> Color(0xFFE0E0E0)
     }
-    val borderColor = when (ownerSeat) {
-        Seat.NORTH -> Color(0xFF1565C0)
-        Seat.EAST -> Color(0xFF6A1B9A)
-        Seat.SOUTH -> Color(0xFFC62828)
-        Seat.WEST -> Color(0xFF2E7D32)
-        null -> Color.Transparent
-    }
     val enabled = state != ManualEntryCardState.IN_SELECTED_HAND
 
     Box(
@@ -309,7 +313,7 @@ private fun ManualEntryCardButton(
             .fillMaxWidth()
             .fillMaxHeight()
             .background(backgroundColor, RoundedCornerShape(6.dp))
-            .border(6.dp, borderColor, RoundedCornerShape(6.dp))
+            .border(6.dp, ownerSeat.borderColor, RoundedCornerShape(6.dp))
             .then(
                 if (enabled) Modifier.clickable(onClick = onClick)
                 else Modifier
@@ -335,11 +339,32 @@ private fun ManualEntryCardButton(
     }
 }
 
+@Composable
+private fun SeatBorderLegendChip(seat: Seat) {
+    Box(
+        modifier = Modifier
+            .border(3.dp, seat.borderColor, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = seat.displayName, color = Color.Black, fontWeight = FontWeight.Medium)
+    }
+}
+
 private enum class ManualEntryCardState {
     IN_SELECTED_HAND,
     IN_OTHER_HAND,
     UNASSIGNED,
 }
+
+private val Seat?.borderColor: Color
+    get() = when (this) {
+        Seat.NORTH -> Color(0xFF1565C0)
+        Seat.EAST -> Color(0xFF6A1B9A)
+        Seat.SOUTH -> Color(0xFFC62828)
+        Seat.WEST -> Color(0xFF2E7D32)
+        null -> Color.Transparent
+    }
 
 private val Suit.displayColor: Color
     get() = when (this) {
