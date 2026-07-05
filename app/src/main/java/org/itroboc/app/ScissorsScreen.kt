@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.BoardState
@@ -344,3 +345,44 @@ private val Suit.displayColor: Color
         Suit.HEARTS, Suit.DIAMONDS -> Color.Red
         Suit.SPADES, Suit.CLUBS -> Color.Black
     }
+
+@Preview(showBackground = true, widthDp = 1000, heightDp = 800)
+@Composable
+fun ScissorsScreenPreview() {
+    val seat = Seat.NORTH
+    val northHand = HandState(
+        setOf(
+            CardId(Suit.SPADES, Rank.ACE),
+            CardId(Suit.SPADES, Rank.KING),
+            CardId(Suit.SPADES, Rank.QUEEN),
+            CardId(Suit.HEARTS, Rank.TWO),
+            CardId(Suit.HEARTS, Rank.THREE),
+            CardId(Suit.HEARTS, Rank.FOUR),
+        )
+    )
+    val southHand = HandState(
+        setOf(
+            CardId(Suit.DIAMONDS, Rank.ACE),
+            CardId(Suit.DIAMONDS, Rank.KING),
+        )
+    )
+    val boardState = BoardState(
+        hands = mapOf(
+            Seat.NORTH to northHand,
+            Seat.SOUTH to southHand,
+            Seat.EAST to HandState(),
+            Seat.WEST to HandState(),
+        )
+    )
+
+    MaterialTheme {
+        ScissorsScreen(
+            seat = seat,
+            boardState = boardState,
+            handState = northHand,
+            onDismiss = {},
+            onRemoveCard = {},
+            onAddCard = {},
+        )
+    }
+}
