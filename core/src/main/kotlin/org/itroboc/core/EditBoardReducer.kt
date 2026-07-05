@@ -258,14 +258,14 @@ object EditBoardReducer {
             val assignedCards = boardState.allCards()
             val remainingCards = allCards - assignedCards
 
-            if (remainingCards.size == 13) {
+            if (remainingCards.size <= 13) {
                 var autoFilledBoard = boardState
                 remainingCards.forEach { card ->
                     autoFilledBoard = autoFilledBoard.addCard(seat, card)
                 }
                 return EditBoardUpdate(
                     state = editState.copy(boardState = autoFilledBoard),
-                    message = "${seat.displayName} auto-filled from remaining 13 cards. Board complete."
+                    message = "${seat.displayName} auto-filled from remaining 13 cards.\nBoard complete."
                 )
             }
         }
