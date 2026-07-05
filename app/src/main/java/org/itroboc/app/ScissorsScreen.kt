@@ -203,8 +203,8 @@ private fun ScissorsHandPane(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Seat.entries.forEach { seat ->
-                SeatBorderLegendChip(seat)
+            Seat.entries.forEach { chip ->
+                SeatBorderLegendChip(ownerSeat = seat, seat = chip)
             }
         }
 
@@ -326,24 +326,20 @@ private fun ManualEntryCardButton(
             fontSize = 30.sp,
             color = Color.Black,
         )
-        if (ownerSeat != null) {
-            Text(
-                text = ownerSeat.displayName.first().toString(),
-                fontSize = 16.sp,
-                color = Color.DarkGray,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(8.dp),
-            )
-        }
     }
 }
 
 @Composable
-private fun SeatBorderLegendChip(seat: Seat) {
+private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat) {
+    val backgroundColor =
+        if (seat == ownerSeat) { Color(0xFF81C784) }
+        else { Color(0xFFFFCC80) }
+
     Box(
         modifier = Modifier
-            .border(3.dp, seat.borderColor, RoundedCornerShape(8.dp))
+            .background(backgroundColor, RoundedCornerShape(6.dp))
+            .background(backgroundColor, RoundedCornerShape(6.dp))
+            .border(6.dp, seat.borderColor, RoundedCornerShape(6.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {

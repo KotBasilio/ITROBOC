@@ -629,9 +629,6 @@ private fun CameraPreview(
     frameDecoder: AdminEditCameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
 ) {
-    Text("I'm sure", fontSize = 32.sp)
-    return
-
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
