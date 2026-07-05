@@ -54,18 +54,33 @@ fun ScissorsScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = "Scissors for ${seat.displayName}",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Remove on the left, add manually on the right",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Normal,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.weight(2f))
+                Text(
+                    text = "Add cards",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Normal,
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = "Scissors for ${seat.displayName}",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = "Remove cards",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Normal,
+                )
+                Spacer(modifier = Modifier.weight(2f))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier
@@ -73,24 +88,19 @@ fun ScissorsScreen(
                     .weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                ScissorsHandPane(
-                    seat = seat,
-                    handState = handState,
-                    onRemoveCard = onRemoveCard,
-                    modifier = Modifier.weight(1f),
-                )
                 ScissorsManualEntryPane(
                     seat = seat,
                     boardState = boardState,
                     onAddCard = onAddCard,
                     modifier = Modifier.weight(1f),
                 )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(onClick = onDismiss) {
-                Text(fontSize = 32.sp, text = "Close")
+                ScissorsHandPane(
+                    seat = seat,
+                    handState = handState,
+                    onRemoveCard = onRemoveCard,
+                    onDismiss = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
@@ -101,6 +111,7 @@ private fun ScissorsHandPane(
     seat: Seat,
     handState: HandState,
     onRemoveCard: (CardId) -> Unit,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -111,21 +122,15 @@ private fun ScissorsHandPane(
         horizontalAlignment = Alignment.Start,
     ) {
         Text(
-            text = "${seat.displayName} hand",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
             text = "Click cards to remove them",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray,
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         if (handState.count() == 0) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(2.3f),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -154,9 +159,9 @@ private fun ScissorsHandPane(
                         Spacer(modifier = Modifier.width(8.dp))
                         if (suitCards.cards.isEmpty()) {
                             Text(
-                                text = "—",
+                                text = " —",
                                 fontSize = 42.sp,
-                                color = Color.LightGray,
+                                color = Color.Black,
                             )
                         } else {
                             suitCards.cards.forEach { card ->
@@ -172,6 +177,33 @@ private fun ScissorsHandPane(
                         }
                     }
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = "Legend",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OwnershipLegendChip("Here", Color(0xFF81C784))
+            OwnershipLegendChip("Other hand", Color(0xFFFFCC80))
+            OwnershipLegendChip("Unassigned", Color(0xFFE0E0E0))
+        }
+
+        Spacer(modifier = Modifier.height(60.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(onClick = onDismiss) {
+                Text(fontSize = 32.sp, text = "Close")
             }
         }
     }
@@ -191,50 +223,19 @@ private fun ScissorsManualEntryPane(
         modifier = modifier
             .fillMaxHeight()
             .border(2.dp, Color(0xFFB0BEC5), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+            .padding(8.dp),
         horizontalAlignment = Alignment.Start,
     ) {
-        Text(
-            text = "Manual entry",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "Click any card to add it to ${seat.displayName}",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OwnershipLegendChip("Here", Color(0xFF81C784))
-            OwnershipLegendChip("Other hand", Color(0xFFFFCC80))
-            OwnershipLegendChip("Unassigned", Color(0xFFE0E0E0))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             suits.forEach { suit ->
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1.3f),
-                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = suit.prettySymbol,
-                        color = suit.displayColor,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    Text(text = suit.prettySymbol, fontSize = 38.sp)
                 }
             }
         }
@@ -297,8 +298,8 @@ private fun ManualEntryCardButton(
     val borderColor = when (ownerSeat) {
         Seat.NORTH -> Color(0xFF1565C0)
         Seat.EAST -> Color(0xFF6A1B9A)
-        Seat.SOUTH -> Color(0xFF2E7D32)
-        Seat.WEST -> Color(0xFFC62828)
+        Seat.SOUTH -> Color(0xFFC62828)
+        Seat.WEST -> Color(0xFF2E7D32)
         null -> Color.Transparent
     }
     val enabled = state != ManualEntryCardState.IN_SELECTED_HAND
@@ -308,7 +309,7 @@ private fun ManualEntryCardButton(
             .fillMaxWidth()
             .fillMaxHeight()
             .background(backgroundColor, RoundedCornerShape(6.dp))
-            .border(2.dp, borderColor, RoundedCornerShape(6.dp))
+            .border(6.dp, borderColor, RoundedCornerShape(6.dp))
             .then(
                 if (enabled) Modifier.clickable(onClick = onClick)
                 else Modifier
@@ -318,17 +319,17 @@ private fun ManualEntryCardButton(
         Text(
             text = card.rank.symbol.toString(),
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
+            fontSize = 30.sp,
             color = Color.Black,
         )
         if (ownerSeat != null) {
             Text(
                 text = ownerSeat.displayName.first().toString(),
-                fontSize = 10.sp,
+                fontSize = 16.sp,
                 color = Color.DarkGray,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(4.dp),
+                    .align(Alignment.CenterEnd)
+                    .padding(8.dp),
             )
         }
     }
@@ -366,12 +367,25 @@ fun ScissorsScreenPreview() {
             CardId(Suit.DIAMONDS, Rank.KING),
         )
     )
+    val westHand = HandState(
+        setOf(
+            CardId(Suit.DIAMONDS, Rank.THREE),
+            CardId(Suit.DIAMONDS, Rank.QUEEN),
+        )
+    )
+    val eastHand = HandState(
+        setOf(
+            CardId(Suit.CLUBS, Rank.THREE),
+            CardId(Suit.CLUBS, Rank.QUEEN),
+            CardId(Suit.CLUBS, Rank.ACE),
+        )
+    )
     val boardState = BoardState(
         hands = mapOf(
             Seat.NORTH to northHand,
             Seat.SOUTH to southHand,
-            Seat.EAST to HandState(),
-            Seat.WEST to HandState(),
+            Seat.EAST to eastHand,
+            Seat.WEST to westHand,
         )
     )
 
