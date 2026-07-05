@@ -2,7 +2,7 @@
 
 ITROBOC stands for Independent Tool for Reading Observed Barcodes On Cards.
 
-The project is planned as an Android-first tool for bridge tournament directors. It turn barcode observations from physical playing cards into canonical card IDs, assembles hands and boards, validates results, and exports PBN.
+The project is planned as an Android-first tool for bridge tournament directors. It turns barcode observations from physical playing cards into canonical card IDs, assembles hands and boards, validates results, and exports PBN.
 
 ## Current milestone
 
@@ -20,7 +20,7 @@ The repository currently contains:
   - batch presentation summaries
   - PBN export logic
 - a functional Android `:app` shell with:
-  - a main menu as the entry point
+  - a main menu with two large current entry actions: Admin and TD eye
   - an Admin actions screen for Deck Profile management:
     - profile listing with active selection
     - in-memory Add/Delete functionality
@@ -35,8 +35,8 @@ The repository currently contains:
       - auto-advance calibration flow
       - on-screen frame/decode debug text
       - JSONL scan debug logging with share/export action
-  - a TD actions screen featuring a 30-board session overview:
-    - 3x10 grid of boards 1..30
+  - a TD actions screen featuring a dynamic session overview:
+    - 3-row board grid with configurable visible board count
     - color-coding by board status (green for complete, yellow for empty/partial)
     - active profile name shown in the overview
   - a functional **TD::EditBoard** scanning cockpit:
@@ -47,9 +47,11 @@ The repository currently contains:
     - active seat selection with auto-advance (N -> E -> S -> W)
     - **Auto-fill "Fourth Hand"**: automatically calculates and assigns the final 13 cards when the other three hands are complete
     - orientation-aware scanning with `bfm`/`brm` mode toggle
-    - detailed scan feedback and board progress status
+    - detailed scan feedback, board progress status, and Beetle Mind stabilization thoughts
+    - recovery controls: Undo, Scissors, Swap, I'm sure, and Clear
+    - Scissors selected-hand repair screen with add/remove card halves and a 52-card manual repair grid
     - gated PBN preview triggered upon board completion
-  - a "Mock actions" screen featuring a legacy fake TD workflow for dry-runs.
+  - legacy Mock code may still exist temporarily, but the Mock screen is not a current main-menu product surface.
 
 Broader product direction and workflow notes live in [docs/product_context.md].
 

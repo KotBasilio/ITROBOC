@@ -1,8 +1,8 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `2b180f5`.
+Last aligned with source snapshot: `524265c`.
 
-Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls for common scan/human errors.
+Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors.
 
 This document is written for future AI instances. It is a current architecture map, not a ticket list and not a historical diary. Completed tickets should not remain here unless they changed a durable invariant, ownership rule, or system boundary.
 
@@ -50,7 +50,7 @@ Board complete means: stop scanning; trust the landing.
 Interpretation:
 
 - Admin may show diagnostics, calibration evidence, grids, aliases, raw signatures, and reasons.
-- TD should show concise operational results: accepted card, skipped duplicate, board complete, export available, and visible in-progress stabilization thought when a scan has not landed yet.
+- TD should show concise operational results: accepted card, skipped duplicate, manual repair result, board complete, export available, and visible in-progress stabilization thought when a scan has not landed yet.
 - A missed scan costs another hand movement. A wrong accepted card corrupts trust and board state.
 - Barcode/vision code emits signatures. Core/profile code assigns card meaning.
 - `bfm` and `brm` are feed-direction families, not arbitrary min/max canonicalization.
@@ -107,10 +107,11 @@ Android shell, Compose UI, CameraX adapters, session import/export/share.
 
 Owns:
 
-- screens: Main, TD overview, TD edit board, Admin actions/edit/read-only, mock surfaces
+- screens: Main, TD overview, TD edit board, Scissors selected-hand repair, Admin actions/edit/read-only
 - `AdminEditCameraSupport` and CameraX frame adapters
 - `EditBoardController`
 - `EditBoardScreen`
+- `ScissorsScreen`
 - `TdSessionState`
 - `TdSessionExchange`
 - `TdSessionShareManager`
@@ -395,7 +396,7 @@ PBN preview appears only in the central `BoardCompleteView` when the board is co
 
 - total card count `Cards: n/52`;
 - SPS/IDLE telemetry;
-- placeholder `Thoughts: 0`;
+- `Thoughts: ...` from the stabilization layer (`0`, tentative `?`/`??`/`???`, ambiguous `~`, or accepted `.`);
 - last result message.
 
 ### Selected hand
@@ -459,18 +460,49 @@ Accepted no-fix behavior:
 - immediate `Undo` therefore applies to the new selected hand and may be disabled if that hand has no history;
 - TD can reselect the previous hand if needed.
 
-### Scissors
+### Scissors / selected-hand repair
 
-`Scissors` opens a full-screen selected-hand view.
+`Scissors` opens `ScissorsScreen`, a full-screen selected-hand repair cockpit. It is not removal-only anymore.
 
-Each visible card is clickable. Removing a card:
+The screen has two operational halves:
 
-- removes only from the selected hand;
-- removes matching history for that selected seat/card;
+```text
+left:  Add cards       52-card table / manual repair grid
+right: Remove cards    selected hand, grouped by suit
+```
+
+The add table uses the same TD-readable ownership language as Admin-style card grids:
+
+- green fill = card is already here, in the selected hand;
+- orange fill = card is in another hand;
+- gray fill = card is unassigned;
+- seat-colored border = current owner seat when there is one.
+
+Click behavior:
+
+- card already in selected hand: disabled/no-op;
+- unassigned card: add it to selected hand manually;
+- card in another hand: atomically move it into selected hand, semantically similar to `I'm sure`;
+- selected hand already has 13 cards: block add and ask TD to remove one first.
+
+Manual add/move is for scratched barcodes, missing barcodes, replaced physical cards, and late discovery that a previous card placement was wrong.
+
+Reducer semantics for manual add/move:
+
+- clear duplicate candidate;
+- unassigned manual add appends `AddedCardRecord(selectedSeat, card)`;
+- move from another hand removes matching old history for old seat/card and appends selected-seat history;
+- manual add/move does **not** auto-advance selected seat;
+- manual add/move does **not** trigger fourth-hand auto-fill.
+
+Removing a card from the right pane:
+
+- removes only from selected hand;
+- removes matching selected-hand history for that card;
 - clears duplicate candidate;
-- does not dismiss the screen automatically.
+- keeps the Scissors screen open.
 
-This is the main recovery route for auto-filled fourth-hand cards.
+This is the main recovery route for unreadable physical cards and auto-filled fourth-hand card corrections.
 
 ### Swap
 
@@ -498,13 +530,22 @@ Context applies:
 
 ## 11. Auto-fill fourth hand
 
-`tryAutoFillFourthHand(...)` fills the selected hand with the remaining deck only when all other hands are complete and selected hand is empty.
+`tryAutoFillFourthHand(...)` fills the selected hand with the remaining deck when all other hands are complete and the selected hand can be completed by the remaining cards.
 
 Auto-filled cards:
 
 - are not added to `addHistory`;
 - are not expected to be undone via `Undo`;
-- can be removed via `Scissors`.
+- can be removed via `Scissors`;
+- are intentionally not produced directly by Scissors manual add/move.
+
+Current trigger policy:
+
+- ordinary scanned add may try auto-fill after a hand lands;
+- explicit seat selection calls `tryAutoFillFourthHand(...)`;
+- manual Scissors repair does not auto-fill immediately.
+
+This supports the field case where the TD manually moves one card into a hand, closes Scissors, selects the complementary hand, and lets that selected hand auto-complete from the remaining deck.
 
 This is an accepted product decision.
 
@@ -555,6 +596,9 @@ Specific current regression anchors:
 - Duplicate override stale cases clear candidate without mutation.
 - Swap clears duplicate candidate.
 - Scissors removal clears candidate and matching history.
+- Scissors manual add handles unassigned card, already-here no-op, other-hand atomic move, and full-hand block.
+- Scissors manual add/move clears duplicate candidate and preserves intended history semantics.
+- Scissors manual add does not auto-fill immediately; seat selection remains the explicit manual-repair auto-fill trigger.
 
 ## 14. Current limitations / non-goals
 
@@ -570,10 +614,10 @@ Current non-goals:
 
 Known placeholders / current rough edges:
 
-- `Thoughts: 0` is a placeholder in TD status.
 - Snap feed mode is disabled/placeholder.
 - TD screen layout is field-driven and may remain visually blunt while ergonomics are tested.
 - PBN preview inside `BoardCompleteView` is central-only; side PBN area is intentionally removed.
+- Legacy `MockActions`/`MockTdScreen` code may still exist temporarily, but the current main menu does not expose the Mock screen and current docs should not present it as an active product surface.
 
 ## 15. Guidance for future AI instances
 

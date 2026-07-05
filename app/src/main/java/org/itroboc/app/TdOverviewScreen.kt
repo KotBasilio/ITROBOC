@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.itroboc.core.BoardProgressSummary
-import org.itroboc.core.BuiltInDeckProfiles
+import org.itroboc.core.*
 import kotlin.math.roundToInt
 
 enum class BoardUiStatus {
@@ -79,10 +79,10 @@ fun TdOverviewScreen(
             Text(
                 text = "TD Actions",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontSize = 40.sp,  fontWeight = FontWeight.Bold
             )
             Button(onClick = onBack) {
-                Text("Back")
+                Text("Back", fontSize = 40.sp)
             }
         }
 
@@ -110,6 +110,7 @@ fun TdOverviewScreen(
                 
                 BoardButton(
                     number = boardNumber,
+                    totalBoards = sessionState.totalBoardsInGrid,
                     status = status,
                     onClick = { onNavigateToBoard(boardNumber) }
                 )
@@ -150,7 +151,7 @@ fun TdOverviewScreen(
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Import")
+                Text("Import", fontSize = 40.sp)
             }
             Button(
                 onClick = {
@@ -171,14 +172,14 @@ fun TdOverviewScreen(
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Export")
+                Text("Export", fontSize = 40.sp)
             }
             Button(
                 onClick = { showSettingsDialog = true },
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Settings")
+                Text("Settings", fontSize = 40.sp)
             }
         }
     }
@@ -246,19 +247,19 @@ fun TdSettingsScreen(
                 Text(
                     text = "TD Settings",
                     style = MaterialTheme.typography.headlineMedium,
+                    fontSize = 40.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Button(onClick = onDismiss) {
-                    Text("Close")
+                    Text("Close", fontSize = 40.sp )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                "Total boards in grid:",
+            Text( "Total boards in grid",
                 style = MaterialTheme.typography.titleMedium,
-                fontSize = 24.sp,
+                fontSize = 40.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -274,7 +275,7 @@ fun TdSettingsScreen(
                         label = { 
                             Text(
                                 text = size.toString(),
-                                fontSize = 20.sp,
+                                fontSize = 24.sp,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) 
                         }
@@ -284,10 +285,9 @@ fun TdSettingsScreen(
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            Text(
-                "Perception",
+            Text( "Perception",
                 style = MaterialTheme.typography.titleMedium,
-                fontSize = 24.sp,
+                fontSize = 40.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -307,15 +307,15 @@ fun TdSettingsScreen(
                 modifier = Modifier.fillMaxWidth(0.85f),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    text = "Shy",
+                Text( "Shy",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
+                    fontSize = 36.sp,
                 )
-                Text(
-                    text = "Bold",
+                Text( "Bold",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
+                    fontSize = 36.sp,
                 )
             }
         }
@@ -325,6 +325,7 @@ fun TdSettingsScreen(
 @Composable
 fun BoardButton(
     number: Int,
+    totalBoards: Int,
     status: BoardUiStatus,
     onClick: () -> Unit
 ) {
@@ -333,17 +334,67 @@ fun BoardButton(
         else -> Color(0xFFFFEB3B) // Yellow
     }
 
+    val ar = if (totalBoards > 35 ) 0.6f
+             else if (totalBoards > 32 ) 0.7f
+             else if (totalBoards > 25 ) 0.8f
+             else if (totalBoards > 20 ) 1f
+             else 1.5f
+
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor),
-        modifier = Modifier.fillMaxWidth().aspectRatio(0.8f),
+        modifier = Modifier.fillMaxWidth().aspectRatio(ar),
         contentPadding = PaddingValues(0.dp)
     ) {
         Text(
             text = "$number",
-            color = Color.Black,
+            color = Color.Black, fontSize = 36.sp,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
+
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 1024, heightDp = 768)
+@Composable
+fun TdOverviewScreenPreview() {
+    val sampleBoards = mutableMapOf<Int, BoardEditState>()
+
+    // Board 1: Partial
+    val partialBoard = BoardState().addCard(Seat.NORTH, CardId.parse("SA"))
+    sampleBoards[1] = BoardEditState(1, boardState = partialBoard)
+
+    // Board 2: Complete
+    val completeBoard = BoardState()
+        .let { state ->
+            var updatedState = state
+            Seat.entries.forEach { seat ->
+                listOf("A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2").forEach { rank ->
+                    val suit = when (seat) {
+                        Seat.NORTH -> "S"
+                        Seat.EAST -> "H"
+                        Seat.SOUTH -> "D"
+                        Seat.WEST -> "C"
+                    }
+                    updatedState = updatedState.addCard(seat, CardId.parse("$suit$rank"))
+                }
+            }
+            updatedState
+        }
+    sampleBoards[2] = BoardEditState(2, boardState = completeBoard)
+
+    val sampleSessionState = TdSessionState(
+        totalBoardsInGrid = 36,
+        boards = sampleBoards
+    )
+
+    MaterialTheme {
+        TdOverviewScreen(
+            sessionState = sampleSessionState,
+            onSessionStateChange = {},
+            onNavigateToBoard = {},
+            onBack = {}
         )
     }
 }

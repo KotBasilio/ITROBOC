@@ -1,6 +1,6 @@
 # TD::EditBoard Design
 
-Last aligned with source snapshot: `2b180f5`.
+Last aligned with source snapshot: `524265c`.
 
 This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
 
@@ -48,6 +48,7 @@ Relevant code:
 ```text
 :app
   EditBoardScreen.kt
+  ScissorsScreen.kt
   EditBoardController.kt
   TdSessionState.kt
   TdSessionExchange.kt
@@ -67,7 +68,9 @@ Relevant code:
   BarcodeModels.kt
 ```
 
-`EditBoardScreen` owns Compose layout and camera UI.
+`EditBoardScreen` owns the main Compose cockpit and camera UI.
+
+`ScissorsScreen` owns the full-screen selected-hand repair cockpit.
 
 `EditBoardController` bridges camera scan outcomes, stabilization/thought state, profile lookup, reducer calls, status messages, and scan-rate metrics.
 
@@ -168,7 +171,7 @@ East hand panel also hosts:
 
 `Undo` is enabled if `addHistory` contains at least one card for the currently selected hand.
 
-`Scissors` is enabled when the selected hand has cards.
+`Scissors` is available as selected-hand repair. It can be useful even when the selected hand is empty, because it can add unreadable or no-barcode cards manually.
 
 ## 7. Bottom row
 
@@ -230,7 +233,14 @@ Current stabilization rule:
 
 - repeated `Found` verdicts must reach consensus before they mutate board state;
 - current controller uses a fixed small frame-count consensus;
-- this is stabilization, not semantic inference.
+- this is stabilization, not semantic inference;
+- unknown signatures intentionally do not stabilize.
+
+Current eye/mind note:
+
+- `Scissors`/`Swap` replace the camera surface with a modal placeholder, so the beetle eye is effectively closed while the full-screen repair/seat chooser is open;
+- `onManualAddCard(...)` calls `blankMind()` before manual repair;
+- other manual operations currently do not blank the mind by design: eye is eye, pocket is pocket.
 
 Current unknown rule:
 
@@ -269,13 +279,20 @@ Current `updateMetrics()` clears `scanDeltas` while board is complete.
 
 ### Auto-fill fourth hand
 
-When three other hands are complete and selected hand is empty, the reducer fills the selected hand with remaining deck cards.
+When other hands are complete and the selected hand can be completed by the remaining deck cards, the reducer fills the selected hand with those remaining cards.
 
 Accepted decision:
 
 - auto-filled cards are not added to `addHistory`;
 - `Undo` does not peel auto-filled cards;
-- `Scissors` is the recovery path for auto-filled cards.
+- `Scissors` is the recovery path for auto-filled cards;
+- manual Scissors add/move does not auto-fill immediately.
+
+Current trigger policy:
+
+- scanned-card add can try fourth-hand auto-fill as part of the normal scan landing path;
+- explicit seat selection can try fourth-hand auto-fill;
+- manual Scissors repair waits for the TD to choose the next seat/step.
 
 ### Undo
 
@@ -295,16 +312,64 @@ Accepted decision:
 - immediate `Undo` may be disabled because the new selected hand is empty;
 - TD can reselect the previous hand when needed.
 
-### Scissors
+### Scissors / selected-hand repair
 
-`Scissors` opens a full-screen selected-hand view.
+`Scissors` opens `ScissorsScreen`, a full-screen selected-hand repair view.
 
-Each displayed card is clickable. Removing a card:
+It now has two halves:
 
-- removes it from selected hand;
+```text
+Add cards     | Remove cards
+52-card grid  | selected hand cards
+```
+
+Purpose:
+
+- remove a wrong card found late in the selected hand;
+- add a card whose barcode is scratched, missing, or physically replaced;
+- move a card from another hand into the selected hand when the earlier placement was wrong.
+
+Left pane / add table:
+
+- shows all 52 cards as suit columns and rank rows;
+- uses green fill for cards already in selected hand;
+- uses orange fill for cards in another hand;
+- uses gray fill for unassigned cards;
+- uses seat-colored borders to show the owner seat;
+- disables/no-ops cards already in the selected hand.
+
+`EditBoardReducer.addManualCardToSelectedHand(...)` owns the domain behavior:
+
+1. If selected hand already contains the card:
+   - no board mutation;
+   - clear duplicate candidate;
+   - report already-here message.
+2. If selected hand has 13 cards:
+   - no mutation;
+   - clear duplicate candidate;
+   - ask TD to remove one first.
+3. If another hand contains the card:
+   - atomically remove from old seat and add to selected seat;
+   - remove old matching history record for old seat/card;
+   - append selected-seat `AddedCardRecord`;
+   - clear duplicate candidate;
+   - report move message.
+4. If card is unassigned:
+   - add it to selected hand;
+   - append selected-seat `AddedCardRecord`;
+   - clear duplicate candidate;
+   - report manual add message.
+
+Manual Scissors add/move intentionally does not auto-advance and does not auto-fill immediately. The TD remains in control of seat selection during manual repair.
+
+Right pane / remove cards:
+
+- shows selected-hand cards grouped by suit;
+- each visible card rank is clickable;
+- removing a card removes it from selected hand;
 - removes matching selected-hand history for that card;
 - clears duplicate candidate;
-- keeps the Scissors screen open.
+- keeps Scissors open.
 
 ### Swap
 
@@ -387,6 +452,10 @@ Important current TD/recovery tests should cover:
 - stale duplicate override when target hand is complete;
 - swap clears duplicate candidate and history;
 - scissors removal clears candidate and matching history only;
+- scissors manual add of an unassigned card appends selected-hand history and clears duplicate candidate;
+- scissors manual move from another hand removes old matching history and appends selected-hand history;
+- manual add after manual remove keeps history coherent;
+- manual Scissors add/move does not auto-fill immediately;
 - clear selected hand preserves other-hand history;
 - grid resize rejects invalid sizes and sizes below highest non-empty board;
 - import accepts 1..39, rejects outside range, and expands grid;
@@ -399,13 +468,14 @@ Accepted no-fix items:
 - immediate Undo after auto-advance may be disabled until TD reselects previous hand;
 - auto-filled fourth-hand cards are not undo-history items;
 - `Clear` relies on context rather than long label;
-- `Thoughts: 0` remains placeholder;
-- snap feed mode remains disabled.
+- snap feed mode remains disabled;
+- legacy Mock screen is no longer a current entry surface and should not be presented as current TD workflow.
 
 ## 15. Future direction hints
 
 Possible future improvements, not current tickets by default:
 
+- explicit blank-mind-on-eye-close behavior if field testing shows stale thought after opening/closing modal screens;
 - more explicit status event rail;
 - more field-friendly status wording;
 - haptic/sound feedback;
