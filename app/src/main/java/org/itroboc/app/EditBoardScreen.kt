@@ -274,9 +274,20 @@ internal fun CentralArea(
     pendingScanRequest: AtomicBoolean,
     frameDecoder: AdminEditCameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
-    onDream: (topic : String ) -> Unit,
+    onDream: (topic: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dreamTopic = when {
+        !hasCameraPermission -> "Eye"
+        showScissorsScreen || showSwapScreen -> "TD"
+        isBoardComplete -> "Joker"
+        else -> null
+    }
+
+    LaunchedEffect(dreamTopic) {
+        dreamTopic?.let(onDream)
+    }
+
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -286,13 +297,10 @@ internal fun CentralArea(
     ) {
         if (!hasCameraPermission) {
             Text("Camera permission required", color = Color.White)
-            onDream("Eye")
         } else if (showScissorsScreen || showSwapScreen) {
             Text("Modal screen is coming", color = Color.White)
-            onDream("TD")
         } else if (isBoardComplete) {
             BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
-            onDream("Joker")
         } else {
             CameraPreview(
                 consumeScanRequest = { pendingScanRequest.get() },
