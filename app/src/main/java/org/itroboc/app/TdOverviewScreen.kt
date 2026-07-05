@@ -18,6 +18,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 enum class BoardUiStatus {
@@ -40,6 +43,24 @@ fun TdOverviewScreen(
     val latestOnSessionStateChange by rememberUpdatedState(onSessionStateChange)
     var messageToDisplay by remember { mutableStateOf<String?>(null) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+
+    val saveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        uri?.let {
+            try {
+                val exportText = TdSessionExchange.exportCompleteBoards(latestSessionState)
+                if (exportText != null) {
+                    context.contentResolver.openOutputStream(it)?.use { stream ->
+                        stream.write(exportText.toByteArray(Charsets.UTF_8))
+                    }
+                    messageToDisplay = "Session saved successfully."
+                }
+            } catch (e: Exception) {
+                messageToDisplay = "Failed to save: ${e.message}"
+            }
+        }
+    }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -173,6 +194,20 @@ fun TdOverviewScreen(
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text("Export", fontSize = 40.sp)
+            }
+            Button(
+                onClick = {
+                    val exportText = TdSessionExchange.exportCompleteBoards(sessionState)
+                    if (exportText == null) {
+                        messageToDisplay = "No complete boards available to save."
+                        return@Button
+                    }
+                    saveLauncher.launch(generatePbnFilename())
+                },
+                modifier = Modifier.weight(1f).height(56.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text("Save", fontSize = 40.sp)
             }
             Button(
                 onClick = { showSettingsDialog = true },
@@ -320,6 +355,12 @@ fun TdSettingsScreen(
             }
         }
     }
+}
+
+private fun generatePbnFilename(): String {
+    val formatter = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US)
+    val timestamp = formatter.format(Date())
+    return "itroboc_session_$timestamp.pbn"
 }
 
 @Composable
