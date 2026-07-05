@@ -52,6 +52,7 @@ fun EditBoardScreenPreview() {
             boardEditState = BoardEditState(boardNumber = 7),
             deckProfile = BuiltInDeckProfiles.defaultProfile(),
             orientationMode = BarcodeOrientationMode.BRM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onOrientationModeChange = {},
             onBoardEditStateChange = {},
             onBack = {}
@@ -64,6 +65,7 @@ fun EditBoardScreen(
     boardEditState: BoardEditState,
     deckProfile: DeckProfile,
     orientationMode: BarcodeOrientationMode,
+    requiredConsensusFrames: Int,
     onOrientationModeChange: (BarcodeOrientationMode) -> Unit,
     onBoardEditStateChange: (BoardEditState) -> Unit,
     onBack: () -> Unit
@@ -72,6 +74,7 @@ fun EditBoardScreen(
         boardEditState = boardEditState,
         deckProfile = deckProfile,
         orientationMode = orientationMode,
+        requiredConsensusFrames = requiredConsensusFrames,
         onBoardEditStateChange = onBoardEditStateChange
     )
 

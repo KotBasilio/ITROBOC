@@ -53,7 +53,7 @@ class EditBoardReducerTest {
         assertEquals(13, update.state.boardState.totalCardCount())
         assertEquals(Seat.EAST, update.state.selectedSeat)
         assertEquals(board, update.state.boardState)
-        assertEquals("Hand North already complete. Auto-advancing to East.", update.message)
+        assertEquals("Hand North already complete.\nAuto-advancing to East.", update.message)
     }
 
     @Test
@@ -106,7 +106,7 @@ class EditBoardReducerTest {
 
         assertEquals(52, update.state.boardState.totalCardCount())
         assertEquals(13, update.state.boardState.handOf(Seat.WEST).count())
-        assertEquals("West auto-filled from remaining 12 cards. Board complete.", update.message)
+        assertEquals("West auto-filled from remaining 12 cards.\nBoard complete.", update.message)
     }
 
     @Test
@@ -275,7 +275,7 @@ class EditBoardReducerTest {
 
         assertEquals(board, update.state.boardState)
         assertEquals(Seat.NORTH, update.state.selectedSeat)
-        assertEquals("North already has 13 cards. Remove one first.", update.message)
+        assertEquals("North already has 13 cards.\nRemove one first.", update.message)
     }
 
     @Test

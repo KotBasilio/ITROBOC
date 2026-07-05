@@ -13,6 +13,7 @@ internal class EditBoardController(
     var boardEditState by mutableStateOf(BoardEditState(0))
     var deckProfile by mutableStateOf(BuiltInDeckProfiles.defaultProfile())
     var orientationMode by mutableStateOf(BarcodeOrientationMode.BRM)
+    var requiredConsensusFrames by mutableIntStateOf(TdSessionState.DEFAULT_CONSENSUS_FRAMES)
 
     // --- Performance State ---
     var scanDeltas by mutableStateOf<List<Long>>(emptyList())
@@ -28,8 +29,6 @@ internal class EditBoardController(
     // Pondering State (🪲🧠)
     private var ponderingSignature: String? = null
     private var ponderingCount = 0
-    private val requiredConsensusFrames = 4
-    
     // Debounce state
     private var lastRawSignature: String? = null
     private var lastScanTimeMillis: Long = 0L
@@ -44,11 +43,13 @@ internal class EditBoardController(
         state: BoardEditState,
         profile: DeckProfile,
         mode: BarcodeOrientationMode,
+        requiredConsensusFrames: Int,
         onBoardEditStateChange: (BoardEditState) -> Unit,
     ) {
         boardEditState = state
         deckProfile = profile
         orientationMode = mode
+        this.requiredConsensusFrames = requiredConsensusFrames
         this.onBoardEditStateChange = onBoardEditStateChange
     }
 
@@ -242,10 +243,11 @@ internal fun rememberEditBoardController(
     boardEditState: BoardEditState,
     deckProfile: DeckProfile,
     orientationMode: BarcodeOrientationMode,
+    requiredConsensusFrames: Int,
     onBoardEditStateChange: (BoardEditState) -> Unit
 ): EditBoardController {
     val controller = remember { EditBoardController(onBoardEditStateChange) }
-    controller.update(boardEditState, deckProfile, orientationMode, onBoardEditStateChange)
+    controller.update(boardEditState, deckProfile, orientationMode, requiredConsensusFrames, onBoardEditStateChange)
     
     LaunchedEffect(controller) {
         controller.runMetricsLoop()

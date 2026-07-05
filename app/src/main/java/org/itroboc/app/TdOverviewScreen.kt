@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BuiltInDeckProfiles
+import kotlin.math.roundToInt
 
 enum class BoardUiStatus {
     Empty,
@@ -186,11 +187,15 @@ fun TdOverviewScreen(
         TdSettingsScreen(
             currentSize = sessionState.totalBoardsInGrid,
             minAllowedSize = sessionState.highestNonEmptyBoardNumber,
+            currentConsensusFrames = sessionState.requiredConsensusFrames,
             onDismiss = { showSettingsDialog = false },
             onSizeSelected = { newSize ->
                 onSessionStateChange(sessionState.updateGridSize(newSize))
                 showSettingsDialog = false
-            }
+            },
+            onConsensusFramesSelected = { newFrames ->
+                onSessionStateChange(sessionState.updateRequiredConsensusFrames(newFrames))
+            },
         )
     }
 
@@ -212,10 +217,16 @@ fun TdOverviewScreen(
 fun TdSettingsScreen(
     currentSize: Int,
     minAllowedSize: Int,
+    currentConsensusFrames: Int,
     onDismiss: () -> Unit,
-    onSizeSelected: (Int) -> Unit
+    onSizeSelected: (Int) -> Unit,
+    onConsensusFramesSelected: (Int) -> Unit,
 ) {
     val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES.filter { it >= minAllowedSize }
+    val perceptionFrames = TdSessionState.ALLOWED_CONSENSUS_FRAMES
+    var perceptionIndex by remember(currentConsensusFrames) {
+        mutableFloatStateOf(perceptionFrames.indexOf(currentConsensusFrames).coerceAtLeast(0).toFloat())
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -269,6 +280,43 @@ fun TdSettingsScreen(
                         }
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Text(
+                "Perception",
+                style = MaterialTheme.typography.titleMedium,
+                fontSize = 24.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Slider(
+                value = perceptionIndex,
+                onValueChange = { value ->
+                    val snappedIndex = value.roundToInt().coerceIn(0, perceptionFrames.lastIndex)
+                    perceptionIndex = snappedIndex.toFloat()
+                    onConsensusFramesSelected(perceptionFrames[snappedIndex])
+                },
+                valueRange = 0f..4f,
+                steps = 3,
+                modifier = Modifier.fillMaxWidth(0.85f),
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.85f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Shy",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = "Bold",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                )
             }
         }
     }

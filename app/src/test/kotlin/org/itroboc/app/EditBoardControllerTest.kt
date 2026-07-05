@@ -29,12 +29,14 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = firstSink::add,
         )
         controller.update(
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = secondSink::add,
         )
 
@@ -60,6 +62,7 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
 
@@ -85,6 +88,7 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = DeckProfile(emptyMap()),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
 
@@ -127,6 +131,7 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
 
@@ -154,6 +159,7 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
 
@@ -180,6 +186,7 @@ class EditBoardControllerTest {
             state = latestState,
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = { latestState = it },
         )
 
@@ -204,6 +211,7 @@ class EditBoardControllerTest {
             state = state,
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
 
@@ -211,7 +219,7 @@ class EditBoardControllerTest {
 
         assertEquals(1, appliedStates.size)
         assertEquals(state.boardState, appliedStates.single().boardState)
-        assertEquals("North already has 13 cards. Remove one first.", controller.lastResultMessage)
+        assertEquals("North already has 13 cards.\nRemove one first.", controller.lastResultMessage)
         assertEquals(Seat.NORTH, controller.boardEditState.selectedSeat)
     }
 
@@ -225,6 +233,33 @@ class EditBoardControllerTest {
         assertEquals(listOf(300L, 400L, 500L), controller.scanDeltas)
         assertEquals(2.5, controller.scansPerSecond)
         assertEquals(0L, controller.scansIdleCount)
+    }
+
+    @Test
+    fun `lower consensus frame requirement lands faster`() {
+        val time = FakeTime(5_000L)
+        val appliedStates = mutableListOf<BoardEditState>()
+        val controller = EditBoardController(
+            onBoardEditStateChange = appliedStates::add,
+            nowMillis = time::now,
+        )
+        controller.update(
+            state = BoardEditState(boardNumber = 1),
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = 2,
+            onBoardEditStateChange = appliedStates::add,
+        )
+
+        controller.handleCameraScan(foundOutcome("bfm1549"))
+        assertTrue(appliedStates.isEmpty())
+        assertEquals("♠A?", controller.thoughts)
+
+        time.current += 50L
+        controller.handleCameraScan(foundOutcome("bfm1549"))
+
+        assertEquals(1, appliedStates.size)
+        assertEquals("♠A.", controller.thoughts)
     }
 
     private fun testDeckProfile(): DeckProfile = DeckProfile(
