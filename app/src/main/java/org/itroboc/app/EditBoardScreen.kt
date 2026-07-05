@@ -278,8 +278,9 @@ internal fun CentralArea(
     modifier: Modifier = Modifier
 ) {
     val dreamTopic = when {
-        !hasCameraPermission -> "Eye"
-        showScissorsScreen || showSwapScreen -> "TD"
+        !hasCameraPermission -> "Eyes"
+        showScissorsScreen -> "Hands"
+        showSwapScreen -> "Wind"
         isBoardComplete -> "Joker"
         else -> null
     }
