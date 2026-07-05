@@ -298,7 +298,7 @@ fun TdSettingsScreen(
                     perceptionIndex = snappedIndex.toFloat()
                     onConsensusFramesSelected(perceptionFrames[snappedIndex])
                 },
-                valueRange = 0f..4f,
+                valueRange = 0f..perceptionFrames.lastIndex.toFloat(),
                 steps = 3,
                 modifier = Modifier.fillMaxWidth(0.85f),
             )

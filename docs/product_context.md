@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `524265c`.
+Last aligned with source snapshot: `3d85beb`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
