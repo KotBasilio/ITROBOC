@@ -90,7 +90,7 @@ class EditBoardReducerTest {
     }
 
     @Test
-    fun `auto-fill does not run if selected hand is nonempty`() {
+    fun `auto-fill completes a partial fourth hand from remaining cards`() {
         var board = BoardState()
         // Fill North, East, South
         Suit.entries.take(3).forEachIndexed { suitIdx, suit ->
@@ -104,8 +104,26 @@ class EditBoardReducerTest {
         val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.WEST)
         val update = EditBoardReducer.tryAutoFillFourthHand(state)
 
-        assertEquals(39 + 1, update.state.boardState.totalCardCount())
+        assertEquals(52, update.state.boardState.totalCardCount())
+        assertEquals(13, update.state.boardState.handOf(Seat.WEST).count())
+        assertEquals("West auto-filled from remaining 12 cards. Board complete.", update.message)
+    }
+
+    @Test
+    fun `auto-fill does not run when selected hand is already complete`() {
+        var board = BoardState()
+        Suit.entries.forEachIndexed { suitIdx, suit ->
+            val seat = Seat.entries[suitIdx]
+            Rank.entries.forEach { rank ->
+                board = board.addCard(seat, CardId(suit, rank))
+            }
+        }
+
+        val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.WEST)
+        val update = EditBoardReducer.tryAutoFillFourthHand(state)
+
         assertEquals(state, update.state)
+        assertEquals(null, update.message)
     }
 
     @Test
