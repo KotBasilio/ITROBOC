@@ -228,6 +228,28 @@ class EditBoardReducerTest {
     }
 
     @Test
+    fun `manual add clears pending duplicate candidate`() {
+        val existingCandidateCard = CardId(Suit.SPADES, Rank.ACE)
+        val addedCard = CardId(Suit.HEARTS, Rank.KING)
+        val state = BoardEditState(
+            boardNumber = 1,
+            selectedSeat = Seat.NORTH,
+            duplicateOverrideCandidate = DuplicateOverrideCandidate(
+                card = existingCandidateCard,
+                signature = "sig1",
+                existingSeat = Seat.EAST,
+                targetSeat = Seat.NORTH,
+            ),
+        )
+
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, addedCard)
+
+        assertEquals(true, update.state.boardState.handOf(Seat.NORTH).contains(addedCard))
+        assertEquals(listOf(AddedCardRecord(Seat.NORTH, addedCard)), update.state.addHistory)
+        assertEquals(null, update.state.duplicateOverrideCandidate)
+    }
+
+    @Test
     fun `manual add does nothing when card already in selected hand`() {
         val card = CardId(Suit.SPADES, Rank.ACE)
         val state = BoardEditState(
@@ -276,6 +298,62 @@ class EditBoardReducerTest {
         assertEquals(board, update.state.boardState)
         assertEquals(Seat.NORTH, update.state.selectedSeat)
         assertEquals("North already has 13 cards.\nRemove one first.", update.message)
+    }
+
+    @Test
+    fun `manual remove after manual add removes matching history`() {
+        val card = CardId(Suit.SPADES, Rank.ACE)
+        val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)
+
+        val addUpdate = EditBoardReducer.addManualCardToSelectedHand(state, card)
+        val removeUpdate = EditBoardReducer.removeCardFromSelectedHand(addUpdate.state, card)
+
+        assertEquals(false, removeUpdate.state.boardState.handOf(Seat.NORTH).contains(card))
+        assertEquals(emptyList(), removeUpdate.state.addHistory)
+    }
+
+    @Test
+    fun `manual add does not auto-fill immediately`() {
+        var board = BoardState()
+        Rank.entries.drop(1).forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, rank))
+        }
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.EAST, CardId(Suit.HEARTS, rank))
+            board = board.addCard(Seat.SOUTH, CardId(Suit.DIAMONDS, rank))
+        }
+
+        val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.NORTH)
+        val update = EditBoardReducer.addManualCardToSelectedHand(state, CardId(Suit.SPADES, Rank.ACE))
+
+        assertEquals(13, update.state.boardState.handOf(Seat.NORTH).count())
+        assertEquals(0, update.state.boardState.handOf(Seat.WEST).count())
+        assertEquals(39, update.state.boardState.totalCardCount())
+    }
+
+    @Test
+    fun `manual repair setup still auto-fills when seat selection changes`() {
+        var board = BoardState()
+        Rank.entries.drop(1).forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, rank))
+        }
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.EAST, CardId(Suit.HEARTS, rank))
+            board = board.addCard(Seat.SOUTH, CardId(Suit.DIAMONDS, rank))
+        }
+
+        val repairedState = EditBoardReducer.addManualCardToSelectedHand(
+            BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.NORTH),
+            CardId(Suit.SPADES, Rank.ACE),
+        ).state
+
+        val update = EditBoardReducer.tryAutoFillFourthHand(
+            repairedState.copy(selectedSeat = Seat.WEST),
+        )
+
+        assertEquals(52, update.state.boardState.totalCardCount())
+        assertEquals(13, update.state.boardState.handOf(Seat.WEST).count())
+        assertEquals("West auto-filled from remaining 13 cards.\nBoard complete.", update.message)
     }
 
     @Test
