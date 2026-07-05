@@ -486,7 +486,7 @@ fun EastArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Scissors", fontSize = 32.sp)
+                Text("✂\uFE0F", fontSize = 32.sp)
             }
         }
     }
@@ -629,6 +629,9 @@ private fun CameraPreview(
     frameDecoder: AdminEditCameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
 ) {
+    Text("I'm sure", fontSize = 32.sp)
+    return
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
