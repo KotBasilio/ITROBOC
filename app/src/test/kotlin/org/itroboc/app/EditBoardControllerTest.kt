@@ -197,6 +197,28 @@ class EditBoardControllerTest {
     }
 
     @Test
+    fun `manual add blanks Beetle Mind before applying repair`() {
+        val appliedStates = mutableListOf<BoardEditState>()
+        val controller = EditBoardController(
+            onBoardEditStateChange = appliedStates::add,
+        )
+        controller.update(
+            state = BoardEditState(boardNumber = 1),
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
+            onBoardEditStateChange = appliedStates::add,
+        )
+        controller.dream("♠A???")
+
+        controller.onManualAddCard(CardId.parse("SA"))
+
+        assertEquals(1, appliedStates.size)
+        assertEquals("0", controller.thoughts)
+        assertEquals("Added SA to North manually.", controller.lastResultMessage)
+    }
+
+    @Test
     fun `manual add blocks when selected hand is full and keeps seat`() {
         var board = BoardState()
         Rank.entries.forEach { rank ->
@@ -221,6 +243,53 @@ class EditBoardControllerTest {
         assertEquals(state.boardState, appliedStates.single().boardState)
         assertEquals("North already has 13 cards.\nRemove one first.", controller.lastResultMessage)
         assertEquals(Seat.NORTH, controller.boardEditState.selectedSeat)
+    }
+
+    @Test
+    fun `seat selection remains the manual repair auto-fill trigger`() {
+        var board = BoardState()
+        Rank.entries.drop(1).forEach { rank ->
+            board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, rank))
+        }
+        Rank.entries.forEach { rank ->
+            board = board.addCard(Seat.EAST, CardId(Suit.HEARTS, rank))
+            board = board.addCard(Seat.SOUTH, CardId(Suit.DIAMONDS, rank))
+        }
+
+        var latestState = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+        )
+        val controller = EditBoardController(
+            onBoardEditStateChange = {
+                latestState = it
+            },
+        )
+        controller.update(
+            state = latestState,
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
+            onBoardEditStateChange = { latestState = it },
+        )
+
+        controller.onManualAddCard(CardId.parse("SA"))
+        assertEquals(39, latestState.boardState.totalCardCount())
+        assertEquals(0, latestState.boardState.handOf(Seat.WEST).count())
+
+        controller.update(
+            state = latestState,
+            profile = testDeckProfile(),
+            mode = BarcodeOrientationMode.BFM,
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
+            onBoardEditStateChange = { latestState = it },
+        )
+        controller.onSeatClick(Seat.WEST)
+
+        assertEquals(52, latestState.boardState.totalCardCount())
+        assertEquals(13, latestState.boardState.handOf(Seat.WEST).count())
+        assertEquals("West auto-filled from remaining 13 cards.\nBoard complete.", controller.lastResultMessage)
     }
 
     @Test
