@@ -1,6 +1,6 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `524265c`.
+Last aligned with source snapshot: `3d85beb`.
 
 Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors.
 

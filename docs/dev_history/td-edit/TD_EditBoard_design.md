@@ -1,6 +1,6 @@
 # TD::EditBoard Design
 
-Last aligned with source snapshot: `524265c`.
+Last aligned with source snapshot: `3d85beb`.
 
 This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
 
@@ -232,7 +232,7 @@ If the board is complete, scans are ignored.
 Current stabilization rule:
 
 - repeated `Found` verdicts must reach consensus before they mutate board state;
-- current controller uses a fixed small frame-count consensus;
+- Beetle Mind uses configurable Found-stability consensus. TD Settings exposes this as Perception: Shy ↔ Bold. Allowed values are 6,5,4,3,2 frames; default is 4.;
 - this is stabilization, not semantic inference;
 - unknown signatures intentionally do not stabilize.
 
