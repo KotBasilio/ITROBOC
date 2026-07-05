@@ -145,37 +145,10 @@ private fun ScissorsHandPane(
                 horizontalAlignment = Alignment.Start,
             ) {
                 handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start,
-                    ) {
-                        Text(
-                            text = suitCards.suit.prettySymbol,
-                            color = suitCards.suit.displayColor,
-                            fontSize = 50.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.width(44.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        if (suitCards.cards.isEmpty()) {
-                            Text(
-                                text = " —",
-                                fontSize = 42.sp,
-                                color = Color.Black,
-                            )
-                        } else {
-                            suitCards.cards.forEach { card ->
-                                Text(
-                                    text = card.rank.symbol.toString(),
-                                    fontSize = 50.sp,
-                                    color = Color.Black,
-                                    modifier = Modifier
-                                        .clickable { onRemoveCard(card) }
-                                        .padding(horizontal = 12.dp),
-                                )
-                            }
-                        }
-                    }
+                    ScissorsSuitCardsRow(
+                        suitCards = suitCards,
+                        onRemoveCard = onRemoveCard,
+                    )
                 }
             }
         }
@@ -216,6 +189,74 @@ private fun ScissorsHandPane(
             Button(onClick = onDismiss) {
                 Text(fontSize = 32.sp, text = "Close")
             }
+        }
+    }
+}
+
+@Composable
+private fun ScissorsSuitCardsRow(
+    suitCards: org.itroboc.core.SuitCards,
+    onRemoveCard: (CardId) -> Unit,
+) {
+    val cards = suitCards.cards
+    val splitIndex = if (cards.size >= 8) (cards.size + 1) / 2 else cards.size
+    val topRow = cards.take(splitIndex)
+    val bottomRow = cards.drop(splitIndex)
+
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        Text(
+            text = suitCards.suit.prettySymbol,
+            color = suitCards.suit.displayColor,
+            fontSize = 50.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(44.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        if (cards.isEmpty()) {
+            Text(
+                text = " —",
+                fontSize = 42.sp,
+                color = Color.Black,
+            )
+        } else if (bottomRow.isEmpty()) {
+            ScissorsSuitRankLine(cards = topRow, onRemoveCard = onRemoveCard)
+        } else {
+            Box(
+                modifier = Modifier
+                    .border(1.dp, Color(0xFFB0BEC5), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ScissorsSuitRankLine(cards = topRow, onRemoveCard = onRemoveCard)
+                    ScissorsSuitRankLine(cards = bottomRow, onRemoveCard = onRemoveCard)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScissorsSuitRankLine(
+    cards: List<CardId>,
+    onRemoveCard: (CardId) -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        cards.forEach { card ->
+            Text(
+                text = card.rank.symbol.toString(),
+                fontSize = 50.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .clickable { onRemoveCard(card) }
+                    .padding(horizontal = 12.dp),
+            )
         }
     }
 }
