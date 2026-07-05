@@ -46,7 +46,7 @@ object EditBoardReducer {
             val nextSeat = selectedSeat.next()
             return EditBoardUpdate(
                 state = editState.copy(selectedSeat = nextSeat),
-                message = "Hand ${selectedSeat.displayName} already complete. Auto-advancing to ${nextSeat.displayName}."
+                message = "Hand ${selectedSeat.displayName} already complete.\nAuto-advancing to ${nextSeat.displayName}."
             )
         }
 
@@ -138,7 +138,7 @@ object EditBoardReducer {
         if (selectedHand.isComplete()) {
             return EditBoardUpdate(
                 state = editState.copy(duplicateOverrideCandidate = null),
-                message = "${selectedSeat.displayName} already has 13 cards. Remove one first.",
+                message = "${selectedSeat.displayName} already has 13 cards.\nRemove one first.",
             )
         }
 
@@ -266,7 +266,7 @@ object EditBoardReducer {
                 val addedCount = remainingCards.size
                 return EditBoardUpdate(
                     state = editState.copy(boardState = autoFilledBoard),
-                    message = "${seat.displayName} auto-filled from remaining $addedCount cards. Board complete."
+                    message = "${seat.displayName} auto-filled from remaining $addedCount cards.\nBoard complete."
                 )
             }
         }
