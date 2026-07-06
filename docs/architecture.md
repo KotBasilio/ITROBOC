@@ -396,7 +396,7 @@ PBN preview appears only in the central `BoardCompleteView` when the board is co
 
 - total card count `Cards: n/52`;
 - SPS/IDLE telemetry;
-- `Thoughts: ...` from the stabilization layer (`0`, tentative `?`/`??`/`???`, ambiguous `~`, or accepted `.`), accompanied by the 🪲 mascot icon;
+- `Thoughts: ...` from the stabilization layer (`0`, tentative `?`/`??`/`???`, ambiguous `~`, or accepted `.`);
 - last result message.
 
 ### Selected hand
