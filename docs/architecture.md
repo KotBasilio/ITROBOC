@@ -1,8 +1,8 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `68030c8`.
+Last aligned with source snapshot: `c5d9931`.
 
-Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors.
+Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors. PBN exports now include professional file-level headers and preserve double-dummy solver (DDS) metadata during import/export cycles.
 
 This document is written for future AI instances. It is a current architecture map, not a ticket list and not a historical diary. Completed tickets should not remain here unless they changed a durable invariant, ownership rule, or system boundary.
 
