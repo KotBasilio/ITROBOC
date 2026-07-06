@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `3d85beb`.
+Last aligned with source snapshot: `2178216`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -79,7 +79,7 @@ TD uses an existing Deck Profile to build boards.
 
 Current TD surfaces:
 
-- TD overview with dynamic board grid, Import, Export, Settings;
+- TD overview with dynamic board grid, Import, Export, Save, Settings;
 - TD::EditBoard cockpit with four hands, camera area, orientation control, status, last scanned card, and recovery controls.
 - TD::EditBoard also includes a stabilization/thought layer before accepted scans mutate board state.
 - Scissors selected-hand repair screen for late correction, manual add of scratched/no-barcode cards, and moving cards from another hand when the previous placement was wrong.
@@ -98,9 +98,11 @@ PBN export is gated on complete boards: four 13-card hands and 52 unique cards.
 
 Current MVP PBN export intentionally does not emit `[Site "..."]`.
 
-TD overview cumulative export includes complete visible boards only, sorted by board number, and shares via Android share intent including `EXTRA_TEXT`.
+TD overview cumulative export includes complete visible boards only, sorted by board number. It can be shared via Android share intent (including `EXTRA_TEXT`) or saved locally as a `.pbn` file using the Android Storage Access Framework.
 
-TD import accepts complete PBN boards numbered `1..39`, ignores unsupported/partial blocks, and expands the visible board grid to fit valid imported boards.
+Cumulative PBN output includes a professional file header (PBN 2.1, ISO-8859-1).
+
+TD import accepts complete PBN boards numbered `1..39`, ignores unsupported/partial blocks, and expands the visible board grid to fit valid imported boards. Import correctly preserves double-dummy solver (DDS) metadata for later export.
 
 ## Current state
 
