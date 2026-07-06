@@ -365,21 +365,11 @@ fun BoardControlsArea(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_small),
-                contentDescription = "Mascot",
-                modifier = Modifier.size(48.dp)
-            )
-            Text(
-                text = "Board: $boardNumber",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold, fontSize = 32.sp,
-            )
-        }
+        Text(
+            text = "Board: $boardNumber",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold, fontSize = 32.sp,
+        )
 
         Button(
             onClick = onBack,
@@ -578,20 +568,10 @@ fun StatusArea(
                         text = if (sps > 0.0) "SPS %4.1f".format(sps) else "IDLE %.0f".format(-sps),
                         fontSize = 24.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_small),
-                            contentDescription = "Thoughts mascot",
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            "Thoughts: " + thoughts,
-                            fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
-                        )
-                    }
+                    Text(
+                        "Thoughts: " + thoughts,
+                        fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                    )
                 }
             }
 
@@ -637,6 +617,12 @@ fun LastScannedCardArea(
                     fontSize = 50.sp,
                     color = if (displayCard.suit == Suit.HEARTS || displayCard.suit == Suit.DIAMONDS) Color.Red else Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.beetle),
+                    contentDescription = "Mascot",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
