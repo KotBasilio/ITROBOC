@@ -1,6 +1,6 @@
 # TD::EditBoard Design
 
-Last aligned with source snapshot: `3d85beb`.
+Last aligned with source snapshot: `65eb5aa`.
 
 This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
 
@@ -48,8 +48,8 @@ Relevant code:
 ```text
 :app
   EditBoardScreen.kt
-  ScissorsScreen.kt
   EditBoardController.kt
+  ScissorsScreen.kt
   TdSessionState.kt
   TdSessionExchange.kt
   TdSessionShareManager.kt
@@ -84,7 +84,7 @@ The screen is a 3-row cockpit.
 
 ```text
 Top row:
-Board controls | North hand | LastScannedCardArea | StatusArea
+BoardControlsArea | North hand | LastScannedCardArea | StatusArea
 
 Middle row:
 West hand + Clear + Swap | CentralArea | East hand + Undo + Scissors
@@ -101,7 +101,9 @@ PBN preview appears in the central area only when the board is complete.
 
 ### BoardControlsArea
 
-Shows current board number and Back.
+Shows current board number and Back. 
+
+Observed design choice (v1): A laconic text-only header to maximize vertical space for recovery controls.
 
 ### North HandArea
 
@@ -115,7 +117,7 @@ Displays:
 - last scanned accepted/reported card if available;
 - otherwise pending duplicate candidate card.
 
-This keeps a rejected duplicate visible while `I'm sure` is actionable.
+When idle and no card is present, this area displays a large, friendly 🪲 mascot icon to anchor the branding without crowding the status metrics.
 
 ### StatusArea
 
