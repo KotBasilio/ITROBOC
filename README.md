@@ -51,6 +51,8 @@ The repository currently contains:
     - recovery controls: Undo, Scissors, Swap, I'm sure, and Clear
     - Scissors selected-hand repair screen with add/remove card halves and a 52-card manual repair grid
     - gated PBN preview triggered upon board completion
+    - functional PBN export/share and local **Save** action via Android Storage Access Framework
+    - PBN import with preservation of **double-dummy solver (DDS)** metadata
   - legacy Mock code may still exist temporarily, but the Mock screen is not a current main-menu product surface.
 
 Broader product direction and workflow notes live in [docs/product_context.md].

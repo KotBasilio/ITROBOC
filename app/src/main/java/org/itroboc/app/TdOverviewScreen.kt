@@ -51,10 +51,13 @@ fun TdOverviewScreen(
             try {
                 val exportText = TdSessionExchange.exportCompleteBoards(latestSessionState)
                 if (exportText != null) {
-                    context.contentResolver.openOutputStream(it)?.use { stream ->
-                        stream.write(exportText.toByteArray(Charsets.UTF_8))
+                    val stream = context.contentResolver.openOutputStream(it)
+                    if (stream == null) {
+                        messageToDisplay = "Failed to save: could not open destination."
+                    } else {
+                        stream.use { it.write(exportText.toByteArray(Charsets.UTF_8)) }
+                        messageToDisplay = "Session saved successfully."
                     }
-                    messageToDisplay = "Session saved successfully."
                 }
             } catch (e: Exception) {
                 messageToDisplay = "Failed to save: ${e.message}"
