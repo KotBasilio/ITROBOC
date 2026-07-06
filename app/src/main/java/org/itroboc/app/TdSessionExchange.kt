@@ -7,6 +7,7 @@ import org.itroboc.core.CardId
 import org.itroboc.core.DuplicateBoardMetadata
 import org.itroboc.core.HandState
 import org.itroboc.core.PbnExportOptions
+import org.itroboc.core.PbnDoubleDummyData
 import org.itroboc.core.PbnExporter
 import org.itroboc.core.Rank
 import org.itroboc.core.Seat
@@ -37,14 +38,29 @@ internal object TdSessionExchange {
                 if (!BoardProgressSummary.from(boardEditState.boardState).boardComplete) {
                     return@mapNotNull null
                 }
-                exportCompleteBoard(
-                    boardState = boardEditState.boardState,
-                    boardNumber = boardEditState.boardNumber,
+                val metadata = DuplicateBoardMetadata.forBoardNumber(boardEditState.boardNumber)
+                PbnExporter.export(
+                    boardEditState.boardState,
+                    PbnExportOptions(
+                        boardNumber = boardEditState.boardNumber,
+                        dealer = metadata.dealer,
+                        vulnerability = metadata.vulnerability,
+                        pbnDoubleDummyData = boardEditState.pbnDoubleDummyData,
+                    ),
                 )
             }
             .toList()
 
-        return exportedBoards.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n\n")
+        return exportedBoards.takeIf { it.isNotEmpty() }?.let { boards ->
+            buildString {
+                appendLine("% PBN 2.1")
+                appendLine("% EXPORT")
+                appendLine("%Content-type: text/x-pbn; charset=ISO-8859-1")
+                appendLine("%Creator: ITROBOC")
+                appendLine()
+                append(boards.joinToString(separator = "\n\n"))
+            }
+        }
     }
 
     fun importCumulative(
@@ -70,6 +86,7 @@ internal object TdSessionExchange {
                     boardNumber = importedBoard.boardNumber,
                     boardState = importedBoard.boardState,
                     selectedSeat = selectedSeat,
+                    pbnDoubleDummyData = importedBoard.pbnDoubleDummyData,
                 )
             )
             importedBoardNumbers += importedBoard.boardNumber
@@ -96,44 +113,41 @@ internal object TdSessionExchange {
         boardNumber in 1..39
 
     private fun parseTaggedBlocks(rawText: String): List<List<String>> {
-        val blocks = mutableListOf<MutableList<String>>()
-        var currentBlock = mutableListOf<String>()
+        val blocks = mutableListOf<List<String>>()
+        val currentBlock = mutableListOf<String>()
 
-        rawText.lineSequence().forEach { rawLine ->
-            val line = rawLine.trim()
-            if (!line.startsWith("[") || !line.endsWith("]")) {
-                if (currentBlock.isNotEmpty()) {
-                    blocks += currentBlock
-                    currentBlock = mutableListOf()
+        rawText.lineSequence()
+            .map { it.trimEnd() }
+            .forEach { line ->
+                if (line.isBlank()) {
+                    if (currentBlock.isNotEmpty()) {
+                        blocks += currentBlock.toList()
+                        currentBlock.clear()
+                    }
+                } else {
+                    currentBlock += line
                 }
-                return@forEach
             }
-
-            if (line.startsWith("[Board ") && currentBlock.any { it.startsWith("[Deal ") }) {
-                blocks += currentBlock
-                currentBlock = mutableListOf()
-            }
-
-            currentBlock += line
-        }
 
         if (currentBlock.isNotEmpty()) {
-            blocks += currentBlock
+            blocks += currentBlock.toList()
         }
 
-        return blocks
+        return blocks.filter { block -> block.any { it.trimStart().startsWith("[") } }
     }
 
     private fun parseCompleteBoard(lines: List<String>): ImportedBoard? {
-        val tags = lines.mapNotNull(::parseTag).toMap()
+        val tags = lines.mapNotNull { parseTag(it.trim()) }.toMap()
         val boardNumber = tags["Board"]?.toIntOrNull() ?: return null
         val dealer = tags["Dealer"]?.singleOrNull()?.let(::seatFromSymbol) ?: return null
         val deal = tags["Deal"] ?: return null
+        val pbnDoubleDummyData = parsePbnDoubleDummyData(lines)
 
         return runCatching {
             ImportedBoard(
                 boardNumber = boardNumber,
                 boardState = parseCompleteBoardState(dealer = dealer, deal = deal),
+                pbnDoubleDummyData = pbnDoubleDummyData,
             )
         }.getOrNull()
     }
@@ -141,6 +155,50 @@ internal object TdSessionExchange {
     private fun parseTag(line: String): Pair<String, String>? {
         val match = TAG_REGEX.matchEntire(line) ?: return null
         return match.groupValues[1] to match.groupValues[2]
+    }
+
+    private fun parsePbnDoubleDummyData(lines: List<String>): PbnDoubleDummyData? {
+        var doubleDummyTricks: String? = null
+        var optimumResultTableHeader: String? = null
+        var optimumResultTableRows: List<String> = emptyList()
+        var optimumScore: String? = null
+
+        var index = 0
+        while (index < lines.size) {
+            val line = lines[index].trim()
+            val tag = parseTag(line)
+            when (tag?.first) {
+                "DoubleDummyTricks" -> doubleDummyTricks = tag.second
+                "OptimumResultTable" -> {
+                    optimumResultTableHeader = tag.second
+                    val rows = mutableListOf<String>()
+                    var rowIndex = index + 1
+                    while (rowIndex < lines.size) {
+                        val rowLine = lines[rowIndex].trimEnd()
+                        if (rowLine.isBlank() || rowLine.trimStart().startsWith("[") || rowLine.trimStart().startsWith("%")) {
+                            break
+                        }
+                        rows += rowLine.trim()
+                        rowIndex += 1
+                    }
+                    optimumResultTableRows = rows
+                    index = rowIndex - 1
+                }
+                "OptimumScore" -> optimumScore = tag.second
+            }
+            index += 1
+        }
+
+        if (doubleDummyTricks == null && optimumResultTableHeader == null && optimumScore == null) {
+            return null
+        }
+
+        return PbnDoubleDummyData(
+            doubleDummyTricks = doubleDummyTricks,
+            optimumResultTableHeader = optimumResultTableHeader,
+            optimumResultTableRows = optimumResultTableRows,
+            optimumScore = optimumScore,
+        )
     }
 
     private fun parseCompleteBoardState(
@@ -194,6 +252,7 @@ internal object TdSessionExchange {
     private data class ImportedBoard(
         val boardNumber: Int,
         val boardState: BoardState,
+        val pbnDoubleDummyData: PbnDoubleDummyData?,
     )
 
     private val TAG_REGEX = Regex("""\[(\w+)\s+"([^"]*)"]""")
