@@ -11,6 +11,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +31,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -363,11 +365,21 @@ fun BoardControlsArea(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Board: $boardNumber",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 32.sp,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_small),
+                contentDescription = "Mascot",
+                modifier = Modifier.size(48.dp)
+            )
+            Text(
+                text = "Board: $boardNumber",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold, fontSize = 32.sp,
+            )
+        }
 
         Button(
             onClick = onBack,
@@ -566,10 +578,20 @@ fun StatusArea(
                         text = if (sps > 0.0) "SPS %4.1f".format(sps) else "IDLE %.0f".format(-sps),
                         fontSize = 24.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
                     )
-                    Text(
-                        "Thoughts: " + thoughts,
-                        fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_small),
+                            contentDescription = "Thoughts mascot",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            "Thoughts: " + thoughts,
+                            fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                        )
+                    }
                 }
             }
 

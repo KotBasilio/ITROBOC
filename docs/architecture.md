@@ -1,6 +1,6 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `3d85beb`.
+Last aligned with source snapshot: `68030c8`.
 
 Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors.
 
@@ -364,7 +364,7 @@ TD::EditBoard is the field cockpit.
 Current layout is a 3-row cockpit:
 
 ```text
-Top:    Board controls | North hand | LastScannedCardArea | StatusArea
+Top:    BoardControlsArea (with 🪲 mascot) | North hand | LastScannedCardArea | StatusArea
 Middle: West hand + Clear + Swap | CentralArea | East hand + Undo + Scissors
 Bottom: Feed mode | South hand | Orientation | SureArea
 ```
@@ -396,7 +396,7 @@ PBN preview appears only in the central `BoardCompleteView` when the board is co
 
 - total card count `Cards: n/52`;
 - SPS/IDLE telemetry;
-- `Thoughts: ...` from the stabilization layer (`0`, tentative `?`/`??`/`???`, ambiguous `~`, or accepted `.`);
+- `Thoughts: ...` from the stabilization layer (`0`, tentative `?`/`??`/`???`, ambiguous `~`, or accepted `.`), accompanied by the 🪲 mascot icon;
 - last result message.
 
 ### Selected hand
