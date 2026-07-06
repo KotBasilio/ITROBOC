@@ -144,10 +144,16 @@ class EditBoardReducerTest {
         var board = BoardState()
         board = board.addCard(Seat.NORTH, CardId(Suit.SPADES, Rank.ACE))
         
-        val state = BoardEditState(boardNumber = 1, boardState = board, selectedSeat = Seat.NORTH)
+        val state = BoardEditState(
+            boardNumber = 1,
+            boardState = board,
+            selectedSeat = Seat.NORTH,
+            pbnDoubleDummyData = PbnDoubleDummyData(doubleDummyTricks = "keep-me-not"),
+        )
         val update = EditBoardReducer.clearBoard(state)
 
         assertEquals(0, update.state.boardState.totalCardCount())
+        assertEquals(null, update.state.pbnDoubleDummyData)
     }
 
     @Test
@@ -212,6 +218,19 @@ class EditBoardReducerTest {
         
         assertEquals(1, removeUpdate.state.boardState.handOf(Seat.NORTH).count())
         assertEquals(card2, removeUpdate.state.boardState.handOf(Seat.NORTH).cards().first())
+    }
+
+    @Test
+    fun `scan add clears imported dds metadata`() {
+        val state = BoardEditState(
+            boardNumber = 1,
+            selectedSeat = Seat.NORTH,
+            pbnDoubleDummyData = PbnDoubleDummyData(doubleDummyTricks = "old"),
+        )
+
+        val update = EditBoardReducer.applyScannedCard(state, CardId(Suit.SPADES, Rank.ACE), "sig1")
+
+        assertEquals(null, update.state.pbnDoubleDummyData)
     }
 
     @Test
@@ -303,13 +322,19 @@ class EditBoardReducerTest {
     @Test
     fun `manual remove after manual add removes matching history`() {
         val card = CardId(Suit.SPADES, Rank.ACE)
-        val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)
+        val state = BoardEditState(
+            boardNumber = 1,
+            selectedSeat = Seat.NORTH,
+            pbnDoubleDummyData = PbnDoubleDummyData(optimumScore = "EW 4S; -620"),
+        )
 
         val addUpdate = EditBoardReducer.addManualCardToSelectedHand(state, card)
         val removeUpdate = EditBoardReducer.removeCardFromSelectedHand(addUpdate.state, card)
 
         assertEquals(false, removeUpdate.state.boardState.handOf(Seat.NORTH).contains(card))
         assertEquals(emptyList(), removeUpdate.state.addHistory)
+        assertEquals(null, addUpdate.state.pbnDoubleDummyData)
+        assertEquals(null, removeUpdate.state.pbnDoubleDummyData)
     }
 
     @Test
@@ -359,13 +384,18 @@ class EditBoardReducerTest {
     @Test
     fun `swapping hands clears history`() {
         val card = CardId(Suit.SPADES, Rank.ACE)
-        val state = BoardEditState(boardNumber = 1, selectedSeat = Seat.NORTH)
+        val state = BoardEditState(
+            boardNumber = 1,
+            selectedSeat = Seat.NORTH,
+            pbnDoubleDummyData = PbnDoubleDummyData(doubleDummyTricks = "stale"),
+        )
         val update = EditBoardReducer.applyScannedCard(state, card, "sig1")
         
         val swapUpdate = EditBoardReducer.swapSelectedHandWith(update.state, Seat.SOUTH)
         
         assertEquals(1, swapUpdate.state.boardState.handOf(Seat.SOUTH).count())
         assertEquals(0, swapUpdate.state.addHistory.size)
+        assertEquals(null, swapUpdate.state.pbnDoubleDummyData)
     }
 
     @Test

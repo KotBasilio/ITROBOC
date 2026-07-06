@@ -7,6 +7,8 @@ data class EditBoardUpdate(
 )
 
 object EditBoardReducer {
+    private fun BoardEditState.withoutPbnDoubleDummyData(): BoardEditState =
+        copy(pbnDoubleDummyData = null)
 
     fun applyScannedCard(
         editState: BoardEditState,
@@ -66,8 +68,8 @@ object EditBoardReducer {
             boardState = updatedBoard,
             selectedSeat = nextSeat,
             addHistory = editState.addHistory + AddedCardRecord(selectedSeat, card),
-            duplicateOverrideCandidate = null
-        )
+            duplicateOverrideCandidate = null,
+        ).withoutPbnDoubleDummyData()
 
         // 4. Auto-fill (if we advanced or if we are just starting on a seat)
         val finalizedUpdate = tryAutoFillFourthHand(baseUpdate)
@@ -98,8 +100,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = updatedBoard,
                 addHistory = updatedHistory,
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Undid: Removed ${lastInHand.card} from ${lastInHand.seat.displayName}."
         )
     }
@@ -116,8 +118,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = updatedBoard,
                 addHistory = updatedHistory,
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Removed $card from ${editState.selectedSeat.displayName}."
         )
     }
@@ -156,7 +158,7 @@ object EditBoardReducer {
                     boardState = updatedBoard,
                     addHistory = updatedHistory,
                     duplicateOverrideCandidate = null,
-                ),
+                ).withoutPbnDoubleDummyData(),
                 message = "Moved $card from ${existingSeat.displayName} to ${selectedSeat.displayName}.",
                 lastScannedCard = card,
             )
@@ -168,7 +170,7 @@ object EditBoardReducer {
                 boardState = updatedBoard,
                 addHistory = editState.addHistory + AddedCardRecord(selectedSeat, card),
                 duplicateOverrideCandidate = null,
-            ),
+            ).withoutPbnDoubleDummyData(),
             message = "Added $card to ${selectedSeat.displayName} manually.",
             lastScannedCard = card,
         )
@@ -180,8 +182,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = updatedBoard,
                 addHistory = emptyList(), // Clear history as per plan
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Swapped ${editState.selectedSeat.displayName} and ${targetSeat.displayName} hands."
         )
     }
@@ -213,8 +215,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = updatedBoard,
                 addHistory = updatedHistory,
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Moved ${candidate.card} from ${candidate.existingSeat.displayName} to ${candidate.targetSeat.displayName}."
         )
     }
@@ -228,8 +230,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = BoardState(newHands),
                 addHistory = updatedHistory,
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Cleared ${editState.selectedSeat.displayName}."
         )
     }
@@ -239,8 +241,8 @@ object EditBoardReducer {
             state = editState.copy(
                 boardState = BoardState(),
                 addHistory = emptyList(),
-                duplicateOverrideCandidate = null
-            ),
+                duplicateOverrideCandidate = null,
+            ).withoutPbnDoubleDummyData(),
             message = "Cleared board ${editState.boardNumber}."
         )
     }
@@ -265,7 +267,7 @@ object EditBoardReducer {
                 }
                 val addedCount = remainingCards.size
                 return EditBoardUpdate(
-                    state = editState.copy(boardState = autoFilledBoard),
+                    state = editState.copy(boardState = autoFilledBoard).withoutPbnDoubleDummyData(),
                     message = "${seat.displayName} auto-filled from remaining $addedCount cards.\nBoard complete."
                 )
             }

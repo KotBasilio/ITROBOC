@@ -45,4 +45,37 @@ class PbnExporterTest {
 
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun `exports board level dds metadata without cumulative header`() {
+        val expected = """
+            [Event "ITROBOC Export"]
+            [Board "4"]
+            [Dealer "W"]
+            [Vulnerable "All"]
+            [Deal "W:..T9872.KQJ98765 AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T"]
+            [DoubleDummyTricks "43367433678a9668a966"]
+            [OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+            N NT  4
+            W  C  6
+            [OptimumScore "EW 4S; -620"]
+        """.trimIndent()
+
+        val actual = PbnExporter.export(
+            board,
+            PbnExportOptions(
+                boardNumber = 4,
+                dealer = Seat.WEST,
+                vulnerability = BoardVulnerability.ALL,
+                pbnDoubleDummyData = PbnDoubleDummyData(
+                    doubleDummyTricks = "43367433678a9668a966",
+                    optimumResultTableHeader = """Declarer;Denomination\2R;Result\2R""",
+                    optimumResultTableRows = listOf("N NT  4", "W  C  6"),
+                    optimumScore = "EW 4S; -620",
+                ),
+            ),
+        )
+
+        assertEquals(expected, actual)
+    }
 }

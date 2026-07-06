@@ -4,6 +4,7 @@ import org.itroboc.core.BoardEditState
 import org.itroboc.core.BoardState
 import org.itroboc.core.BoardVulnerability
 import org.itroboc.core.CardId
+import org.itroboc.core.PbnDoubleDummyData
 import org.itroboc.core.PbnExportOptions
 import org.itroboc.core.PbnExporter
 import org.itroboc.core.Seat
@@ -57,7 +58,15 @@ class TdSessionExchangeTest {
                 ),
             ),
         ).joinToString(separator = "\n\n")
-        assertEquals(expected, exported)
+        val expectedWithHeader = """
+% PBN 2.1
+% EXPORT
+%Content-type: text/x-pbn; charset=ISO-8859-1
+%Creator: ITROBOC
+
+$expected
+        """.trimIndent()
+        assertEquals(expectedWithHeader, exported)
     }
 
     @Test
@@ -178,6 +187,130 @@ class TdSessionExchangeTest {
         assertEquals(listOf(32), result.importedBoardNumbers)
         assertEquals(1, result.ignoredBlockCount)
         assertEquals(33, result.sessionState.totalBoardsInGrid)
+    }
+
+    @Test
+    fun `import ignores file header and preserves dds fields through export`() {
+        val importedText = """
+            % PBN 2.1
+            % EXPORT
+            %Content-type: text/x-pbn; charset=ISO-8859-1
+            %Creator: ITROBOC
+
+            [Event "ITROBOC Export"]
+            [Board "4"]
+            [Dealer "W"]
+            [Vulnerable "All"]
+            [Deal "W:..T9872.KQJ98765 AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T"]
+            [DoubleDummyTricks "43367433678a9668a966"]
+            [OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+            N NT  4
+            N  S  3
+            W  C  6
+            [OptimumScore "EW 4S; -620"]
+        """.trimIndent()
+
+        val result = TdSessionExchange.importCumulative(TdSessionState(), importedText)
+
+        assertEquals(listOf(4), result.importedBoardNumbers)
+        val importedBoard = result.sessionState.boards.getValue(4)
+        assertEquals(
+            PbnDoubleDummyData(
+                doubleDummyTricks = "43367433678a9668a966",
+                optimumResultTableHeader = """Declarer;Denomination\2R;Result\2R""",
+                optimumResultTableRows = listOf("N NT  4", "N  S  3", "W  C  6"),
+                optimumScore = "EW 4S; -620",
+            ),
+            importedBoard.pbnDoubleDummyData,
+        )
+
+        val exported = TdSessionExchange.exportCompleteBoards(result.sessionState)
+        val expectedExport = """
+            % PBN 2.1
+            % EXPORT
+            %Content-type: text/x-pbn; charset=ISO-8859-1
+            %Creator: ITROBOC
+
+            [Event "ITROBOC Export"]
+            [Board "4"]
+            [Dealer "W"]
+            [Vulnerable "All"]
+            [Deal "W:..T9872.KQJ98765 AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T"]
+            [DoubleDummyTricks "43367433678a9668a966"]
+            [OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+            N NT  4
+            N  S  3
+            W  C  6
+            [OptimumScore "EW 4S; -620"]
+        """.trimIndent()
+        assertEquals(expectedExport, exported)
+    }
+
+    @Test
+    fun `placeholder dds values survive import and export`() {
+        val importedText = """
+            [Event "ITROBOC Export"]
+            [Board "5"]
+            [Dealer "N"]
+            [Deal "N:AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T ..T9872.KQJ98765"]
+            [DoubleDummyTricks "********************"]
+            [OptimumScore ""]
+        """.trimIndent()
+
+        val result = TdSessionExchange.importCumulative(TdSessionState(), importedText)
+
+        assertEquals("********************", result.sessionState.boards.getValue(5).pbnDoubleDummyData?.doubleDummyTricks)
+        assertEquals("", result.sessionState.boards.getValue(5).pbnDoubleDummyData?.optimumScore)
+        val exported = TdSessionExchange.exportCompleteBoards(result.sessionState)
+        assertTrue(exported?.contains("""[DoubleDummyTricks "********************"]""") == true)
+        assertTrue(exported?.contains("""[OptimumScore ""]""") == true)
+    }
+
+    @Test
+    fun `partial block with dds fields is ignored`() {
+        val importedText = """
+            [Event "ITROBOC Export"]
+            [Board "8"]
+            [Dealer "N"]
+            [Deal "N:AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T ..T9872.KQJ9876"]
+            [DoubleDummyTricks "--------------------"]
+            [OptimumScore "NS 1N; 90"]
+        """.trimIndent()
+
+        val result = TdSessionExchange.importCumulative(TdSessionState(), importedText)
+
+        assertTrue(result.importedBoardNumbers.isEmpty())
+        assertEquals(1, result.ignoredBlockCount)
+    }
+
+    @Test
+    fun `reimported complete board replaces existing dds metadata`() {
+        val existingState = TdSessionState(
+            boards = mapOf(
+                4 to BoardEditState(
+                    boardNumber = 4,
+                    boardState = boardOne,
+                    pbnDoubleDummyData = PbnDoubleDummyData(
+                        doubleDummyTricks = "old",
+                        optimumScore = "old score",
+                    ),
+                ),
+            ),
+        )
+        val importedText = """
+            [Event "ITROBOC Export"]
+            [Board "4"]
+            [Dealer "W"]
+            [Vulnerable "All"]
+            [Deal "W:..T9872.KQJ98765 AKQJT.987.65.432 98765.AKQJT.43.A 432.65432.AKQJ.T"]
+            [DoubleDummyTricks "new"]
+            [OptimumScore "new score"]
+        """.trimIndent()
+
+        val result = TdSessionExchange.importCumulative(existingState, importedText)
+
+        assertEquals("new", result.sessionState.boards.getValue(4).pbnDoubleDummyData?.doubleDummyTricks)
+        assertEquals("new score", result.sessionState.boards.getValue(4).pbnDoubleDummyData?.optimumScore)
     }
 
     private fun boardOf(vararg seatCards: Pair<Seat, List<String>>): BoardState =

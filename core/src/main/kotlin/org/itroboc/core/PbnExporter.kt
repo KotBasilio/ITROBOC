@@ -15,7 +15,28 @@ object PbnExporter {
             options.boardNumber?.let { appendLine("[Board \"$it\"]") }
             appendLine("[Dealer \"${options.dealer.symbol}\"]")
             options.vulnerability?.let { appendLine("[Vulnerable \"${it.pbnValue}\"]") }
-            append("[Deal \"${options.dealer.symbol}:$dealValue\"]")
+            if (options.pbnDoubleDummyData == null) {
+                append("[Deal \"${options.dealer.symbol}:$dealValue\"]")
+            } else {
+                appendLine("[Deal \"${options.dealer.symbol}:$dealValue\"]")
+                appendPbnDoubleDummyData(options.pbnDoubleDummyData)
+            }
+        }
+    }
+
+    private fun StringBuilder.appendPbnDoubleDummyData(pbnDoubleDummyData: PbnDoubleDummyData) {
+        pbnDoubleDummyData.doubleDummyTricks?.let {
+            appendLine("[DoubleDummyTricks \"$it\"]")
+        }
+        pbnDoubleDummyData.optimumResultTableHeader?.let { header ->
+            appendLine("[OptimumResultTable \"$header\"]")
+            pbnDoubleDummyData.optimumResultTableRows.forEach(::appendLine)
+        }
+        pbnDoubleDummyData.optimumScore?.let {
+            appendLine("[OptimumScore \"$it\"]")
+        }
+        if (lastOrNull() == '\n') {
+            deleteCharAt(lastIndex)
         }
     }
 }
@@ -26,4 +47,5 @@ data class PbnExportOptions(
     val site: String? = "Local",
     val dealer: Seat = Seat.NORTH,
     val vulnerability: BoardVulnerability? = null,
+    val pbnDoubleDummyData: PbnDoubleDummyData? = null,
 )
