@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `2178216`.
+Last aligned with source snapshot: `e8681c4`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -110,6 +110,7 @@ Grounded current state:
 
 - app has Main, TD, and Admin entry surfaces; the visible main menu exposes two large actions, `Admin` and `TD eye`;
 - Admin::Edit can calibrate profiles from CameraX frames;
+- shared camera/analyzer naming is moving to the neutral `CameraFrameDecoder` name;
 - `grid13-v2` preserves `bfm`/`brm` physical orientation;
 - built-in observed profile has complete 52-card coverage;
 - golden manifest follows observed profile and derives bits/run form consistently;
