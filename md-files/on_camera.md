@@ -1,6 +1,8 @@
 # On Camera, Frame Processing, and Beetle Mind
 
-Vacation note from Selyn.
+Last aligned with source snapshot: `d66ac2d`.
+
+Vacation note from Selyn. Current implementation note: the neutral shared camera/analyzer name is now `CameraFrameDecoder`. For compatibility, the existing `AdminEditCameraFrameDecoder` implementation remains as the backing class while call sites can migrate gradually.
 
 ## Short verdict
 
@@ -41,19 +43,24 @@ Law book         = reducer mutates board
 Cockpit          = Compose screen
 ```
 
-## Strongest code smell
+## Current naming decision
 
-`AdminEditCameraFrameDecoder` is used beyond Admin. That means it has become shared camera/analyzer infrastructure.
-
-A future extraction/rename could be:
+The neutral frame-decoder name is settled as:
 
 ```kotlin
 CameraFrameDecoder
-BarcodeCameraFrameDecoder
-CameraScanFrameDecoder
 ```
 
-Shared camera/analyzer code should live somewhere neutral.
+The previous smell was that `AdminEditCameraFrameDecoder` was used beyond Admin. That meant it had become shared camera/analyzer infrastructure while still carrying an Admin-only name.
+
+Current compatibility shape:
+
+```text
+CameraFrameDecoder = neutral shared name
+AdminEditCameraFrameDecoder = current backing implementation / legacy call-site name
+```
+
+This is a safe transitional step. The important design direction is no longer open: future shared camera/analyzer work should use the neutral `CameraFrameDecoder` name.
 
 ## What belongs in Beetle Mind
 
@@ -144,6 +151,7 @@ sealed interface CameraScanMode {
 ```
 
 Admin says: scan one requested frame.
+
 TD says: stream continuously.
 
 ## Suggested ticket
@@ -156,7 +164,7 @@ Separate TD screen rendering from camera frame processing and scan stabilization
 Steps:
 1. Extract Beetle Mind consensus/debounce/dream logic from `EditBoardController` into a pure Kotlin class.
 2. Keep controller responsible for routing accepted scan decisions to `EditBoardReducer`.
-3. Rename/extract `AdminEditCameraFrameDecoder` into neutral camera scan support.
+3. Migrate shared frame-decoder call sites to the neutral `CameraFrameDecoder` name.
 4. Optionally extract duplicated CameraPreview logic from Admin and TD into shared `BarcodeCameraScanner`.
 5. Preserve existing behavior:
    - default Perception = 4;
