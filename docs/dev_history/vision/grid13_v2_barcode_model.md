@@ -134,7 +134,7 @@ If the measured Grid13 candidate is close enough to be useful, but its four oute
 10.........01
 ```
 
-This is the “proper sandwich” policy: if the meal looks incomplete but the detected barcode span is otherwise reliable, normalize the bread/sentinel cells and preserve the middle payload.
+This is the "proper sandwich" policy: if the meal looks incomplete but the detected barcode span is otherwise reliable, normalize the bread/sentinel cells and preserve the middle payload.
 
 However, normalization must be reported as evidence, not hidden:
 
@@ -203,6 +203,17 @@ Reverse-canonicalization reduced uniqueness in analysis and can collapse physica
 
 Physical cards have two meaningful ends. A card can be inspected from one end or from the opposite rotated end.
 
+The same printed barcode area can be seen from two opposite card orientations. In one place on the physical card it is read as the forward meal (`bfm...`); from the opposite end it is read as the reverse meal (`brm...`). This is the same kind of physical orientation effect as a card pip: the pip is still the same printed mark, but when the card turns around its visual form turns too, so a mark like `pip` can visually become something closer to `did`.
+
+That means a single confident Grid13 observation carries two useful raw aliases for the same selected card:
+
+```text
+observed forward bits -> bfmX
+same physical printed code, opposite end -> brmY
+```
+
+This is not generic reverse-canonicalization. The prefix is preserved, and both raw signatures remain distinct aliases.
+
 Some cards form criss-cross pairs where one card's forward payload is another card's reverse payload. This is safe only if the prefix is preserved.
 
 Safe:
@@ -254,22 +265,35 @@ Current profile model notes:
 * `builtin-observed-v1` contains visually verified `bfm...` and `brm...` aliases for all 52 cards.
 * The built-in demo profile is explicitly synthetic and is not a real physical deck mapping.
 
-## Live calibration vs curated built-in profile
+## Live calibration alias policy
 
-Live Admin calibration should not automatically invent a reverse alias from one observed scan.
+Live Admin calibration should automatically add the reverse-orientation alias for a confident `Found` Grid13 scan.
 
-If the camera observes `bfm12A5`, the app should assign that observed raw signature only, unless the user or a curated import explicitly provides the opposite orientation alias.
+Reason: the selected physical card owns both printed orientation readings. When the camera sees one end, the opposite end's token is not an unrelated guess; it is the same printed code viewed through the other orientation family, with the `bfm`/`brm` prefix preserving that physical orientation.
 
-The built-in observed profile is different: it may contain both `bfm` and `brm` aliases if both were physically verified or curated from trusted evidence.
+Example:
+
+```text
+Camera observes selected card:
+    rawSignature     = bfm12A5
+    reverseSignature = brm14A9
+
+DeckProfileEditor should assign both:
+    bfm12A5 -> selected CardId
+    brm14A9 -> selected CardId
+```
+
+This is allowed only when the decoder has both signatures from the same accepted Grid13 observation. It is still not allowed to collapse the prefixes or choose a canonical min/max token.
 
 Current rule:
 
 ```text
-live scan stores observed rawSignature only
-curated/built-in profile may store both orientation-family aliases
+live scan stores observed rawSignature and paired reverseSignature
+bfm/brm prefixes remain part of identity
+canonical min/max reversal is forbidden
 ```
 
-This avoids turning one observation into an unverified claim about the opposite physical orientation.
+If the reverse signature is absent, malformed, or not produced by the accepted decoder result, Admin should store only the observed raw signature and report the limitation as evidence.
 
 ## Current Admin::Edit flow
 
@@ -282,11 +306,13 @@ CameraX frame
 -> Grid13SlowDecoder
 -> BarcodeDecodeResult
 -> DeckProfileEditor.assign(rawSignature, selectedCard)
+-> DeckProfileEditor.assign(reverseSignature, selectedCard) when present and valid
 ```
 
 Behavior:
 
 * `Found` assigns the observed raw signature to the selected card.
+* `Found` also assigns the paired reverse signature when the decoder produced one.
 * `NotFound` does not mutate profile state.
 * `Ambiguous` does not mutate profile state.
 * conflicts are reported, not silently overwritten.
@@ -371,7 +397,7 @@ The golden manifest lives at:
 vision/src/test/resources/barcode-sheets/grid13-v2-golden.json
 ```
 
-The test fixture purpose is not just “can one barcode be decoded?” The important deck-level question is:
+The test fixture purpose is not just "can one barcode be decoded?" The important deck-level question is:
 
 ```text
 do all 52 cards produce distinct stable signatures?
@@ -388,6 +414,8 @@ Core/profile tests:
 5. Known criss-cross pairs remain distinct.
 6. No forward/reverse canonicalization collapses distinct cards.
 7. Custom profile JSON preserves signature metadata and aliases.
+8. Live Admin calibration stores both observed and paired reverse aliases when both are produced by the same accepted Grid13 result.
+9. Live Admin calibration stores only the observed alias when no valid reverse signature is available.
 
 Vision tests:
 
@@ -397,13 +425,14 @@ Vision tests:
 4. Degradation tests report shifts, blur, exposure, JPEG, skew, and red-suit channel comparison where available.
 5. Sentinel repair reports warnings/evidence rather than hiding repair.
 6. Fast decoder and slow diagnostic decoder agree on supported fixture cases.
+7. A confident decode produces both `rawSignature` and `reverseSignature` where the current model can derive both.
 
 Admin/UI tests:
 
 1. Alias chips display `bfm...` / `brm...` compactly.
 2. Read-only preview renders actual token bits.
 3. Sentinel-invalid tokens render with warning styling.
-4. Live calibration stores observed raw signature only.
+4. Live calibration stores observed raw signature and paired reverse signature when both are valid.
 5. Built-in/curated profiles may contain verified opposite-orientation aliases.
 
 ## Known limitations
@@ -417,11 +446,13 @@ Known seams:
 * TD multi-card scanning is not implemented yet.
 * Real profile persistence/import/export is not implemented yet.
 * The C8 static analyzer mismatch was a historical artifact of early pixel-width clustering; the current Grid13 model is collision-free on the 52-card set.
-* The decoder should not auto-store reverse aliases during live calibration, but the built-in observed profile may contain both `bfm` and `brm` if they were physically verified.
+* If a decoder result cannot provide a valid reverse signature, live calibration should not fabricate one.
 
 ## Historical note
 
 Earlier drafts mentioned a `C8` mismatch. That was a historical transcription/modeling scar. It is no longer a current known limitation.
+
+A later docs pass briefly claimed that live calibration should not auto-store reverse aliases. That was too conservative. The correct policy is: if the accepted Grid13 result contains both the observed raw signature and its paired reverse signature, Admin should store both aliases for the selected physical card.
 
 ## Next likely work
 
