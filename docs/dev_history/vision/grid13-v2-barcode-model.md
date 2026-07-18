@@ -5,9 +5,9 @@ This note is the durable implementation handoff for ITROBOC's current barcode si
 Related deeper docs:
 
 * `docs/dev_history/vision/grid13_design.md` — original design and rationale.
-* `docs/dev_history/vision/grid13_v2_barcode_model.md` — this doc, active v2 design spec.
+* `docs/dev_history/vision/grid13_v2_barcode_model.md` — canonical active v2 design spec.
 * `docs/dev_history/vision/barcodes/deep-research-report.md` — source research table and algorithm notes.
-* `docs/dev_history/admin-edit/admin_edit.md` — Admin::Edit calibration workflow and debug-log behavior.
+* `docs/dev_history/admin-edit/Admin_EditProfile_design.md` — Admin::Edit calibration workflow and debug-log behavior.
 
 ## Summary
 
@@ -146,215 +146,208 @@ This must not hide evidence. The decoder/debug model should retain:
 - why repair was applied
 - warnings / confidence
 
-## Grid13 Procedure
+Recommended debug fields:
 
-For a barcode ROI:
+```text
+grid13FwdBitsPreSentinel
+grid13FwdBits
+grid13RevBits
+sentinelValid
+sentinelIssues
+sentinelRepairApplied
+sentinelRepairReason
+warnings
+confidence
+```
 
-1. Convert pixels to an ink/darkness signal.
-2. Project the ROI into a 1D column signal.
-3. Threshold the projection to find black columns.
-4. Extract black runs and internal white gaps.
-5. Define the active span from the first black run edge to the last black run edge.
-6. Divide the active span into 13 equal cells.
-7. Convert each cell to `1` or `0` by ink occupancy/mean.
-8. Build a 13-bit forward string.
-9. Reverse that string for reverse/debug orientation evidence.
-10. Convert each 13-bit string to a 4-digit uppercase hex token.
+## Raw signature format
 
-Current implementation lives mainly in `:vision`:
-
-* `Grid13Signature.kt`
-* `Grid13MeasurementPrimitives.kt`
-* `Grid13SlowBarcodeMeasurement.kt`
-* `Grid13SlowDecoder.kt`
-
-## Raw Signature Format
-
-Forward token:
+Aliases use compact tokens:
 
 ```text
 bfmHHHH
-```
-
-Reverse/debug token:
-
-```text
 brmHHHH
 ```
 
-Meanings:
+Where:
 
-* `bfm` = beetle forward meal, the forward Grid13 token.
-* `brm` = beetle reverse meal, the reverse Grid13 token.
-* `HHHH` = 13-bit occupancy encoded as four uppercase hex digits after left-padding to 16 bits.
+- `bfm` = forward orientation family
+- `brm` = reverse orientation family
+- `HHHH` = exactly four uppercase hex digits
 
-The beetle names are friendly internal nicknames. Technically, `bfm` and `brm` are just compact signature-model prefixes.
+Internal nickname:
+
+- `bfm` = beetle forward meal
+- `brm` = beetle reverse meal
+
+The nickname is playful, but the technical meaning is serious: the prefix preserves orientation.
+
+## Forward and reverse signatures
+
+Both `bfm` and `brm` are valid raw-signature families. Do not reduce them to a single canonical value.
+
+Do not do this:
+
+```text
+canonical = min(forwardBits, reverseBitsSlow)
+```
+
+The prefix is part of the identity.
+
+## Why both `bfm` and `brm` are needed
+
+Physical cards have two meaningful ends. A card can be inspected from one end or from the opposite rotated end.
+
+Some cards form criss-cross pairs where one card’s forward payload is another card’s reverse payload. This is safe only if the prefix is preserved.
+
+Safe:
+
+```text
+Card A: bfmX / brmY
+Card B: bfmY / brmX
+```
+
+Unsafe:
+
+```text
+canonical(X, Y) -> both cards
+```
+
+Therefore:
+
+> Preserve orientation explicitly. Never erase it.
+
+## Deck Profile policy
+
+A Deck Profile may contain both `bfm...` and `brm...` aliases for one card, as long as they are explicitly stored as separate raw signatures.
+
+Core invariant:
+
+> One full raw signature maps to at most one CardId.
+
+The prefix is part of the raw signature, so these are distinct:
+
+```text
+bfm1549
+brm1549
+```
+
+## Live calibration vs curated built-in profile
+
+Live Admin calibration should not automatically invent a reverse alias from one observed scan.
+
+If the camera observes `bfm12A5`, the app should assign that observed raw signature only, unless the user or a curated import explicitly provides the opposite orientation alias.
+
+The built-in observed profile is different: it may contain both `bfm` and `brm` aliases because those aliases are curated as known physical-orientation evidence.
+
+```text
+Live scan: assign what was actually observed.
+Curated built-in profile: may contain both bfm and brm.
+```
+
+## Debug evidence
+
+The decoder should retain lower-level evidence:
+
+```text
+blackRunsPx
+whiteGapsPx
+rl2
+activeSpanPx
+grid13FwdBitsPreSentinel
+grid13FwdBits
+grid13RevBits
+rawSignature
+reverseSignature
+sentinelRepairApplied
+confidence
+warnings
+```
+
+`rl2` is a readable run-length form derived from the normalized Grid13 bit string, not the raw pixel widths.
 
 Example:
 
 ```text
-grid13FwdBits = 1010101001001
-grid13FwdHex  = 1549
-rawSignature  = bfm1549
+bits  = 1001010100101
+rl2   = B1 W2 B1 W1 B1 W1 B1 W2 B1 W1 B1
+token = bfm12A5
 ```
 
-## Orientation Policy
+Pixel measurements should remain available for diagnostics, but they are evidence, not profile identity.
 
-Do not canonicalize forward and reverse signatures.
+## Golden manifest
 
-Bad:
+The observed physical profile has a golden manifest with all 52 cards and expected decoder evidence.
+
+The golden manifest should protect:
+
+- 52 unique forward signatures
+- 52 reverse/orientation signatures where applicable
+- sentinel-valid normalized tokens
+- collision-free profile aliases
+- stable `rl2` derived from normalized bits
+- lower-level run evidence for debugging
+
+If decoder math changes, update the manifest only after verifying the new outputs are intended and still collision-free.
+
+## Decoder obligations
+
+A Grid13-v2 decoder must:
+
+1. Preserve orientation as `bfm` / `brm` families.
+2. Keep visible run evidence for debug.
+3. Store normalized 13-cell tokens as primary alias identity.
+4. Retain pre-normalization evidence when sentinel repair happens.
+5. Reject malformed candidates that are too far from the expected structure.
+6. Avoid mapping raw signatures directly to semantic card IDs.
+
+## Strict gate
+
+The current practical strict gate rejects implausible Grid13 occupancy candidates before returning a found verdict:
+
+- black run length >= 3 is rejected;
+- white run length >= 4 is rejected.
+
+This gate applies to normalized/evaluated 13-cell candidates, not directly to raw pixel runs.
+
+The observed physical 52-card manifest fits within:
 
 ```text
-canonical = min(forward, reverse)
+B1..B2
+W1..W3
 ```
 
-Why: reverse-canonicalization reduced uniqueness in analysis.
+## Read-only preview policy
 
-Current rule:
+Admin read-only preview should render the actual token bits for aliases.
 
-* assign/store `rawSignature`, usually `bfmHHHH`;
-* assign/store `reverseSignature`, usually `brmHHHH`;
-* automatically add the reverse token as an alias.
+It must not silently repair or reinterpret invalid tokens during preview.
 
-## Deck Profile Boundary
+If a profile contains a sentinel-invalid token, preview should show that faithfully and warn rather than creating a prettier barcode that is not actually in the profile.
 
-Core Deck Profiles store raw signatures as opaque strings:
+## Tests to keep green
 
-```text
-Map<RawSignature, CardId>
-```
+Useful test families:
 
-Core does not parse barcode pixels and does not infer card meaning from `bfm...`.
+- value-to-bits / bits-to-value conversion
+- sentinel mask validation
+- sentinel normalization warning behavior
+- raw signature formatting/parsing
+- bfm/brm distinction
+- Grid13 strict run gate
+- golden manifest uniqueness
+- Admin read-only preview using actual token bits
+- profile mapping preserves multiple aliases per card
 
-Deck Profile metadata can declare the signature model:
+## Non-goals
 
-```text
-signatureModel = "grid13-v2"
-```
+Grid13-v2 is not:
 
-Current profile model notes:
+- a generic barcode standard decoder;
+- an OCR system;
+- a semantic card classifier;
+- a guarantee that all printed decks share one profile;
+- a reason to remove Admin calibration.
 
-* Custom calibration profiles default to `grid13-v2`.
-* The default built-in profile is currently `builtin-observed-v1`.
-* `builtin-observed-v1` contains `bfm...` forward aliases and `brm...` reverse aliases for retained cards.
-* The built-in demo profile is explicitly synthetic: `synthetic-demo-bridge52-v1` -- not real physical deck mappings.
-
-## Current Admin::Edit Flow
-
-Admin::Edit currently uses Grid13 for one-frame calibration scans:
-
-```text
-CameraX frame
--> centered guide ROI
--> luma GrayImage
--> Grid13SlowDecoder
--> BarcodeDecodeResult
--> DeckProfileEditor.assign(rawSignature, selectedCard)
-```
-
-Behavior:
-
-* `Found` assigns the forward raw signature to the selected card.
-* `NotFound` does not mutate the profile.
-* `Ambiguous` does not mutate the profile.
-* Low-confidence Grid13 measurements are reported as `Ambiguous`.
-* Alias chips stay compact, such as `bfm1549`.
-* A clicked alias can show retained session scan evidence when available.
-
-## Debug Fields
-
-Admin::Edit JSONL logs are designed for diagnosis. Current records may include:
-
-```text
-timestampMillis
-selectedCard
-frameWidth
-frameHeight
-frameRotation
-frameTimestampNanos
-roi
-cropWidthPx
-cropHeightPx
-roiAngleDeg
-decodeResultType
-thresholdMode
-thresholdValue
-activeStartX
-activeEndX
-activeSpanPx
-blackRuns
-blackRunsPx
-whiteGapsPx
-blackRunCentersPx
-normalizedPattern
-rl2
-grid13FwdBits
-grid13RevBits
-grid13FwdHex
-grid13RevHex
-rawSignature
-reverseSignature
-signatureModel
-scanlineAgreement
-confidence
-ambiguous
-ambiguousCandidates
-warnings
-failureReason
-deckProfileMatchCount
-```
-
-Important current placeholders:
-
-* `roiAngleDeg` is `0.0` for the current rectangular guide crop.
-* `scanlineAgreement` is currently `null`; multi-scanline agreement is not implemented yet.
-
-## Validation Fixtures
-
-Barcode sheet PNG fixtures live in:
-
-```text
-vision/src/test/resources/barcode-sheets/
-```
-
-The golden manifest lives at:
-
-```text
-vision/src/test/resources/barcode-sheets/grid13-v2-golden.json
-```
-
-Current tests cover:
-
-* token formatting and reverse-bit conversion;
-* sheet resource enumeration;
-* measurement primitives;
-* static Grid13 measurement composition;
-* golden manifest uniqueness and known collision documentation;
-* degradation reporting for shifts, blur, exposure, JPEG, skew, and red-suit channel comparison;
-* live decoder behavior for found, not found, and ambiguous/low-confidence outcomes;
-* Admin debug log fields.
-
-## Known Limitations
-
-Grid13 is practical, not a claim about the manufacturer's official encoding.
-
-Known seams:
-
-* Live Android scan currently uses luma-only `GrayImage`, while static research prefers `ink = 255 - min(R,G,B)`.
-* Mild skew is unstable in degradation tests and needs later ROI/rectification work.
-* `scanlineAgreement` is not implemented yet.
-* `roiAngleDeg` is a placeholder.
-* TD multi-card scanning is not implemented yet.
-* Real profile persistence/import/export is not implemented yet.
-* The C8 static analyzer mismatch was a historical artifact of early pixel-width clustering; the current Grid13 model is collision-free on the 52-card set.
-* The decoder should not auto-store reverse aliases during live calibration, but the built-in observed profile may contain both `bfm` and `brm` if they were physically verified.
-
-## Next Likely Work
-
-Good next seams after this documentation pass:
-
-* improve live ROI extraction and orientation/rectification;
-* add multi-scanline measurement and fill `scanlineAgreement`;
-* investigate luma versus RGB/YUV ink extraction on real red-suit scans;
-* improve Admin profile persistence/import/export;
-* later, adapt Grid13 from Admin calibration into TD multi-card scan workflow.
+The deck profile layer remains essential.
