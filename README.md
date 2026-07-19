@@ -55,9 +55,9 @@ The repository currently contains:
     - PBN import with preservation of **double-dummy solver (DDS)** metadata
   - legacy Mock code may still exist temporarily, but the Mock screen is not a current main-menu product surface.
 
-Broader product direction and workflow notes live in [docs/product_context.md].
+Broader product direction and workflow notes live in [docs/product_context.md](docs/product_context.md).
 
-For the current barcode signature model and Grid13 implementation handoff, see [docs/grid13_v2_barcode_model.md].
+For the current barcode signature model and Grid13 implementation handoff, see [docs/dev_history/vision/grid13_v2_barcode_model.md](docs/dev_history/vision/grid13_v2_barcode_model.md).
 
 ## Built-in deck profiles
 

@@ -1,11 +1,12 @@
 # Admin::EditProfile Design
 
+Last aligned with source snapshot: `5a39c7e`.
+
 Audience: future AI instances working on ITROBOC.
 Scope: current-state design anchor for `docs/dev_history/admin-edit/Admin_EditProfile_design.md`.
-Status: post-MVP Admin calibration / inspection design, aligned with the `0ec24a2` source snapshot and the current architecture maxims.
+Status: post-MVP Admin calibration / inspection design.
 
-This file is intended to replace the older historical Admin EditProfile notes in `docs/dev_history/admin-edit/`.
-It should stay lean: current behavior, invariants, ownership, and design intent only. Completed tickets and old migration notes should not live here.
+This file should stay lean: current behavior, invariants, ownership, and design intent only. Completed tickets and old migration notes should not live here.
 
 ## Purpose
 
@@ -13,7 +14,7 @@ It should stay lean: current behavior, invariants, ownership, and design intent 
 
 Its job is to build, inspect, and debug mappings from observed raw barcode signatures to semantic bridge cards.
 
-The load-bearing rule is:
+Load-bearing rule:
 
 ```text
 Scanner does not know card meaning.
@@ -103,7 +104,7 @@ App owns Android/Compose/device integration:
 - `AdminReadOnlyCardPreview`
 - `AdminAliasDetails`
 - `AdminEditCameraSupport`
-- `AdminEditCameraFrameDecoder`
+- `CameraFrameDecoder`
 - `AdminEditScanDebugLogManager`
 
 App owns:
@@ -115,6 +116,15 @@ App owns:
 - in-memory profile selection/edit state;
 - JSON import/export through Android document pickers;
 - debug-log sharing through Android share/file-provider APIs.
+
+Naming note:
+
+```text
+CameraFrameDecoder = neutral shared camera/analyzer name
+AdminEditCameraFrameDecoder = current backing implementation / compatibility name
+```
+
+New shared camera/analyzer work should use `CameraFrameDecoder`.
 
 ## Admin::Actions current behavior
 
@@ -181,9 +191,7 @@ capture next frame -> decode ROI -> assign found raw signature to selected card
 
 The screen is split into two panes.
 
-### Left pane: card mapping grid
-
-The left pane contains:
+Left pane:
 
 - title: `Card Mapping`;
 - `Read only` toggle;
@@ -197,17 +205,13 @@ columns: ♠ ♥ ♦ ♣
 rows:    A K Q J T 9 8 7 6 5 4 3 2
 ```
 
-Current visual status:
+Visual status:
 
 - green card = mapped;
 - yellow card = unmapped;
 - selected card = extra black border independent of mapped/unmapped color.
 
-`Read only` is enabled only when every card has at least one alias. If the profile is incomplete, the UI explains that read-only unlocks after all 52 cards have at least one alias.
-
-### Right pane: preview/scanner/status/controls
-
-The right pane contains:
+Right pane:
 
 - camera preview or read-only inspection card;
 - selected-card status;
@@ -216,6 +220,8 @@ The right pane contains:
 - result message;
 - debug log path;
 - `Save`, `Back`, and `Share Debug Log` controls.
+
+`Read only` is enabled only when every card has at least one alias. If the profile is incomplete, the UI explains that read-only unlocks after all 52 cards have at least one alias.
 
 ## Read-only inspection mode
 
@@ -249,8 +255,6 @@ Important rule:
 Preview must show actual token bits. It must not silently repair invalid preview tokens.
 ```
 
-Sentinel-invalid preview uses a soft warning background and text such as `fails border sentinel check`.
-
 ## Editing mode
 
 Editing mode is active when `isReadOnly == false`.
@@ -281,7 +285,7 @@ CameraX ImageProxy
 -> frame debug metadata
 -> centered barcode ROI from adminScanGuideSpec
 -> luma-only GrayImage crop
--> Grid13SlowDecoder through BarcodeDecoder
+-> CameraFrameDecoder / slow Grid13 decode
 -> BarcodeDecodeResult
 -> DeckProfileEditor assignment on Found
 -> debug JSONL record
@@ -290,7 +294,7 @@ CameraX ImageProxy
 Current guide spec:
 
 ```kotlin
-widthFraction = 0.30f
+widthFraction = 0.20f
 heightFraction = 0.08f
 ```
 
@@ -360,18 +364,6 @@ Alias details:
 - show a clear note when no current-session evidence is retained;
 - allow removal only outside read-only mode.
 
-Retained scan evidence may include:
-
-- model;
-- forward bits;
-- reverse bits;
-- reverse token;
-- RL2;
-- black runs;
-- white gaps;
-- confidence;
-- warnings.
-
 Removing an alias calls `editor.remove(alias)`, marks the editor dirty, and does not remove any other alias for that card.
 
 ## Auto-advance behavior
@@ -402,8 +394,6 @@ Mock is not the real calibration path and should not be used to infer physical b
 
 ## Save/back behavior
 
-### Save
-
 `Save` commits the current editor into app-level in-memory profile state:
 
 ```text
@@ -412,11 +402,7 @@ activeProfileId -> updated DeckProfile
 
 It then returns to `Admin::Actions`.
 
-### Back
-
-If the editor is dirty and not read-only, `Back` opens a save/discard dialog.
-
-If the editor is clean or read-only, `Back` returns to `Admin::Actions` immediately.
+If the editor is dirty and not read-only, `Back` opens a save/discard dialog. If the editor is clean or read-only, `Back` returns to `Admin::Actions` immediately.
 
 ## Debug logging
 
@@ -430,23 +416,7 @@ Current behavior:
 - `Share Debug Log` exposes the log via Android FileProvider/share intent;
 - no durable database/log browser exists inside the app.
 
-Log records include at least:
-
-- selected card at scan-request time;
-- frame dimensions, rotation, timestamp;
-- ROI rectangle and crop dimensions;
-- decode result type;
-- raw signature and confidence on found results;
-- failure reason on failures;
-- threshold mode/value when present;
-- normalized pattern / black-run info when present;
-- Grid13 model, forward/reverse bits, hex, reverse token, RL2;
-- black/white run widths and centers;
-- active span;
-- sentinel validity and repair metadata;
-- ambiguity/candidate data;
-- warnings;
-- deck-profile match count at scan time.
+Log records include frame metadata, ROI, decode result, raw signature/confidence on success, failure reasons, Grid13 evidence when present, warnings, ambiguity data, and deck-profile match count at scan time.
 
 `scanlineAgreement` currently remains `null` until multi-scanline analysis exists.
 
