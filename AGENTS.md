@@ -10,5 +10,5 @@
 - Keep bridge-domain concepts explicit.
 - Prefer typed result models over booleans/strings for domain outcomes.
 - Skip automated rendering tools for UI verification; Archy will verify visuals manually in the IDE.
-- Add tests for behavior changes when possible.
+- Add tests for behavior changes when possible. ABCDEG -- a temp code to test pull request.
 - Run ./gradlew test before reporting completion when possible.
