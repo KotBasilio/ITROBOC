@@ -549,9 +549,19 @@ This supports the field case where the TD manually moves one card into a hand, c
 
 This is an accepted product decision.
 
-## 12. Compose/state rules
+## 12. Compose/state/typography rules
 
 Avoid mutating Compose state directly inside render branches.
+
+### Typography
+
+ITROBOC uses a central semantic typography layer in `ItrobocTextStyles.kt`.
+
+- **Prefer semantic roles** over raw `fontSize` or `FontWeight` in `.kt` UI files.
+- **BigVisible**: Primary anchor for titles and major actions (40sp Bold).
+- **CockpitBasic**: Standard size for cockpit controls (32sp).
+- **SettingsBasic**: Anchor for settings labels and grids (36sp Bold).
+- **TdHand**: Unified style for card displays in hands (24sp).
 
 Example rule:
 
