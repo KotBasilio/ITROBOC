@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.itroboc.core.CardId
 import org.itroboc.core.Suit
 import org.itroboc.vision.checkGrid13SentinelsSlow
@@ -100,8 +99,7 @@ internal fun AdminReadOnlyCardPreview(
         Text(
             text = card.prettyCardLabel,
             color = inspectionGreen,
-            fontSize = 38.sp,
-            fontWeight = FontWeight.Black,
+            style = ItrobocTextStyles.CardInspectionTitle,
             modifier = Modifier.align(Alignment.Center),
         )
 
@@ -136,8 +134,7 @@ private fun CardCorner(
         Text(
             text = card.suit.prettySymbol,
             color = inspectionGreen,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Black,
+            style = ItrobocTextStyles.CardInspectionSuit,
         )
     }
 }

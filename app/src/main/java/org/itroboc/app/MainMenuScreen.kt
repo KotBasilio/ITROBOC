@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainMenuScreen(
@@ -33,7 +32,7 @@ fun MainMenuScreen(
                 onClick = { onNavigate(Screen.AdminActions) },
                 modifier = Modifier.weight(1f).aspectRatio(4f)
             ) {
-                Text("Admin", fontSize = 60.sp)
+                Text("Admin", style = ItrobocTextStyles.MainMenuAction)
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -42,7 +41,7 @@ fun MainMenuScreen(
                 onClick = { onNavigate(Screen.TdActions) },
                 modifier = Modifier.weight(1f).aspectRatio(4f)
             ) {
-                Text("TD eye", fontSize = 60.sp)
+                Text("TD eye", style = ItrobocTextStyles.MainMenuAction)
             }
         }
         

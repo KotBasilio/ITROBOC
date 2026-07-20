@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.itroboc.core.BoardState
 import org.itroboc.core.CardId
 import org.itroboc.core.HandState
@@ -187,7 +186,7 @@ private fun ScissorsHandPane(
             horizontalArrangement = Arrangement.Center,
         ) {
             Button(onClick = onDismiss) {
-                Text(fontSize = 32.sp, text = "Close")
+                Text(style = ItrobocTextStyles.CockpitBasic, text = "Close")
             }
         }
     }
@@ -210,8 +209,7 @@ private fun ScissorsSuitCardsRow(
         Text(
             text = suitCards.suit.prettySymbol,
             color = suitCards.suit.displayColor,
-            fontSize = 50.sp,
-            fontWeight = FontWeight.Bold,
+            style = ItrobocTextStyles.TdResultCard,
             modifier = Modifier.width(44.dp),
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -219,7 +217,7 @@ private fun ScissorsSuitCardsRow(
         if (cards.isEmpty()) {
             Text(
                 text = " —",
-                fontSize = 42.sp,
+                style = ItrobocTextStyles.BigVisible,
                 color = Color.Black,
             )
         } else if (bottomRow.isEmpty()) {
@@ -251,7 +249,7 @@ private fun ScissorsSuitRankLine(
         cards.forEach { card ->
             Text(
                 text = card.rank.symbol.toString(),
-                fontSize = 50.sp,
+                style = ItrobocTextStyles.TdResultCard,
                 color = Color.Black,
                 modifier = Modifier
                     .clickable { onRemoveCard(card) }
@@ -287,7 +285,7 @@ private fun ScissorsManualEntryPane(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = suit.prettySymbol, fontSize = 38.sp)
+                    Text(text = suit.prettySymbol, style = ItrobocTextStyles.ScissorsGridSuit)
                 }
             }
         }
@@ -364,7 +362,7 @@ private fun ManualEntryCardButton(
         Text(
             text = card.rank.symbol.toString(),
             fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
+            style = ItrobocTextStyles.ScissorsGridRank,
             color = Color.Black,
         )
     }

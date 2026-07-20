@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -202,7 +201,7 @@ fun AdminEditScreen(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = suit.prettySymbol, fontSize = 20.sp)
+                        Text(text = suit.prettySymbol, style = ItrobocTextStyles.AdminGridSuit)
                     }
                 }
             }
@@ -662,7 +661,7 @@ fun CardButton(
         Text(
             text = card.rank.symbol.toString(),
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            style = ItrobocTextStyles.AdminGridRank,
             color = Color.Black
         )
     }

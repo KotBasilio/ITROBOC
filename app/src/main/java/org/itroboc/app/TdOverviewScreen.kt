@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.itroboc.core.*
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -102,11 +101,10 @@ fun TdOverviewScreen(
         ) {
             Text(
                 text = "TD Actions",
-                style = MaterialTheme.typography.headlineMedium,
-                fontSize = 40.sp,  fontWeight = FontWeight.Bold
+                style = ItrobocTextStyles.BigVisible
             )
             Button(onClick = onBack) {
-                Text("Back", fontSize = 40.sp)
+                Text("Back", style = ItrobocTextStyles.BigVisible)
             }
         }
 
@@ -175,7 +173,7 @@ fun TdOverviewScreen(
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Import", fontSize = 40.sp)
+                Text("Import", style = ItrobocTextStyles.BigVisible)
             }
             Button(
                 onClick = {
@@ -196,7 +194,7 @@ fun TdOverviewScreen(
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Export", fontSize = 40.sp)
+                Text("Export", style = ItrobocTextStyles.BigVisible)
             }
             Button(
                 onClick = {
@@ -210,14 +208,14 @@ fun TdOverviewScreen(
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Save", fontSize = 40.sp)
+                Text("Save", style = ItrobocTextStyles.BigVisible)
             }
             Button(
                 onClick = { showSettingsDialog = true },
                 modifier = Modifier.weight(1f).height(56.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Text("Settings", fontSize = 40.sp)
+                Text("Settings", style = ItrobocTextStyles.BigVisible)
             }
         }
     }
@@ -284,20 +282,17 @@ fun TdSettingsScreen(
             ) {
                 Text(
                     text = "TD Settings",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold
+                    style = ItrobocTextStyles.BigVisible
                 )
                 Button(onClick = onDismiss) {
-                    Text("Close", fontSize = 40.sp )
+                    Text("Close", style = ItrobocTextStyles.BigVisible )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Text( "Total boards in grid",
-                style = MaterialTheme.typography.titleMedium,
-                fontSize = 40.sp,
+                style = ItrobocTextStyles.BigVisible,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -313,7 +308,7 @@ fun TdSettingsScreen(
                         label = { 
                             Text(
                                 text = size.toString(),
-                                fontSize = 24.sp,
+                                style = ItrobocTextStyles.SettingValue,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) 
                         }
@@ -324,8 +319,7 @@ fun TdSettingsScreen(
             Spacer(modifier = Modifier.height(36.dp))
 
             Text( "Perception",
-                style = MaterialTheme.typography.titleMedium,
-                fontSize = 40.sp,
+                style = ItrobocTextStyles.BigVisible,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -346,14 +340,10 @@ fun TdSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text( "Shy",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 36.sp,
+                    style = ItrobocTextStyles.SettingsBasic,
                 )
                 Text( "Bold",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 36.sp,
+                    style = ItrobocTextStyles.SettingsBasic,
                 )
             }
         }
@@ -392,10 +382,8 @@ fun BoardButton(
     ) {
         Text(
             text = "$number",
-            color = Color.Black, fontSize = 36.sp,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
-
+            color = Color.Black,
+            style = ItrobocTextStyles.SettingsBasic
         )
     }
 }

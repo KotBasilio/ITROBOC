@@ -367,8 +367,8 @@ fun BoardControlsArea(
     ) {
         Text(
             text = "Board: $boardNumber",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 32.sp,
+            style = ItrobocTextStyles.CockpitBasic,
+            fontWeight = FontWeight.Bold
         )
 
         Button(
@@ -376,7 +376,7 @@ fun BoardControlsArea(
             modifier = Modifier.fillMaxWidth().aspectRatio(3f),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Text("Back", fontSize = 32.sp)
+            Text("Back", style = ItrobocTextStyles.CockpitBasic)
         }
     }
 }
@@ -396,13 +396,13 @@ fun HandContent(
                 Text(
                     text = suitCards.suit.prettySymbol,
                     color = if (suitCards.suit == Suit.HEARTS || suitCards.suit == Suit.DIAMONDS) Color.Red else Color.Black,
-                    fontSize = 24.sp,
+                    style = ItrobocTextStyles.TdHand,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(22.dp)
                 )
                 Text(
                     text = " " + if (suitCards.cards.isEmpty()) "—" else suitCards.cards.joinToString("") { it.rank.symbol.toString() },
-                    fontSize = 24.sp,
+                    style = ItrobocTextStyles.TdHand,
                     color = Color.Black
                 )
             }
@@ -439,7 +439,7 @@ fun WestArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Clear", fontSize = 32.sp)
+                Text("Clear", style = ItrobocTextStyles.CockpitBasic)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -454,7 +454,7 @@ fun WestArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Swap", fontSize = 32.sp)
+                Text("Swap", style = ItrobocTextStyles.CockpitBasic)
             }
         }
     }
@@ -491,7 +491,7 @@ fun EastArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("Undo", fontSize = 32.sp)
+                Text("Undo", style = ItrobocTextStyles.CockpitBasic)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -506,7 +506,7 @@ fun EastArea(
                 modifier = Modifier.padding(8.dp).fillMaxWidth().aspectRatio(3f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
-                Text("✂\uFE0F", fontSize = 32.sp)
+                Text("✂\uFE0F", style = ItrobocTextStyles.CockpitBasic)
             }
         }
     }
@@ -556,9 +556,8 @@ fun StatusArea(
                 val totalCount = boardState.totalCardCount()
                 Text(
                     text = "Cards: $totalCount/52",
-                    fontSize = 40.sp,
+                    style = ItrobocTextStyles.BigVisible,
                     color = Color(0xFF4CAF50),
-                    style = MaterialTheme.typography.titleMedium,
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -566,11 +565,11 @@ fun StatusArea(
                 Column {
                     Text(
                         text = if (sps > 0.0) "SPS %4.1f".format(sps) else "IDLE %.0f".format(-sps),
-                        fontSize = 24.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                        style = ItrobocTextStyles.TdTelemetry, color = Color.Gray
                     )
                     Text(
                         "Thoughts: " + thoughts,
-                        fontSize = 20.sp, style = MaterialTheme.typography.labelSmall, color = Color.Gray
+                        style = ItrobocTextStyles.TdThoughts, color = Color.Gray
                     )
                 }
             }
@@ -578,8 +577,7 @@ fun StatusArea(
             if (message != null) {
                 Text(
                     text = message,
-                    fontSize = 24.sp,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = ItrobocTextStyles.TdTelemetry,
                     color = Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -612,9 +610,7 @@ fun LastScannedCardArea(
             if (displayCard != null) {
                 Text(
                     text = "${displayCard.suit.prettySymbol}${displayCard.rank.symbol}",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 50.sp,
+                    style = ItrobocTextStyles.TdResultCard,
                     color = if (displayCard.suit == Suit.HEARTS || displayCard.suit == Suit.DIAMONDS) Color.Red else Color.Black,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -644,7 +640,7 @@ fun SureArea(
             .padding(8.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
     ) {
-        Text("I'm sure", fontSize = 32.sp)
+        Text("I'm sure", style = ItrobocTextStyles.CockpitBasic)
     }
 }
 
@@ -769,8 +765,7 @@ fun OrientationArea(
     ) {
         Text(
             "Barcode",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 30.sp,
+            style = ItrobocTextStyles.SectionHeader
         )
         Spacer(modifier = Modifier.height(10.dp))
         Row(modifier = Modifier.selectableGroup()) {
@@ -792,8 +787,7 @@ fun OrientationArea(
                     )
                     Text(
                         text = mode.label,
-                        fontSize = 28.sp,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = ItrobocTextStyles.ChoiceLabel,
                         color = if (enabled) Color.Unspecified else Color.Gray
                     )
                 }
@@ -814,8 +808,7 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
     ) {
         Text(
             "Feed mode",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold, fontSize = 30.sp,
+            style = ItrobocTextStyles.SectionHeader
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -828,7 +821,7 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = true, onClick = null)
-                Text("stream", fontSize = 28.sp, style = MaterialTheme.typography.bodyMedium)
+                Text("stream", style = ItrobocTextStyles.ChoiceLabel)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -837,8 +830,7 @@ fun FeedModeArea(modifier: Modifier = Modifier) {
                 RadioButton(selected = false, onClick = null, enabled = false)
                 Text(
                     "snap",
-                    fontSize = 28.sp,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = ItrobocTextStyles.ChoiceLabel,
                     color = Color.Gray
                 )
             }
@@ -866,9 +858,7 @@ fun SwapScreen(
         ) {
             Text(
                 text = "Swap ${currentSeat.displayName} with...",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 40.sp
+                style = ItrobocTextStyles.BigVisible
             )
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -881,14 +871,14 @@ fun SwapScreen(
                         .padding(vertical = 8.dp)
                         .height(80.dp)
                 ) {
-                    Text(text = seat.displayName, fontSize = 40.sp)
+                    Text(text = seat.displayName, style = ItrobocTextStyles.BigVisible)
                 }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
 
             Button(onClick = onDismiss) {
-                Text( fontSize = 32.sp, text = "Cancel" )
+                Text( text = "Cancel", style = ItrobocTextStyles.CockpitBasic )
             }
         }
     }
