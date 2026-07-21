@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -39,6 +38,7 @@ fun TdOverviewScreen(
     onAutosaveEnabledChange: (Boolean) -> Unit = {},
     onAutosavePrefixChange: (String) -> Unit = {},
     onClearOldFiles: (archive: Boolean) -> Unit = {},
+    onWipeSession: () -> Unit = {},
     onNavigateToBoard: (Int) -> Unit,
     onBack: () -> Unit
 ) {
@@ -244,7 +244,11 @@ fun TdOverviewScreen(
                 onSessionStateChange(sessionState.updateRequiredConsensusFrames(newFrames))
             },
             onAutosaveEnabledChange = onAutosaveEnabledChange,
-            onAutosavePrefixChange = onAutosavePrefixChange
+            onAutosavePrefixChange = onAutosavePrefixChange,
+            onWipeSession = {
+                onWipeSession()
+                showSettingsDialog = false
+            }
         )
     }
 
@@ -299,12 +303,14 @@ fun TdSettingsScreen(
     onConsensusFramesSelected: (Int) -> Unit,
     onAutosaveEnabledChange: (Boolean) -> Unit,
     onAutosavePrefixChange: (String) -> Unit,
+    onWipeSession: () -> Unit,
 ) {
     val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES.filter { it >= minAllowedSize }
     val perceptionFrames = TdSessionState.ALLOWED_CONSENSUS_FRAMES
     var perceptionIndex by remember(currentConsensusFrames) {
         mutableFloatStateOf(perceptionFrames.indexOf(currentConsensusFrames).coerceAtLeast(0).toFloat())
     }
+    var showWipeConfirm by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -390,21 +396,33 @@ fun TdSettingsScreen(
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            Text( "Autosave",
+            Text( "Autosave & Session",
                 style = ItrobocTextStyles.BigVisible,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(0.8f),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Checkbox(
-                    checked = autosaveEnabled,
-                    onCheckedChange = onAutosaveEnabledChange
-                )
-                Text("Enable Autosave", style = ItrobocTextStyles.ChoiceLabel)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = autosaveEnabled,
+                        onCheckedChange = onAutosaveEnabledChange
+                    )
+                    Text("Enable Autosave", style = ItrobocTextStyles.ChoiceLabel)
+                }
+                
+                Button(
+                    onClick = { showWipeConfirm = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Wipe Session", style = ItrobocTextStyles.CockpitBasic)
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = autosavePrefix,
@@ -422,6 +440,27 @@ fun TdSettingsScreen(
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
+    }
+
+    if (showWipeConfirm) {
+        AlertDialog(
+            onDismissRequest = { showWipeConfirm = false },
+            title = { Text("Wipe Session?") },
+            text = { Text("This will clear all currently entered boards. The autosave file will remain until the next hand is completed. To recover after wipe, restart the app immediately.") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    onWipeSession()
+                    showWipeConfirm = false 
+                }) {
+                    Text("Wipe", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWipeConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

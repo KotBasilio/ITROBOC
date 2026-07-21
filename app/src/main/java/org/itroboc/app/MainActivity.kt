@@ -47,6 +47,7 @@ fun AppNavigation(viewModel: ItrobocMainViewModel) {
                 onAutosaveEnabledChange = { viewModel.updateAutosaveEnabled(it) },
                 onAutosavePrefixChange = { viewModel.updateAutosavePrefix(it) },
                 onClearOldFiles = { viewModel.clearOldFiles(it) },
+                onWipeSession = { viewModel.wipeSession() },
                 onNavigateToBoard = { viewModel.navigateTo(Screen.EditBoard(it)) },
                 onBack = { viewModel.navigateTo(Screen.MainMenu) }
             )

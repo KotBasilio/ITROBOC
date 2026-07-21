@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import org.itroboc.core.BoardProgressSummary
 import org.itroboc.core.BuiltInDeckProfiles
@@ -95,9 +96,12 @@ class ItrobocMainViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun wipeSession() {
+        sessionState = TdSessionState()
+        // Note: we don't delete the autosave file here, giving the TD a "last train" recovery
+    }
+
     private fun shouldTriggerAutosave(old: TdSessionState, new: TdSessionState): Boolean {
-        // Trigger if any hand count changed and reached 13
-        // Also trigger on manual fourth-hand fill (all hands reached 13)
         val oldSummary = old.boards.mapValues { BoardProgressSummary.from(it.value.boardState) }
         val newSummary = new.boards.mapValues { BoardProgressSummary.from(it.value.boardState) }
 
@@ -109,12 +113,12 @@ class ItrobocMainViewModel(application: Application) : AndroidViewModel(applicat
 
     fun updateAutosaveEnabled(enabled: Boolean) {
         autosaveEnabled = enabled
-        prefs.edit().putBoolean("autosave_enabled", enabled).apply()
+        prefs.edit { putBoolean("autosave_enabled", enabled) }
     }
 
     fun updateAutosavePrefix(prefix: String) {
         autosavePrefix = prefix
-        prefs.edit().putString("autosave_prefix", prefix).apply()
+        prefs.edit { putString("autosave_prefix", prefix) }
         currentAutosaveFilename = autosaveManager.generateFilename(prefix)
     }
 
