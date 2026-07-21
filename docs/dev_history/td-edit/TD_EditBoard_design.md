@@ -1,6 +1,6 @@
 # TD::EditBoard Design
 
-Last aligned with source snapshot: `65eb5aa`.
+Last aligned with source snapshot: `c868326`.
 
 This document is the current-state design anchor for `TD::EditBoard`. It replaces earlier TD EditBoard ticket/history notes. It should stay lean: when a ticket is completed, remove ticket archaeology and keep only current behavior, invariants, accepted decisions, and test anchors.
 

@@ -129,7 +129,7 @@ The “Fire-Queen sews docs seam” claim is mostly true, but not perfect yet.
 `product_context.md` still says:
 
 ```text
-Last aligned with source snapshot: 3d85beb
+Last aligned with source snapshot: c868326
 ```
 
 and does not yet mention:

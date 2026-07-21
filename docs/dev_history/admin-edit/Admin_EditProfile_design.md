@@ -1,6 +1,6 @@
 # Admin::EditProfile Design
 
-Last aligned with source snapshot: `5a39c7e`.
+Last aligned with source snapshot: `c868326`.
 
 Audience: future AI instances working on ITROBOC.
 Scope: current-state design anchor for `docs/dev_history/admin-edit/Admin_EditProfile_design.md`.
