@@ -6,9 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,14 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.unit.dp
-import org.itroboc.core.BoardState
-import org.itroboc.core.CardId
-import org.itroboc.core.HandState
-import org.itroboc.core.Rank
-import org.itroboc.core.Seat
-import org.itroboc.core.Suit
+import org.itroboc.core.*
 
 @Composable
 fun ScissorsScreen(
@@ -42,6 +38,7 @@ fun ScissorsScreen(
     onDismiss: () -> Unit,
     onRemoveCard: (CardId) -> Unit,
     onAddCard: (CardId) -> Unit,
+    onSeatChange: (Seat) -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -98,6 +95,7 @@ fun ScissorsScreen(
                     handState = handState,
                     onRemoveCard = onRemoveCard,
                     onDismiss = onDismiss,
+                    onSeatChange = onSeatChange,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -111,6 +109,7 @@ private fun ScissorsHandPane(
     handState: HandState,
     onRemoveCard: (CardId) -> Unit,
     onDismiss: () -> Unit,
+    onSeatChange: (Seat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -120,67 +119,29 @@ private fun ScissorsHandPane(
             .padding(16.dp),
         horizontalAlignment = Alignment.Start,
     ) {
-        Text(
-            text = "Click cards to remove them",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
+        ScissorsHandArea(
+            seat = seat,
+            handState = handState,
+            onRemoveCard = onRemoveCard,
+            onSeatChange = onSeatChange,
         )
-        Spacer(modifier = Modifier.height(30.dp))
 
-        if (handState.count() == 0) {
-            Box(
-                modifier = Modifier.weight(2.3f),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Hand is empty.\nUse the table to add cards.",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.Gray,
-                )
-            }
-        } else {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
-                    ScissorsSuitCardsRow(
-                        suitCards = suitCards,
-                        onRemoveCard = onRemoveCard,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-            text = "Legend",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            Text(
+                text = "Legend:",
+                style = ItrobocTextStyles.CardInspectionSuit,
+                fontWeight = FontWeight.Bold,
+            )
             OwnershipLegendChip("Here", Color(0xFF81C784))
-            OwnershipLegendChip("Other hand", Color(0xFFFFCC80))
-            OwnershipLegendChip("Unassigned", Color(0xFFE0E0E0))
+            OwnershipLegendChip("There", Color(0xFFFFCC80))
+            OwnershipLegendChip("Free", Color(0xFFE0E0E0))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Seat.entries.forEach { chip ->
-                SeatBorderLegendChip(ownerSeat = seat, seat = chip)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(60.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -193,8 +154,82 @@ private fun ScissorsHandPane(
 }
 
 @Composable
+private fun ColumnScope.ScissorsHandArea(
+    seat: Seat,
+    handState: HandState,
+    onRemoveCard: (CardId) -> Unit,
+    onSeatChange: (Seat) -> Unit,
+) {
+    val isComplete = handState.isComplete()
+    val backgroundColor = if (isComplete) Color(0xFFC8E6C9) else Color.Transparent
+    val borderColor = seat.borderColor
+    val borderWidth = 6.dp
+
+    // We use a fixed height here (e.g., 280.dp) to fit approximately 5 rows of cards reliably.
+    // This ensures the area doesn't "stretch" or "shrink" when cards are added or removed.
+    val handContainerModifier = Modifier
+        .height(340.dp)
+        .fillMaxWidth()
+        .background(backgroundColor, RoundedCornerShape(12.dp))
+        .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
+
+    Text(
+        text = "Click cards to remove them",
+        style = MaterialTheme.typography.bodyLarge,
+        color = Color.Gray,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    if (handState.count() == 0) {
+        Box(
+            modifier = handContainerModifier,
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Hand is empty.\nUse the table to add cards.",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.Gray,
+            )
+        }
+    } else {
+        Column(
+            modifier = handContainerModifier,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Spacer(modifier = Modifier.height(4.dp))
+            handState.cardsBySuitInBridgeOrder().forEach { suitCards ->
+                ScissorsSuitCardsRow(
+                    suitCards = suitCards,
+                    onRemoveCard = onRemoveCard,
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Seat.entries.forEach { chip ->
+            SeatBorderLegendChip(
+                ownerSeat = seat,
+                seat = chip,
+                onClick = { onSeatChange(chip) }
+            )
+        }
+    }
+
+    // This Spacer now has weight(1f), which tells it to consume ALL remaining
+    // vertical space, pushing the items below it to the very bottom of the parent Column.
+    Spacer(modifier = Modifier.weight(1f))
+}
+
+@Composable
 private fun ScissorsSuitCardsRow(
-    suitCards: org.itroboc.core.SuitCards,
+    suitCards: SuitCards,
     onRemoveCard: (CardId) -> Unit,
 ) {
     val cards = suitCards.cards
@@ -206,6 +241,7 @@ private fun ScissorsSuitCardsRow(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start,
     ) {
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = suitCards.suit.prettySymbol,
             color = suitCards.suit.displayColor,
@@ -271,7 +307,6 @@ private fun ScissorsManualEntryPane(
 
     Column(
         modifier = modifier
-            .fillMaxHeight()
             .border(2.dp, Color(0xFFB0BEC5), RoundedCornerShape(12.dp))
             .padding(8.dp),
         horizontalAlignment = Alignment.Start,
@@ -329,7 +364,7 @@ private fun OwnershipLegendChip(label: String, color: Color) {
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = Color.Black, fontWeight = FontWeight.Medium)
+        Text(text = label, color = Color.Black, fontWeight = FontWeight.Medium, style = ItrobocTextStyles.CardInspectionSuit)
     }
 }
 
@@ -369,7 +404,7 @@ private fun ManualEntryCardButton(
 }
 
 @Composable
-private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat) {
+private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat, onClick: () -> Unit) {
     val backgroundColor =
         if (seat == ownerSeat) { Color(0xFF81C784) }
         else { Color(0xFFFFCC80) }
@@ -378,10 +413,11 @@ private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat) {
         modifier = Modifier
             .background(backgroundColor, RoundedCornerShape(6.dp))
             .border(6.dp, seat.borderColor, RoundedCornerShape(6.dp))
+            .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = seat.displayName, color = Color.Black, fontWeight = FontWeight.Medium)
+        Text(text = seat.displayName, color = Color.Black, fontWeight = FontWeight.Medium, style = ItrobocTextStyles.ScissorsGridRank)
     }
 }
 
@@ -406,7 +442,7 @@ private val Suit.displayColor: Color
         Suit.SPADES, Suit.CLUBS -> Color.Black
     }
 
-@Preview(showBackground = true, widthDp = 1000, heightDp = 800)
+@ComposePreview(showBackground = true, device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 800)
 @Composable
 fun ScissorsScreenPreview() {
     val seat = Seat.NORTH
@@ -456,6 +492,7 @@ fun ScissorsScreenPreview() {
             onDismiss = {},
             onRemoveCard = {},
             onAddCard = {},
+            onSeatChange = {},
         )
     }
 }

@@ -226,6 +226,9 @@ fun EditBoardScreen(
             onAddCard = { card ->
                 controller.onManualAddCard(card)
             },
+            onSeatChange = { seat ->
+                controller.onSeatClick(seat)
+            }
         )
     }
 
