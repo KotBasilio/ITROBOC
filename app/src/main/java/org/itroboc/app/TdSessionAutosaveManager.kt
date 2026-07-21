@@ -16,8 +16,8 @@ internal class TdSessionAutosaveManager(private val context: Context) {
 
     fun getAutosaveDirectory(): File = context.filesDir
 
-    fun generateFilename(prefix: String): String {
-        val dateStr = dateFormat.format(Date())
+    fun generateFilename(prefix: String, date: Date = Date()): String {
+        val dateStr = dateFormat.format(date)
         return "${prefix}-${dateStr}.pbn"
     }
 
@@ -35,6 +35,36 @@ internal class TdSessionAutosaveManager(private val context: Context) {
         } catch (e: Exception) {
             Log.e(tag, "Failed to autosave: ${e.message}")
         }
+    }
+
+    /**
+     * Attempts to restore the session. If today's file is missing and it's before 03:00,
+     * tries yesterday's file as a fallback.
+     */
+    fun smartRestore(prefix: String, currentSession: TdSessionState, now: Date = Date()): TdSessionState {
+        val todayFilename = generateFilename(prefix, now)
+        val todayFile = File(getAutosaveDirectory(), todayFilename)
+        
+        if (todayFile.exists()) {
+            return restore(todayFilename, currentSession)
+        }
+
+        // Midnight fallback window: 00:00 to 03:00
+        val calendar = Calendar.getInstance().apply { time = now }
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        
+        if (hour < 3) {
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+            val yesterdayFilename = generateFilename(prefix, calendar.time)
+            val yesterdayFile = File(getAutosaveDirectory(), yesterdayFilename)
+            
+            if (yesterdayFile.exists()) {
+                Log.i(tag, "Today's file missing in early-morning window. Falling back to yesterday: $yesterdayFilename")
+                return restore(yesterdayFilename, currentSession)
+            }
+        }
+
+        return currentSession
     }
 
     fun restore(filename: String, currentSession: TdSessionState): TdSessionState {

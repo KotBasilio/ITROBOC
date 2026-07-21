@@ -11,6 +11,8 @@ import org.itroboc.core.CardId
 import org.itroboc.core.Seat
 import java.io.File
 import java.nio.file.Files
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -21,6 +23,7 @@ class TdSessionAutosaveManagerTest {
     private lateinit var tempDir: File
     private lateinit var context: Context
     private lateinit var manager: TdSessionAutosaveManager
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
     @BeforeTest
     fun setup() {
@@ -84,5 +87,48 @@ class TdSessionAutosaveManagerTest {
         val archivedFile = File(tempDir, prefix.replace("autosave", "archived") + "-2020-01-01.pbn")
         assertTrue(archivedFile.exists())
         assertTrue(!oldFile.exists())
+    }
+
+    @Test
+    fun `smartRestore prefers today file even in morning window`() {
+        val prefix = "ITROBOC-autosave"
+        val now = Calendar.getInstance().apply { set(2024, 6, 21, 1, 30) }.time // 01:30 AM
+        val todayFilename = manager.generateFilename(prefix, now)
+        val yesterdayFilename = manager.generateFilename(prefix, Date(now.time - 24 * 60 * 60 * 1000))
+
+        val boardToday = BoardState().addCard(Seat.NORTH, CardId.parse("SA"))
+        val boardYesterday = BoardState().addCard(Seat.NORTH, CardId.parse("SK"))
+
+        manager.save(TdSessionState(boards = mapOf(1 to BoardEditState(1, boardState = boardToday))), todayFilename)
+        manager.save(TdSessionState(boards = mapOf(1 to BoardEditState(1, boardState = boardYesterday))), yesterdayFilename)
+
+        val restored = manager.smartRestore(prefix, TdSessionState(), now)
+        assertEquals(boardToday, restored.boards.getValue(1).boardState)
+    }
+
+    @Test
+    fun `smartRestore falls back to yesterday in morning window if today is missing`() {
+        val prefix = "ITROBOC-autosave"
+        val now = Calendar.getInstance().apply { set(2024, 6, 21, 1, 30) }.time // 01:30 AM
+        val yesterdayFilename = manager.generateFilename(prefix, Date(now.time - 24 * 60 * 60 * 1000))
+
+        val boardYesterday = BoardState().addCard(Seat.NORTH, CardId.parse("SK"))
+        manager.save(TdSessionState(boards = mapOf(1 to BoardEditState(1, boardState = boardYesterday))), yesterdayFilename)
+
+        val restored = manager.smartRestore(prefix, TdSessionState(), now)
+        assertEquals(boardYesterday, restored.boards.getValue(1).boardState)
+    }
+
+    @Test
+    fun `smartRestore does not fall back to yesterday after morning window`() {
+        val prefix = "ITROBOC-autosave"
+        val now = Calendar.getInstance().apply { set(2024, 6, 21, 10, 0) }.time // 10:00 AM
+        val yesterdayFilename = manager.generateFilename(prefix, Date(now.time - 24 * 60 * 60 * 1000))
+
+        val boardYesterday = BoardState().addCard(Seat.NORTH, CardId.parse("SK"))
+        manager.save(TdSessionState(boards = mapOf(1 to BoardEditState(1, boardState = boardYesterday))), yesterdayFilename)
+
+        val restored = manager.smartRestore(prefix, TdSessionState(), now)
+        assertTrue(restored.boards.isEmpty())
     }
 }

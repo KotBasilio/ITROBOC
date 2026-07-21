@@ -69,8 +69,8 @@ class ItrobocMainViewModel(application: Application) : AndroidViewModel(applicat
     var oldAutosaveFiles by mutableStateOf<List<File>>(emptyList())
 
     init {
-        // Initial restore
-        sessionState = autosaveManager.restore(currentAutosaveFilename, sessionState)
+        // Initial restore with midnight fallback
+        sessionState = autosaveManager.smartRestore(autosavePrefix, sessionState)
         
         // Check for old files
         oldAutosaveFiles = autosaveManager.findOldAutosaves(autosavePrefix)
