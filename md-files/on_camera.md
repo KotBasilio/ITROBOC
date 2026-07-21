@@ -1,6 +1,6 @@
 # On Camera, Frame Processing, and Beetle Mind
 
-Last aligned with source snapshot: `7b247cc`.
+Last aligned with source snapshot: `e118faa`.
 
 Vacation note from Selyn. Current implementation note: the neutral shared camera/analyzer name is now `CameraFrameDecoder`. For compatibility, the existing `AdminEditCameraFrameDecoder` implementation remains as the backing class while call sites can migrate gradually.
 
