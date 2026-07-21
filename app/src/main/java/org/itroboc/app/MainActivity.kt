@@ -39,7 +39,14 @@ fun AppNavigation(viewModel: ItrobocMainViewModel) {
             TdOverviewScreen(
                 sessionState = viewModel.sessionState,
                 activeProfile = activeProfileItem,
+                autosaveEnabled = viewModel.autosaveEnabled,
+                autosavePrefix = viewModel.autosavePrefix,
+                autosavePath = viewModel.autosavePath,
+                oldFilesCount = viewModel.oldAutosaveFiles.size,
                 onSessionStateChange = { viewModel.updateSession(it) },
+                onAutosaveEnabledChange = { viewModel.updateAutosaveEnabled(it) },
+                onAutosavePrefixChange = { viewModel.updateAutosavePrefix(it) },
+                onClearOldFiles = { viewModel.clearOldFiles(it) },
                 onNavigateToBoard = { viewModel.navigateTo(Screen.EditBoard(it)) },
                 onBack = { viewModel.navigateTo(Screen.MainMenu) }
             )

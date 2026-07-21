@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -17,22 +18,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.itroboc.core.*
+import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import kotlin.math.roundToInt
 
 enum class BoardUiStatus {
-    Empty,
-    Partial,
-    Complete
+    Empty, Partial, Complete
 }
 
 @Composable
 fun TdOverviewScreen(
     sessionState: TdSessionState,
     activeProfile: ProfileListItem = BuiltInDeckProfiles.demoBridge52().metadata.toProfileListItem(),
+    autosaveEnabled: Boolean = true,
+    autosavePrefix: String = "ITROBOC-autosave",
+    autosavePath: String = "",
+    oldFilesCount: Int = 0,
     onSessionStateChange: (TdSessionState) -> Unit,
+    onAutosaveEnabledChange: (Boolean) -> Unit = {},
+    onAutosavePrefixChange: (String) -> Unit = {},
+    onClearOldFiles: (archive: Boolean) -> Unit = {},
     onNavigateToBoard: (Int) -> Unit,
     onBack: () -> Unit
 ) {
@@ -42,6 +48,7 @@ fun TdOverviewScreen(
     val latestOnSessionStateChange by rememberUpdatedState(onSessionStateChange)
     var messageToDisplay by remember { mutableStateOf<String?>(null) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showHousekeepingDialog by remember { mutableStateOf(oldFilesCount > 0) }
 
     val saveLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/plain")
@@ -225,6 +232,9 @@ fun TdOverviewScreen(
             currentSize = sessionState.totalBoardsInGrid,
             minAllowedSize = sessionState.highestNonEmptyBoardNumber,
             currentConsensusFrames = sessionState.requiredConsensusFrames,
+            autosaveEnabled = autosaveEnabled,
+            autosavePrefix = autosavePrefix,
+            autosavePath = autosavePath,
             onDismiss = { showSettingsDialog = false },
             onSizeSelected = { newSize ->
                 onSessionStateChange(sessionState.updateGridSize(newSize))
@@ -233,6 +243,32 @@ fun TdOverviewScreen(
             onConsensusFramesSelected = { newFrames ->
                 onSessionStateChange(sessionState.updateRequiredConsensusFrames(newFrames))
             },
+            onAutosaveEnabledChange = onAutosaveEnabledChange,
+            onAutosavePrefixChange = onAutosavePrefixChange
+        )
+    }
+
+    if (showHousekeepingDialog) {
+        AlertDialog(
+            onDismissRequest = { showHousekeepingDialog = false },
+            title = { Text("Old Autosave Files") },
+            text = { Text("Found $oldFilesCount autosave file(s) older than one month. Would you like to delete them or archive them?") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    onClearOldFiles(true)
+                    showHousekeepingDialog = false 
+                }) {
+                    Text("Archive")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    onClearOldFiles(false)
+                    showHousekeepingDialog = false 
+                }) {
+                    Text("Delete")
+                }
+            }
         )
     }
 
@@ -255,9 +291,14 @@ fun TdSettingsScreen(
     currentSize: Int,
     minAllowedSize: Int,
     currentConsensusFrames: Int,
+    autosaveEnabled: Boolean,
+    autosavePrefix: String,
+    autosavePath: String,
     onDismiss: () -> Unit,
     onSizeSelected: (Int) -> Unit,
     onConsensusFramesSelected: (Int) -> Unit,
+    onAutosaveEnabledChange: (Boolean) -> Unit,
+    onAutosavePrefixChange: (String) -> Unit,
 ) {
     val allowedSizes = TdSessionState.ALLOWED_GRID_SIZES.filter { it >= minAllowedSize }
     val perceptionFrames = TdSessionState.ALLOWED_CONSENSUS_FRAMES
@@ -346,14 +387,47 @@ fun TdSettingsScreen(
                     style = ItrobocTextStyles.SettingsBasic,
                 )
             }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Text( "Autosave",
+                style = ItrobocTextStyles.BigVisible,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = autosaveEnabled,
+                    onCheckedChange = onAutosaveEnabledChange
+                )
+                Text("Enable Autosave", style = ItrobocTextStyles.ChoiceLabel)
+            }
+
+            OutlinedTextField(
+                value = autosavePrefix,
+                onValueChange = onAutosavePrefixChange,
+                label = { Text("Autosave Prefix") },
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Path: $autosavePath",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
         }
     }
 }
 
-private fun generatePbnFilename(): String {
-    val formatter = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US)
-    val timestamp = formatter.format(Date())
-    return "itroboc_session_$timestamp.pbn"
+fun generatePbnFilename(): String {
+    val date = SimpleDateFormat("yyyyMMdd-HHmm", Locale.getDefault()).format(Date())
+    return "ITROBOC-$date.pbn"
 }
 
 @Composable

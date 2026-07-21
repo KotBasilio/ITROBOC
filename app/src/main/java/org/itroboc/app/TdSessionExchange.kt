@@ -30,12 +30,19 @@ internal object TdSessionExchange {
     }
 
     fun exportCompleteBoards(sessionState: TdSessionState): String? {
+        return exportBoards(sessionState, allowPartial = false)
+    }
+
+    fun exportBoards(
+        sessionState: TdSessionState,
+        allowPartial: Boolean,
+    ): String? {
         val exportedBoards = sessionState.boards.values
             .asSequence()
             .filter { it.boardNumber <= sessionState.totalBoardsInGrid }
             .sortedBy { it.boardNumber }
             .mapNotNull { boardEditState ->
-                if (!BoardProgressSummary.from(boardEditState.boardState).boardComplete) {
+                if (!allowPartial && !BoardProgressSummary.from(boardEditState.boardState).boardComplete) {
                     return@mapNotNull null
                 }
                 val metadata = DuplicateBoardMetadata.forBoardNumber(boardEditState.boardNumber)
@@ -46,6 +53,7 @@ internal object TdSessionExchange {
                         dealer = metadata.dealer,
                         vulnerability = metadata.vulnerability,
                         pbnDoubleDummyData = boardEditState.pbnDoubleDummyData,
+                        allowPartial = allowPartial,
                     ),
                 )
             }
@@ -66,6 +74,7 @@ internal object TdSessionExchange {
     fun importCumulative(
         sessionState: TdSessionState,
         rawText: String,
+        allowPartial: Boolean = false,
     ): TdSessionImportResult {
         val parsedBlocks = parseTaggedBlocks(rawText)
         var mergedState = sessionState
@@ -74,7 +83,7 @@ internal object TdSessionExchange {
         var maxValidBoardNumber = sessionState.totalBoardsInGrid
 
         parsedBlocks.forEach { block ->
-            val importedBoard = parseCompleteBoard(block)
+            val importedBoard = parseBoard(block, allowPartial)
             if (importedBoard == null || !isSupportedTdBoardNumber(importedBoard.boardNumber)) {
                 ignoredBlockCount += 1
                 return@forEach
@@ -136,7 +145,7 @@ internal object TdSessionExchange {
         return blocks.filter { block -> block.any { it.trimStart().startsWith("[") } }
     }
 
-    private fun parseCompleteBoard(lines: List<String>): ImportedBoard? {
+    private fun parseBoard(lines: List<String>, allowPartial: Boolean): ImportedBoard? {
         val tags = lines.mapNotNull { parseTag(it.trim()) }.toMap()
         val boardNumber = tags["Board"]?.toIntOrNull() ?: return null
         val dealer = tags["Dealer"]?.singleOrNull()?.let(::seatFromSymbol) ?: return null
@@ -146,7 +155,7 @@ internal object TdSessionExchange {
         return runCatching {
             ImportedBoard(
                 boardNumber = boardNumber,
-                boardState = parseCompleteBoardState(dealer = dealer, deal = deal),
+                boardState = parseBoardState(dealer = dealer, deal = deal, allowPartial = allowPartial),
                 pbnDoubleDummyData = pbnDoubleDummyData,
             )
         }.getOrNull()
@@ -201,9 +210,10 @@ internal object TdSessionExchange {
         )
     }
 
-    private fun parseCompleteBoardState(
+    private fun parseBoardState(
         dealer: Seat,
         deal: String,
+        allowPartial: Boolean,
     ): BoardState {
         val separatorIndex = deal.indexOf(':')
         require(separatorIndex >= 0) { "PBN deal must contain seat prefix" }
@@ -221,15 +231,17 @@ internal object TdSessionExchange {
 
         var boardState = BoardState()
         orderedSeats.zip(handStrings).forEach { (seat, handString) ->
-            parseHand(handString).cards().forEach { card ->
+            parseHand(handString, allowPartial).cards().forEach { card ->
                 boardState = boardState.addCard(seat, card)
             }
         }
-        boardState.validateComplete()
+        if (!allowPartial) {
+            boardState.validateComplete()
+        }
         return boardState
     }
 
-    private fun parseHand(handString: String): HandState {
+    private fun parseHand(handString: String, allowPartial: Boolean): HandState {
         val suitStrings = handString.split(".")
         require(suitStrings.size == Suit.entries.size) {
             "PBN hand must contain four suits"
@@ -241,7 +253,9 @@ internal object TdSessionExchange {
                 handState = handState.addCard(CardId(suit, Rank.fromSymbol(rankSymbol)))
             }
         }
-        handState.validateComplete()
+        if (!allowPartial) {
+            handState.validateComplete()
+        }
         return handState
     }
 

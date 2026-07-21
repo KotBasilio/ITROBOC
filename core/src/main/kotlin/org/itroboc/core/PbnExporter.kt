@@ -5,7 +5,9 @@ object PbnExporter {
         boardState: BoardState,
         options: PbnExportOptions = PbnExportOptions(),
     ): String {
-        boardState.validateComplete()
+        if (!options.allowPartial) {
+            boardState.validateComplete()
+        }
 
         val dealValue = boardState.handsInPbnOrder(options.dealer)
             .joinToString(separator = " ") { it.toPbnHand() }
@@ -48,4 +50,5 @@ data class PbnExportOptions(
     val dealer: Seat = Seat.NORTH,
     val vulnerability: BoardVulnerability? = null,
     val pbnDoubleDummyData: PbnDoubleDummyData? = null,
+    val allowPartial: Boolean = false,
 )
