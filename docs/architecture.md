@@ -553,6 +553,13 @@ This is an accepted product decision.
 
 Avoid mutating Compose state directly inside render branches.
 
+### State durability
+
+ITROBOC manages state durability at two levels:
+
+1. **Configuration Change (Rotation)**: App-level state (navigation, profiles, TD session) is hoisted into `ItrobocMainViewModel`. This ensures that data is not lost when the device is rotated.
+2. **Process Death**: Standard Android lifecycle rules apply. While `ViewModel` survives rotation, full persistence across process death (e.g., app kill) requires JSON save/load.
+
 ### Typography
 
 ITROBOC uses a central semantic typography layer in `ItrobocTextStyles.kt`.
