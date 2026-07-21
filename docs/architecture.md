@@ -558,7 +558,9 @@ Avoid mutating Compose state directly inside render branches.
 ITROBOC manages state durability at two levels:
 
 1. **Configuration Change (Rotation)**: App-level state (navigation, profiles, TD session) is hoisted into `ItrobocMainViewModel`. This ensures that data is not lost when the device is rotated.
-2. **Process Death**: Standard Android lifecycle rules apply. While `ViewModel` survives rotation, full persistence across process death (e.g., app kill) requires JSON save/load.
+2. **Process Death & Restarts**: A silent **Autosave** system triggers a PBN export to internal storage whenever a hand is completed. On startup, the app automatically attempts to restore the most recent configured autosave file.
+
+Settings for autosave (enabled/disabled, file prefix) are persisted in `SharedPreferences`.
 
 ### Typography
 
