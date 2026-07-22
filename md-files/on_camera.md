@@ -1,6 +1,6 @@
 # Camera and Beetle Mind: remaining work
 
-Last audited: 2026-07-22, after the shared camera scanner extraction.
+Last audited: 2026-07-22, after the shared camera support cleanup.
 
 This file is only a remaining-work list. Remove an item when it lands. Preserve
 the architectural relay:

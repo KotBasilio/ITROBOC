@@ -105,6 +105,7 @@ App owns Android/Compose/device integration:
 - `AdminAliasDetails`
 - `AdminEditCameraSupport`
 - `CameraFrameDecoder`
+- `CameraFrameSupport`
 - `BarcodeCameraScanner`
 - `AdminEditScanDebugLogManager`
 
@@ -122,6 +123,8 @@ Naming note:
 
 `CameraFrameDecoder` is the shared CameraX frame-to-verdict adapter. Admin uses
 its default slow diagnostic decoder; TD injects the fast verdict decoder.
+`CameraFrameSupport` owns the shared guide geometry, ROI, and luma extraction
+helpers used around that adapter.
 
 ## Admin::Actions current behavior
 
@@ -467,6 +470,7 @@ Current important test coverage lives in:
 - AdminProfileUiModelsTest
 - AdminAliasDetailsTest
 - AdminReadOnlyCardPreviewTest
+- CameraFrameSupportTest
 - AdminEditCameraSupportTest
 ```
 
