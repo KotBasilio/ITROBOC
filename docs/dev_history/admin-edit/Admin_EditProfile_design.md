@@ -105,6 +105,7 @@ App owns Android/Compose/device integration:
 - `AdminAliasDetails`
 - `AdminEditCameraSupport`
 - `CameraFrameDecoder`
+- `BarcodeCameraScanner`
 - `AdminEditScanDebugLogManager`
 
 App owns:
@@ -279,7 +280,7 @@ Admin live scan path:
 ```text
 CameraX ImageProxy
 -> frame debug metadata
--> centered barcode ROI from adminScanGuideSpec
+-> centered barcode ROI from barcodeScanGuideSpec
 -> luma-only GrayImage crop
 -> CameraFrameDecoder / slow Grid13 decode
 -> BarcodeDecodeResult

@@ -15,7 +15,7 @@ class AdminEditCameraSupportTest {
         val roi = centeredBarcodeRoi(
             imageWidth = 100,
             imageHeight = 60,
-            guideSpec = AdminScanGuideSpec(widthFraction = 0.20f, heightFraction = 0.08f),
+            guideSpec = CameraScanGuideSpec(widthFraction = 0.20f, heightFraction = 0.08f),
         )
 
         assertEquals(40, roi.x)

@@ -108,7 +108,7 @@ Android shell, Compose UI, CameraX adapters, session import/export/share.
 Owns:
 
 - screens: Main, TD overview, TD edit board, Scissors selected-hand repair, Admin actions/edit/read-only
-- `CameraFrameDecoder`, Admin camera support, and CameraX adapters
+- `CameraFrameDecoder`, `BarcodeCameraScanner`, Admin camera support, and CameraX adapters
 - `EditBoardController`
 - `EditBoardScreen`
 - `ScissorsScreen`

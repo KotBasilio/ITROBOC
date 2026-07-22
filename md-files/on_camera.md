@@ -1,6 +1,6 @@
 # Camera and Beetle Mind: remaining work
 
-Last audited: 2026-07-22, after the neutral `CameraFrameDecoder` migration.
+Last audited: 2026-07-22, after the shared camera scanner extraction.
 
 This file is only a remaining-work list. Remove an item when it lands. Preserve
 the architectural relay:
@@ -48,43 +48,3 @@ reducer.
 
 Done means the evidence-trust state no longer lives in the controller and the
 existing TD scan behavior is unchanged.
-
-## 2. Extract the duplicated camera preview/analyzer component
-
-[`AdminEditScreen.kt`](../app/src/main/java/org/itroboc/app/AdminEditScreen.kt)
-and
-[`EditBoardScreen.kt`](../app/src/main/java/org/itroboc/app/EditBoardScreen.kt)
-still contain near-duplicate private `CameraPreview` and
-`BarcodeGuideOverlay` implementations.
-
-Extract one shared `:app` camera composable after the neutral decoder migration.
-Keep the existing request seam rather than introducing a second mode model
-without need:
-
-```kotlin
-consumeScanRequest: () -> Boolean
-```
-
-Admin must continue to consume one requested frame with `compareAndSet`; TD must
-continue to accept the stream while its camera surface is active.
-
-The shared component must preserve:
-
-- one analysis executor and `STRATEGY_KEEP_ONLY_LATEST`;
-- guaranteed `ImageProxy` closure;
-- latest callback capture via `rememberUpdatedState`;
-- exact-size reusable ROI pixel storage;
-- analyzer-thread decode and Main-thread outcome delivery;
-- lifecycle bind/unbind and executor shutdown;
-- the current centered guide overlay.
-
-Keep screen-owned concerns outside the component: permission prompts, Admin
-calibration state, TD Beetle Mind/controller handling, board completion, and
-modal navigation.
-
-Run the full unit suite after extraction. Archy will verify Admin snap and TD
-stream camera behavior visually in the IDE; do not add automated rendering as
-a substitute.
-
-Done means only one production implementation owns the CameraX preview,
-analyzer lifecycle, ROI buffer, and guide overlay.

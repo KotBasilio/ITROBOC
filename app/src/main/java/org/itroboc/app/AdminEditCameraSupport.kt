@@ -12,12 +12,12 @@ import java.io.File
 import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
-internal val adminScanGuideSpec = AdminScanGuideSpec(
+internal val barcodeScanGuideSpec = CameraScanGuideSpec(
     widthFraction = 0.20f,
     heightFraction = 0.08f,
 )
 
-internal data class AdminScanGuideSpec(
+internal data class CameraScanGuideSpec(
     val widthFraction: Float,
     val heightFraction: Float,
 ) {
@@ -37,7 +37,7 @@ internal data class GuideRectBounds(
 internal fun centeredBarcodeRoi(
     imageWidth: Int,
     imageHeight: Int,
-    guideSpec: AdminScanGuideSpec,
+    guideSpec: CameraScanGuideSpec,
 ): BarcodeRoi {
     require(imageWidth > 0) { "imageWidth must be positive" }
     require(imageHeight > 0) { "imageHeight must be positive" }
@@ -62,7 +62,7 @@ internal fun centeredBarcodeRoi(
 internal fun centeredGuideRectBounds(
     containerWidth: Float,
     containerHeight: Float,
-    guideSpec: AdminScanGuideSpec,
+    guideSpec: CameraScanGuideSpec,
 ): GuideRectBounds {
     val width = containerWidth * guideSpec.widthFraction
     val height = containerHeight * guideSpec.heightFraction

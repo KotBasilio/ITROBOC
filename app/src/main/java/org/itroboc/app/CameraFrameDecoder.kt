@@ -36,7 +36,7 @@ internal sealed interface CameraScanOutcome {
 /** Shared CameraX frame-to-verdict adapter used by Admin and TD. */
 internal class CameraFrameDecoder(
     private val decoder: BarcodeDecoder = Grid13SlowDecoder(),
-    private val guideSpec: AdminScanGuideSpec = adminScanGuideSpec,
+    private val guideSpec: CameraScanGuideSpec = barcodeScanGuideSpec,
 ) {
     fun decode(imageProxy: ImageProxy, reusablePixels: ByteArray): CameraScanOutcome {
         val startedAtNanos = System.nanoTime()
