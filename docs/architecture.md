@@ -478,7 +478,12 @@ The add table uses the same TD-readable ownership language as Admin-style card g
 - gray fill = card is unassigned;
 - seat-colored border = current owner seat when there is one.
 
-Click behavior:
+**Redesign features:**
+- **Dynamic focus**: The repair cockpit is a multi-seat surface. Seat-colored chips below the hand display allow the TD to switch focus between North, East, South, and West without closing the screen.
+- **Visual anchors**: The right pane features a thick, seat-colored border and a completion-aware background (green glow at 13 cards) to match the main cockpit's visual language.
+- **Durable height**: The hand area uses a fixed vertical measure to accommodate exceptional "long suit" cases (up to 5 rows) without layout shifts.
+
+Click behavior:,targetContent:
 
 - card already in selected hand: disabled/no-op;
 - unassigned card: add it to selected hand manually;
