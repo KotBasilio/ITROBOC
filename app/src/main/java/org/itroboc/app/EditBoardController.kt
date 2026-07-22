@@ -9,6 +9,8 @@ internal class EditBoardController(
     private var onBoardEditStateChange: (BoardEditState) -> Unit,
     private val nowMillis: () -> Long = System::currentTimeMillis,
 ) {
+    private val beetleMind = BeetleMind(nowMillis = nowMillis)
+
     // --- Inputs updated every recomposition ---
     var boardEditState by mutableStateOf(BoardEditState(0))
     var deckProfile by mutableStateOf(BuiltInDeckProfiles.defaultProfile())
@@ -24,20 +26,7 @@ internal class EditBoardController(
     // --- Scan State ---
     var lastResultMessage by mutableStateOf<String?>(null)
     var lastScannedCard by mutableStateOf<CardId?>(null)
-    var thoughts by mutableStateOf("0")
-    
-    // Pondering State (🪲🧠)
-    private var ponderingSignature: String? = null
-    private var ponderingCount = 0
-    // Debounce state
-    private var lastRawSignature: String? = null
-    private var lastScanTimeMillis: Long = 0L
-    private val debounceWindowMillis = 1000L
-
-    // Unknown signature throttling
-    private var unknownSignatureCount = 0
-    private var lastUnknownMessageTimeMillis: Long = 0L
-    private val unknownThrottleMillis = 3000L
+    var thoughts by mutableStateOf(beetleMind.thought.presentation)
 
     fun update(
         state: BoardEditState,
@@ -53,14 +42,8 @@ internal class EditBoardController(
         this.onBoardEditStateChange = onBoardEditStateChange
     }
 
-    fun dream(topic: String) {
-        thoughts = topic
-        ponderingSignature = null
-        ponderingCount = 0
-    }
-
-    fun blankMind() {
-        dream( "0")
+    fun dream(topic: BeetleDream) {
+        publishMindOutput(beetleMind.dream(topic))
     }
 
     fun handleCameraScan(scanOutcome: CameraScanOutcome) {
@@ -69,78 +52,32 @@ internal class EditBoardController(
         scanDeltas = scanDeltas + delta
         lastScanTimestamp = now
 
-        when (scanOutcome) {
-            is CameraScanOutcome.Decoded -> when (val decodeResult = scanOutcome.decodeResult) {
-                is BarcodeDecodeResult.Found -> {
-                    val signature = decodeResult.signature.viewedAs(orientationMode)
-                    if (signature != null) {
-                        processPondering(signature)
-                    }
-                }
-                is BarcodeDecodeResult.Ambiguous -> {
-                    blankMind()
-                    val firstCandidate: DetectedSignature? = decodeResult.candidates.firstOrNull()
-                    if (firstCandidate != null) {
-                        thoughts = firstCandidate.viewedAs(orientationMode) + "~"
-                    }
-                }
-                else -> {
-                    blankMind()
-                }
-            }
-            else -> {
-                blankMind()
-            }
-        }
+        val evidence = scanOutcome.toBeetleEvidence(
+            profile = deckProfile,
+            orientationMode = orientationMode,
+        ) ?: return
+        publishMindOutput(
+            beetleMind.observe(
+                evidence = evidence,
+                requiredConsensusFrames = requiredConsensusFrames,
+            ),
+        )
     }
 
-    private fun processPondering(signature: String) {
-        val cardId = deckProfile.lookup(signature)
-
-        if (signature == ponderingSignature) {
-            ponderingCount++
-        } else {
-            ponderingSignature = cardId?.let { signature } ?: "No"
-            ponderingCount = 1
-        }
-
-        val cardName = cardId?.let { "${it.suit.prettySymbol}${it.rank.symbol}" } ?: signature
-
-        if (ponderingCount < requiredConsensusFrames) {
-            thoughts = when (ponderingCount) {
-                1 -> "$cardName?"
-                2 -> "$cardName??"
-                else -> "$cardName???"
-            }
-        } else {
-            thoughts = "$cardName."
-            handleScan(signature)
-        }
+    private fun publishMindOutput(output: BeetleMindOutput) {
+        thoughts = output.thought.presentation
+        output.acceptedCardScan?.let(::applyAcceptedCardScan)
     }
 
-    private fun handleScan(signature: String) {
+    private fun applyAcceptedCardScan(scan: AcceptedCardScan) {
         val isBoardComplete = BoardProgressSummary.from(boardEditState.boardState).boardComplete
         if (isBoardComplete) return
 
-        val now = nowMillis()
-        if (signature == lastRawSignature && (now - lastScanTimeMillis) < debounceWindowMillis) {
-            return
-        }
-        lastRawSignature = signature
-        lastScanTimeMillis = now
-
-        val update = EditBoardReducer.applyScannedCard(boardEditState, deckProfile.lookup(signature) ?: run {
-            unknownSignatureCount++
-            if (now - lastUnknownMessageTimeMillis > unknownThrottleMillis) {
-                if (unknownSignatureCount > 1) {
-                    lastResultMessage = "Unknown signatures total: $unknownSignatureCount."
-                } else {
-                    lastResultMessage = "Unknown signature: $signature"
-                }
-                lastUnknownMessageTimeMillis = now
-            }
-            return
-        }, signature)
+        val update = EditBoardReducer.applyScannedCard(
+            editState = boardEditState,
+            card = scan.cardId,
+            signature = scan.rawSignature,
+        )
         
         onBoardEditStateChange(update.state)
         lastResultMessage = update.message
@@ -188,7 +125,7 @@ internal class EditBoardController(
     }
 
     fun onManualAddCard(card: CardId) {
-        blankMind()
+        publishMindOutput(beetleMind.reset())
         val update = EditBoardReducer.addManualCardToSelectedHand(boardEditState, card)
         onBoardEditStateChange(update.state)
         lastResultMessage = update.message
@@ -240,6 +177,42 @@ internal class EditBoardController(
             scansIdleCount++
         }
     }
+}
+
+internal fun CameraScanOutcome.toBeetleEvidence(
+    profile: DeckProfile,
+    orientationMode: BarcodeOrientationMode,
+): BeetleEvidence? = when (this) {
+    is CameraScanOutcome.Decoded -> when (val result = decodeResult) {
+        is BarcodeDecodeResult.Found -> {
+            val signature = result.signature.viewedAs(orientationMode) ?: return null
+            val cardId = profile.lookup(signature)
+            if (cardId == null) {
+                BeetleEvidence.Unknown(
+                    rawSignature = signature,
+                    confidence = result.signature.confidence,
+                )
+            } else {
+                BeetleEvidence.Known(
+                    rawSignature = signature,
+                    cardId = cardId,
+                    confidence = result.signature.confidence,
+                )
+            }
+        }
+        is BarcodeDecodeResult.Ambiguous -> BeetleEvidence.Ambiguous(
+            candidates = result.candidates.mapNotNull { candidate ->
+                candidate.viewedAs(orientationMode)?.let { signature ->
+                    BeetleSignatureCandidate(
+                        rawSignature = signature,
+                        confidence = candidate.confidence,
+                    )
+                }
+            },
+        )
+        is BarcodeDecodeResult.NotFound -> BeetleEvidence.NotFound(result.reason)
+    }
+    is CameraScanOutcome.ConversionFailed -> BeetleEvidence.ConversionFailure(reason)
 }
 
 @Composable

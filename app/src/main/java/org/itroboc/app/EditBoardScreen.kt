@@ -265,14 +265,14 @@ internal fun CentralArea(
     pendingScanRequest: AtomicBoolean,
     frameDecoder: CameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
-    onDream: (topic: String) -> Unit,
+    onDream: (topic: BeetleDream) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dreamTopic = when {
-        !hasCameraPermission -> "Eyes"
-        showScissorsScreen -> "Hands"
-        showSwapScreen -> "Wind"
-        isBoardComplete -> "Joker"
+        !hasCameraPermission -> BeetleDream.EYES
+        showScissorsScreen -> BeetleDream.HANDS
+        showSwapScreen -> BeetleDream.WIND
+        isBoardComplete -> BeetleDream.JOKER
         else -> null
     }
 

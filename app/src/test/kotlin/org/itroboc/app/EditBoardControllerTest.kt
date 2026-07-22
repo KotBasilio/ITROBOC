@@ -12,9 +12,62 @@ import org.itroboc.vision.BarcodeRoi
 import org.itroboc.vision.DetectedSignature
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EditBoardControllerTest {
+    @Test
+    fun `camera outcomes translate into typed beetle evidence`() {
+        val profile = testDeckProfile()
+
+        assertEquals(
+            BeetleEvidence.Known(
+                rawSignature = "bfm1549",
+                cardId = CardId.parse("SA"),
+                confidence = 0.95,
+            ),
+            foundOutcome("bfm1549").toBeetleEvidence(profile, BarcodeOrientationMode.BFM),
+        )
+        assertEquals(
+            BeetleEvidence.Unknown(
+                rawSignature = "bfm-unknown",
+                confidence = 0.95,
+            ),
+            foundOutcome("bfm-unknown").toBeetleEvidence(profile, BarcodeOrientationMode.BFM),
+        )
+        assertEquals(
+            BeetleEvidence.Ambiguous(
+                candidates = listOf(
+                    BeetleSignatureCandidate("bfm1549", confidence = 0.80),
+                    BeetleSignatureCandidate("bfm1550", confidence = 0.70),
+                ),
+            ),
+            decodedOutcome(
+                BarcodeDecodeResult.Ambiguous(
+                    candidates = listOf(
+                        DetectedSignature("bfm1549", confidence = 0.80),
+                        DetectedSignature("bfm1550", confidence = 0.70),
+                    ),
+                    reason = "Two close candidates",
+                ),
+            ).toBeetleEvidence(profile, BarcodeOrientationMode.BFM),
+        )
+        assertEquals(
+            BeetleEvidence.NotFound("No barcode pattern"),
+            decodedOutcome(
+                BarcodeDecodeResult.NotFound("No barcode pattern"),
+            ).toBeetleEvidence(profile, BarcodeOrientationMode.BFM),
+        )
+        assertEquals(
+            BeetleEvidence.ConversionFailure("Luma plane unavailable"),
+            conversionFailureOutcome("Luma plane unavailable")
+                .toBeetleEvidence(profile, BarcodeOrientationMode.BFM),
+        )
+        assertNull(
+            foundOutcome("bfm1549").toBeetleEvidence(profile, BarcodeOrientationMode.AUTO),
+        )
+    }
+
     @Test
     fun `handleCameraScan uses latest state change callback`() {
         val time = FakeTime(5_000L)
@@ -209,7 +262,7 @@ class EditBoardControllerTest {
             requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
             onBoardEditStateChange = appliedStates::add,
         )
-        controller.dream("♠A???")
+        controller.dream(BeetleDream.HANDS)
 
         controller.onManualAddCard(CardId.parse("SA"))
 
@@ -336,6 +389,17 @@ class EditBoardControllerTest {
     )
 
     private fun foundOutcome(rawSignature: String): CameraScanOutcome.Decoded =
+        decodedOutcome(
+            BarcodeDecodeResult.Found(
+                DetectedSignature(
+                    rawSignature = rawSignature,
+                    confidence = 0.95,
+                    debug = null,
+                ),
+            ),
+        )
+
+    private fun decodedOutcome(decodeResult: BarcodeDecodeResult): CameraScanOutcome.Decoded =
         CameraScanOutcome.Decoded(
             frameDebugInfo = FrameDebugInfo(
                 width = 100,
@@ -345,13 +409,20 @@ class EditBoardControllerTest {
                 requestedByScan = false,
             ),
             roi = BarcodeRoi(x = 0, y = 0, width = 10, height = 10),
-            decodeResult = BarcodeDecodeResult.Found(
-                DetectedSignature(
-                    rawSignature = rawSignature,
-                    confidence = 0.95,
-                    debug = null,
-                ),
+            decodeResult = decodeResult,
+        )
+
+    private fun conversionFailureOutcome(reason: String): CameraScanOutcome.ConversionFailed =
+        CameraScanOutcome.ConversionFailed(
+            frameDebugInfo = FrameDebugInfo(
+                width = 100,
+                height = 40,
+                rotationDegrees = 0,
+                timestampNanos = 0L,
+                requestedByScan = false,
             ),
+            roi = BarcodeRoi(x = 0, y = 0, width = 10, height = 10),
+            reason = reason,
         )
 
     private class FakeTime(var current: Long) {
