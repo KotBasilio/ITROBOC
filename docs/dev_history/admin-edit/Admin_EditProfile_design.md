@@ -105,6 +105,8 @@ App owns Android/Compose/device integration:
 - `AdminAliasDetails`
 - `AdminEditCameraSupport`
 - `CameraFrameDecoder`
+- `CameraFrameSupport`
+- `BarcodeCameraScanner`
 - `AdminEditScanDebugLogManager`
 
 App owns:
@@ -119,12 +121,10 @@ App owns:
 
 Naming note:
 
-```text
-CameraFrameDecoder = neutral shared camera/analyzer name
-AdminEditCameraFrameDecoder = current backing implementation / compatibility name
-```
-
-New shared camera/analyzer work should use `CameraFrameDecoder`.
+`CameraFrameDecoder` is the shared CameraX frame-to-verdict adapter. Admin uses
+its default slow diagnostic decoder; TD injects the fast verdict decoder.
+`CameraFrameSupport` owns the shared guide geometry, ROI, and luma extraction
+helpers used around that adapter.
 
 ## Admin::Actions current behavior
 
@@ -283,7 +283,7 @@ Admin live scan path:
 ```text
 CameraX ImageProxy
 -> frame debug metadata
--> centered barcode ROI from adminScanGuideSpec
+-> centered barcode ROI from barcodeScanGuideSpec
 -> luma-only GrayImage crop
 -> CameraFrameDecoder / slow Grid13 decode
 -> BarcodeDecodeResult
@@ -295,7 +295,8 @@ Current guide spec:
 
 ```kotlin
 widthFraction = 0.20f
-heightFraction = 0.08f
+heightFraction = 0.03f
+maxHeightPixels = 10
 ```
 
 The same guide spec is used for:
@@ -303,9 +304,18 @@ The same guide spec is used for:
 - visible overlay rectangle;
 - actual ROI crop sent to vision.
 
-This keeps the visible mouth and the analyzed mouth aligned.
+`BarcodeCameraScanner` computes the ROI once from this spec and passes that
+typed ROI into `CameraFrameDecoder`. This prevents scanner and decoder guide
+settings from drifting apart.
 
-The guide is intentionally small and strip-focused. It is tuned for one barcode strip, not a full-card OCR region.
+The guide is intentionally a thin blade: 3% of the frame height, capped at 10
+pixels, and tuned for one barcode strip rather than a full-card OCR region. The
+overlay uses the same proportional-and-capped guide calculation in display
+coordinates.
+
+This began as experimental ROI sharpening and is now retained current behavior:
+manual field verification found fewer uncertain reads that asked the operator
+to bring the barcode closer.
 
 Current extraction is luma-only. This is intentional for current MVP simplicity. Static research paths may still discuss RGB/min-RGB ink; if red-suit instability appears in live calibration, RGB/YUV-aware extraction is a future seam, not current behavior.
 
@@ -470,6 +480,7 @@ Current important test coverage lives in:
 - AdminProfileUiModelsTest
 - AdminAliasDetailsTest
 - AdminReadOnlyCardPreviewTest
+- CameraFrameSupportTest
 - AdminEditCameraSupportTest
 ```
 

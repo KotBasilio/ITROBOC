@@ -35,6 +35,6 @@ data class TdSessionState(
     companion object {
         val ALLOWED_GRID_SIZES = listOf(15, 18, 21, 24, 27, 30, 33, 36, 39)
         val ALLOWED_CONSENSUS_FRAMES = listOf(6, 5, 4, 3, 2)
-        const val DEFAULT_CONSENSUS_FRAMES = 4
+        const val DEFAULT_CONSENSUS_FRAMES = 2
     }
 }

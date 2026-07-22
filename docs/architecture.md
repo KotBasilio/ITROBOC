@@ -1,6 +1,6 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `e118faa`.
+Last aligned with source snapshot: `fd6860e`.
 
 Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors. PBN exports now include professional file-level headers and preserve double-dummy solver (DDS) metadata during import/export cycles.
 
@@ -14,7 +14,7 @@ It is an Android-first bridge Tournament Director assistant:
 
 ```text
 physical barcode-marked cards
--> camera/luma ROI
+-> thin centered camera/luma ROI
 -> Grid13 raw signature
 -> Deck Profile lookup
 -> CardId
@@ -108,7 +108,7 @@ Android shell, Compose UI, CameraX adapters, session import/export/share.
 Owns:
 
 - screens: Main, TD overview, TD edit board, Scissors selected-hand repair, Admin actions/edit/read-only
-- `AdminEditCameraSupport` and CameraX frame adapters
+- `CameraFrameDecoder`, `CameraFrameSupport`, `BarcodeCameraScanner`, Admin camera support, and CameraX adapters
 - `EditBoardController`
 - `EditBoardScreen`
 - `ScissorsScreen`
@@ -284,7 +284,17 @@ CameraX ImageProxy
 
 Admin::Edit can show diagnostic detail that TD should not show.
 
-The CameraX adapter extracts only the ROI luma data. Dense `pixelStride == 1` paths use row bulk copy; non-unit pixel stride falls back to per-pixel extraction.
+The CameraX scanner computes one centered guide ROI and passes it into the
+frame decoder, so overlay intent, buffer sizing, and decoding share one guide
+specification. The adapter extracts only that ROI's luma data. Dense
+`pixelStride == 1` paths use row bulk copy; non-unit pixel stride falls back to
+per-pixel extraction.
+
+The current shared guide is 20% of frame width and 3% of frame height, with a
+10-pixel height ceiling. The overlay applies the same proportional-and-capped
+specification in display coordinates. This thin-blade tuning is retained after
+manual field verification showed fewer uncertain reads and fewer requests to
+move the barcode closer.
 
 ### Admin read-only / preview
 
@@ -605,6 +615,7 @@ Important test anchors:
 - `TdSessionExchangeTest`
 - `TdSessionShareManagerTest`
 - `EditBoardControllerTest`
+- `CameraFrameSupportTest`
 - `AdminEditCameraSupportTest`
 - `Grid13*Test`
 

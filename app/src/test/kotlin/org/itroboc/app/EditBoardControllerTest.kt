@@ -131,7 +131,7 @@ class EditBoardControllerTest {
             state = BoardEditState(boardNumber = 1),
             profile = testDeckProfile(),
             mode = BarcodeOrientationMode.BFM,
-            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
+            requiredConsensusFrames = 4,
             onBoardEditStateChange = appliedStates::add,
         )
 

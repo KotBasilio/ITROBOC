@@ -2,15 +2,8 @@ package org.itroboc.app
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,25 +18,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.itroboc.core.*
 import org.itroboc.vision.*
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ComposePreview(device = Devices.AUTOMOTIVE_1024p, widthDp = 1024, heightDp = 600, showBackground = true)
@@ -113,7 +99,7 @@ fun EditBoardScreen(
     }
 
     val pendingScanRequest = remember { AtomicBoolean(true) }
-    val frameDecoder = remember { AdminEditCameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
+    val frameDecoder = remember { CameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
 
     fun onClearClick() {
         val selectedHand = boardState.handOf(selectedSeat)
@@ -277,7 +263,7 @@ internal fun CentralArea(
     boardState: BoardState,
     boardNumber: Int,
     pendingScanRequest: AtomicBoolean,
-    frameDecoder: AdminEditCameraFrameDecoder,
+    frameDecoder: CameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
     onDream: (topic: String) -> Unit,
     modifier: Modifier = Modifier
@@ -308,12 +294,12 @@ internal fun CentralArea(
         } else if (isBoardComplete) {
             BoardCompleteView(boardState = boardState, boardNumber = boardNumber)
         } else {
-            CameraPreview(
+            BarcodeCameraScanner(
                 consumeScanRequest = { pendingScanRequest.get() },
                 frameDecoder = frameDecoder,
-                onScanProcessed = onScanProcessed
+                onScanProcessed = onScanProcessed,
+                modifier = Modifier.fillMaxSize(),
             )
-            BarcodeGuideOverlay(guideSpec = adminScanGuideSpec)
         }
     }
 }
@@ -647,110 +633,6 @@ fun SureArea(
     }
 }
 
-
-@Composable
-private fun CameraPreview(
-    consumeScanRequest: () -> Boolean,
-    frameDecoder: AdminEditCameraFrameDecoder,
-    onScanProcessed: (CameraScanOutcome) -> Unit,
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val previewView = remember { PreviewView(context) }
-    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
-    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
-    
-    // Use rememberUpdatedState to avoid stale closures in the analyzer
-    val currentConsumeScanRequest by rememberUpdatedState(consumeScanRequest)
-    val currentOnScanProcessed by rememberUpdatedState(onScanProcessed)
-
-    DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor) {
-        var reusableRoiPixels = ByteArray(0)
-
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.surfaceProvider = previewView.surfaceProvider
-            }
-
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-
-            imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-                imageProxy.use {
-                    if (!currentConsumeScanRequest()) {
-                        return@setAnalyzer
-                    }
-
-                    val roi = centeredBarcodeRoi(
-                        imageWidth = imageProxy.width,
-                        imageHeight = imageProxy.height,
-                        guideSpec = adminScanGuideSpec,
-                    )
-                    val requiredSize = roi.width * roi.height
-                    if (reusableRoiPixels.size != requiredSize) {
-                        reusableRoiPixels = ByteArray(requiredSize)
-                    }
-
-                    val scanOutcome = frameDecoder.decode(imageProxy, reusableRoiPixels)
-                    mainExecutor.execute {
-                        currentOnScanProcessed(scanOutcome)
-                    }
-                }
-            }
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageAnalysis
-                )
-            } catch (e: Exception) {
-                Log.e("CameraPreview", "Use case binding failed", e)
-            }
-        }, mainExecutor)
-
-        onDispose {
-            runCatching {
-                cameraProviderFuture.get().unbindAll()
-            }.onFailure { error ->
-                Log.w("CameraPreview", "Failed to unbind camera on dispose", error)
-            }
-            analysisExecutor.shutdown()
-        }
-    }
-
-    AndroidView(
-        factory = { previewView },
-        modifier = Modifier.fillMaxSize()
-    )
-}
-
-@Composable
-private fun BarcodeGuideOverlay(guideSpec: AdminScanGuideSpec) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val strokeWidth = 2.dp.toPx()
-        val guideBounds = centeredGuideRectBounds(
-            containerWidth = size.width,
-            containerHeight = size.height,
-            guideSpec = guideSpec,
-        )
-
-        drawRoundRect(
-            color = Color.White,
-            topLeft = Offset(guideBounds.left, guideBounds.top),
-            size = Size(guideBounds.width, guideBounds.height),
-            cornerRadius = CornerRadius(8.dp.toPx()),
-            style = Stroke(width = strokeWidth)
-        )
-    }
-}
 
 @Composable
 fun OrientationArea(
