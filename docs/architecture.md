@@ -236,6 +236,10 @@ Between TD verdict decode and board mutation, the app has a pure Kotlin
 thought/dream state, and accepted-card debounce without knowing CameraX,
 Compose, boards, reducers, or scan legality.
 
+`TdSessionState.DEFAULT_CONSENSUS_FRAMES` is the single product default.
+`BeetleMindSettings` owns the valid consensus range and behavior validation,
+but deliberately carries no second default.
+
 Current flow:
 
 ```text

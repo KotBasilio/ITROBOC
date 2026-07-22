@@ -254,6 +254,10 @@ Current stabilization rule:
 - this is stabilization, not semantic inference;
 - unknown signatures intentionally do not stabilize.
 
+`TdSessionState` owns the sole product default. `BeetleMindSettings` validates
+the allowed range, and the controller passes the session value explicitly into
+the mind.
+
 Current eye/mind note:
 
 - `Scissors`/`Swap` replace the camera surface with a modal placeholder, so the beetle eye is effectively closed while the full-screen repair/seat chooser is open;

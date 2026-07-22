@@ -11,7 +11,10 @@ class BeetleMindTest {
     @Test
     fun `known evidence reaches typed card scan at configured consensus`() {
         val time = FakeTime(100L)
-        val mind = BeetleMind(nowMillis = time::now)
+        val mind = BeetleMind(
+            nowMillis = time::now,
+            settings = BeetleMindSettings(requiredConsensusFrames = 2),
+        )
 
         val first = mind.observe(knownAceOfSpades())
         time.current = 150L
@@ -84,7 +87,10 @@ class BeetleMindTest {
 
     @Test
     fun `unknown evidence remains visible but never becomes accepted`() {
-        val mind = BeetleMind(nowMillis = { 0L })
+        val mind = BeetleMind(
+            nowMillis = { 0L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 2),
+        )
 
         repeat(8) {
             val output = mind.observe(
@@ -123,7 +129,10 @@ class BeetleMindTest {
 
     @Test
     fun `ambiguous evidence without candidates blanks thought`() {
-        val output = BeetleMind(nowMillis = { 0L })
+        val output = BeetleMind(
+            nowMillis = { 0L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 2),
+        )
             .observe(BeetleEvidence.Ambiguous(candidates = emptyList()))
 
         assertEquals(BeetleThought.Blank, output.thought)
@@ -172,7 +181,10 @@ class BeetleMindTest {
     @Test
     fun `accepted card scan is debounced against injected time`() {
         val time = FakeTime(0L)
-        val mind = BeetleMind(nowMillis = time::now)
+        val mind = BeetleMind(
+            nowMillis = time::now,
+            settings = BeetleMindSettings(requiredConsensusFrames = 2),
+        )
 
         mind.observe(knownAceOfSpades())
         time.current = 100L
@@ -191,7 +203,10 @@ class BeetleMindTest {
     @Test
     fun `dream does not erase accepted card scan debounce`() {
         val time = FakeTime(0L)
-        val mind = BeetleMind(nowMillis = time::now)
+        val mind = BeetleMind(
+            nowMillis = time::now,
+            settings = BeetleMindSettings(requiredConsensusFrames = 2),
+        )
         mind.observe(knownAceOfSpades())
         time.current = 100L
         mind.observe(knownAceOfSpades())
@@ -216,10 +231,16 @@ class BeetleMindTest {
             BeetleMindSettings(requiredConsensusFrames = 7)
         }
         assertFailsWith<IllegalArgumentException> {
-            BeetleMindSettings(debounceWindowMillis = -1L)
+            BeetleMindSettings(
+                requiredConsensusFrames = 2,
+                debounceWindowMillis = -1L,
+            )
         }
         assertFailsWith<IllegalArgumentException> {
-            BeetleMind(nowMillis = { 0L }).observe(
+            BeetleMind(
+                nowMillis = { 0L },
+                settings = BeetleMindSettings(requiredConsensusFrames = 2),
+            ).observe(
                 evidence = knownAceOfSpades(),
                 requiredConsensusFrames = 7,
             )

@@ -9,7 +9,12 @@ internal class EditBoardController(
     private var onBoardEditStateChange: (BoardEditState) -> Unit,
     private val nowMillis: () -> Long = System::currentTimeMillis,
 ) {
-    private val beetleMind = BeetleMind(nowMillis = nowMillis)
+    private val beetleMind = BeetleMind(
+        nowMillis = nowMillis,
+        settings = BeetleMindSettings(
+            requiredConsensusFrames = TdSessionState.DEFAULT_CONSENSUS_FRAMES,
+        ),
+    )
 
     // --- Inputs updated every recomposition ---
     var boardEditState by mutableStateOf(BoardEditState(0))

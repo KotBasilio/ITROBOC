@@ -3,7 +3,7 @@ package org.itroboc.app
 import org.itroboc.core.CardId
 
 internal data class BeetleMindSettings(
-    val requiredConsensusFrames: Int = DEFAULT_REQUIRED_CONSENSUS_FRAMES,
+    val requiredConsensusFrames: Int,
     val debounceWindowMillis: Long = DEFAULT_DEBOUNCE_WINDOW_MILLIS,
 ) {
     init {
@@ -17,7 +17,6 @@ internal data class BeetleMindSettings(
 
     companion object {
         val ALLOWED_CONSENSUS_FRAMES = 2..6
-        const val DEFAULT_REQUIRED_CONSENSUS_FRAMES = 2
         const val DEFAULT_DEBOUNCE_WINDOW_MILLIS = 1_000L
     }
 }
@@ -116,7 +115,7 @@ internal data class BeetleMindOutput(
 /** Pure Kotlin evidence-trust state machine. It does not own camera or board behavior. */
 internal class BeetleMind(
     private val nowMillis: () -> Long,
-    private val settings: BeetleMindSettings = BeetleMindSettings(),
+    private val settings: BeetleMindSettings,
 ) {
     var thought: BeetleThought = BeetleThought.Blank
         private set
