@@ -113,7 +113,7 @@ fun EditBoardScreen(
     }
 
     val pendingScanRequest = remember { AtomicBoolean(true) }
-    val frameDecoder = remember { AdminEditCameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
+    val frameDecoder = remember { CameraFrameDecoder(decoder = Grid13VerdictDecoder()) }
 
     fun onClearClick() {
         val selectedHand = boardState.handOf(selectedSeat)
@@ -277,7 +277,7 @@ internal fun CentralArea(
     boardState: BoardState,
     boardNumber: Int,
     pendingScanRequest: AtomicBoolean,
-    frameDecoder: AdminEditCameraFrameDecoder,
+    frameDecoder: CameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
     onDream: (topic: String) -> Unit,
     modifier: Modifier = Modifier
@@ -651,7 +651,7 @@ fun SureArea(
 @Composable
 private fun CameraPreview(
     consumeScanRequest: () -> Boolean,
-    frameDecoder: AdminEditCameraFrameDecoder,
+    frameDecoder: CameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current

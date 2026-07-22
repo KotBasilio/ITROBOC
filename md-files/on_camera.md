@@ -1,6 +1,6 @@
 # Camera and Beetle Mind: remaining work
 
-Last audited against source snapshot: `a335245`.
+Last audited: 2026-07-22, after the neutral `CameraFrameDecoder` migration.
 
 This file is only a remaining-work list. Remove an item when it lands. Preserve
 the architectural relay:
@@ -49,28 +49,7 @@ reducer.
 Done means the evidence-trust state no longer lives in the controller and the
 existing TD scan behavior is unchanged.
 
-## 2. Finish the neutral `CameraFrameDecoder` migration
-
-[`CameraFrameDecoder.kt`](../app/src/main/java/org/itroboc/app/CameraFrameDecoder.kt)
-currently provides only a typealias. Admin and TD production call sites still
-construct and type against `AdminEditCameraFrameDecoder`.
-
-Finish the migration:
-
-1. make production and test call sites use `CameraFrameDecoder`;
-2. rename or replace the backing implementation so shared infrastructure no
-   longer has an Admin-owned class name;
-3. keep Admin on `Grid13SlowDecoder` and TD on `Grid13VerdictDecoder` through
-   decoder injection;
-4. remove the compatibility alias once no legacy references remain;
-5. update current architecture/product wording when the migration lands.
-
-Do not change ROI extraction, decoder behavior, or scan outcomes as part of the
-naming migration.
-
-Done means `rg AdminEditCameraFrameDecoder` finds no production or test usage.
-
-## 3. Extract the duplicated camera preview/analyzer component
+## 2. Extract the duplicated camera preview/analyzer component
 
 [`AdminEditScreen.kt`](../app/src/main/java/org/itroboc/app/AdminEditScreen.kt)
 and

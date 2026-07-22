@@ -65,7 +65,7 @@ fun AdminEditScreen(
     var pendingScanCard by remember { mutableStateOf<CardId?>(null) }
     var debugLogStatus by remember { mutableStateOf<String?>(null) }
     val pendingScanRequest = remember { AtomicBoolean(false) }
-    val frameDecoder = remember { AdminEditCameraFrameDecoder() }
+    val frameDecoder = remember { CameraFrameDecoder() }
     val scanEvidenceByAlias = remember { mutableStateMapOf<String, AdminAliasScanEvidence>() }
     
     // Trigger recomposition when editor state changes
@@ -535,7 +535,7 @@ fun AdminEditScreen(
 @Composable
 private fun CameraPreview(
     consumeScanRequest: () -> Boolean,
-    frameDecoder: AdminEditCameraFrameDecoder,
+    frameDecoder: CameraFrameDecoder,
     onScanProcessed: (CameraScanOutcome) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current

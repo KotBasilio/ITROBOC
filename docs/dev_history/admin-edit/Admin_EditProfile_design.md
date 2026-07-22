@@ -119,12 +119,8 @@ App owns:
 
 Naming note:
 
-```text
-CameraFrameDecoder = neutral shared camera/analyzer name
-AdminEditCameraFrameDecoder = current backing implementation / compatibility name
-```
-
-New shared camera/analyzer work should use `CameraFrameDecoder`.
+`CameraFrameDecoder` is the shared CameraX frame-to-verdict adapter. Admin uses
+its default slow diagnostic decoder; TD injects the fast verdict decoder.
 
 ## Admin::Actions current behavior
 
