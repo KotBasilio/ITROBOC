@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `e118faa`.
+Last aligned with source snapshot: `fd6860e`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -25,7 +25,7 @@ Current TD-side workflow is guided and cumulative:
 2. Choose a board.
 3. Select a seat: North, East, South, or West.
 4. Show cards/barcodes to the camera in stream mode.
-5. The app reads the barcode ROI and extracts a raw Grid13 signature.
+5. The app reads a thin centered barcode ROI and extracts a raw Grid13 signature.
 6. The active Deck Profile maps the raw signature to a canonical `CardId`.
 7. The selected hand accumulates unique cards.
 8. Repeated found signatures are stabilized before they mutate board state.
@@ -36,6 +36,11 @@ Current TD-side workflow is guided and cumulative:
 13. TD overview can export all complete boards as cumulative PBN.
 
 The app does not need one perfect scan. It should support fast iterative convergence.
+
+The current camera target is intentionally a thin blade rather than an open
+mouth: 20% of the camera-frame width, 3% of its height, with the height capped
+at 10 pixels. Manual field verification found that this narrower band reduced
+uncertain reads that otherwise asked the operator to bring the barcode closer.
 
 Success is not “decode every visible card perfectly in one frame.”
 

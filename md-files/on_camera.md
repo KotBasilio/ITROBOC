@@ -23,7 +23,7 @@ output models.
 The mind should own evidence-trust policy:
 
 - configurable Found consensus, using the current allowed range `6..2` and
-  default `4` frames;
+  default `2` frames;
 - pondering signature/count and thought presentation;
 - Ambiguous, NotFound, and conversion-failure reset/uncertainty behavior;
 - unknown signatures may appear in thought but never become accepted scans;

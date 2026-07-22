@@ -155,6 +155,12 @@ Central area shows one of:
 - `BoardCompleteView` when the board is complete;
 - otherwise CameraX preview + barcode guide overlay.
 
+The current shared camera guide is a thin blade: 20% of frame width, 3% of
+frame height, and no more than 10 pixels high. `BarcodeCameraScanner` computes
+one ROI for buffer sizing and passes that exact ROI into `CameraFrameDecoder`;
+the overlay uses the same guide specification in display coordinates. Manual
+field verification found fewer uncertain reads that asked for a closer card.
+
 ### BoardCompleteView
 
 When complete, central area shows:
@@ -234,7 +240,7 @@ If the board is complete, scans are ignored.
 Current stabilization rule:
 
 - repeated `Found` verdicts must reach consensus before they mutate board state;
-- Beetle Mind uses configurable Found-stability consensus. TD Settings exposes this as Perception: Shy ↔ Bold. Allowed values are 6,5,4,3,2 frames; default is 4.;
+- Beetle Mind uses configurable Found-stability consensus. TD Settings exposes this as Perception: Shy ↔ Bold. Allowed values are 6,5,4,3,2 frames; default is 2;
 - this is stabilization, not semantic inference;
 - unknown signatures intentionally do not stabilize.
 

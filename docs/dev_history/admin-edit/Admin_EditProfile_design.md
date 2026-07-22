@@ -313,6 +313,10 @@ pixels, and tuned for one barcode strip rather than a full-card OCR region. The
 overlay uses the same proportional-and-capped guide calculation in display
 coordinates.
 
+This began as experimental ROI sharpening and is now retained current behavior:
+manual field verification found fewer uncertain reads that asked the operator
+to bring the barcode closer.
+
 Current extraction is luma-only. This is intentional for current MVP simplicity. Static research paths may still discuss RGB/min-RGB ink; if red-suit instability appears in live calibration, RGB/YUV-aware extraction is a future seam, not current behavior.
 
 ## Decode outcomes
