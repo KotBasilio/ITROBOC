@@ -483,7 +483,7 @@ The add table uses the same TD-readable ownership language as Admin-style card g
 - **Visual anchors**: The right pane features a thick, seat-colored border and a completion-aware background (green glow at 13 cards) to match the main cockpit's visual language.
 - **Durable height**: The hand area uses a fixed vertical measure to accommodate exceptional "long suit" cases (up to 5 rows) without layout shifts.
 
-Click behavior:,targetContent:
+Click behavior:
 
 - card already in selected hand: disabled/no-op;
 - unassigned card: add it to selected hand manually;
