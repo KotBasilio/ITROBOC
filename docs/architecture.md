@@ -284,7 +284,11 @@ CameraX ImageProxy
 
 Admin::Edit can show diagnostic detail that TD should not show.
 
-The CameraX adapter extracts only the ROI luma data. Dense `pixelStride == 1` paths use row bulk copy; non-unit pixel stride falls back to per-pixel extraction.
+The CameraX scanner computes one centered guide ROI and passes it into the
+frame decoder, so overlay intent, buffer sizing, and decoding share one guide
+specification. The adapter extracts only that ROI's luma data. Dense
+`pixelStride == 1` paths use row bulk copy; non-unit pixel stride falls back to
+per-pixel extraction.
 
 ### Admin read-only / preview
 

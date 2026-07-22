@@ -14,13 +14,31 @@ class CameraFrameSupportTest {
         val roi = centeredBarcodeRoi(
             imageWidth = 100,
             imageHeight = 60,
-            guideSpec = CameraScanGuideSpec(widthFraction = 0.20f, heightFraction = 0.08f),
+            guideSpec = barcodeScanGuideSpec,
         )
 
         assertEquals(40, roi.x)
-        assertEquals(27, roi.y)
+        assertEquals(29, roi.y)
         assertEquals(20, roi.width)
-        assertEquals(5, roi.height)
+        assertEquals(2, roi.height)
+    }
+
+    @Test
+    fun `barcode guide height is capped in roi and overlay coordinates`() {
+        val roi = centeredBarcodeRoi(
+            imageWidth = 1920,
+            imageHeight = 1080,
+            guideSpec = barcodeScanGuideSpec,
+        )
+        val overlay = centeredGuideRectBounds(
+            containerWidth = 1080f,
+            containerHeight = 1920f,
+            guideSpec = barcodeScanGuideSpec,
+        )
+
+        assertEquals(384, roi.width)
+        assertEquals(10, roi.height)
+        assertEquals(10f, overlay.height)
     }
 
     @Test

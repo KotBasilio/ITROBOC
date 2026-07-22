@@ -3,20 +3,26 @@ package org.itroboc.app
 import org.itroboc.vision.BarcodeRoi
 import org.itroboc.vision.GrayImage
 import java.nio.ByteBuffer
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 internal val barcodeScanGuideSpec = CameraScanGuideSpec(
     widthFraction = 0.20f,
-    heightFraction = 0.08f,
+    heightFraction = 0.03f,
+    maxHeightPixels = 10,
 )
 
 internal data class CameraScanGuideSpec(
     val widthFraction: Float,
     val heightFraction: Float,
+    val maxHeightPixels: Int? = null,
 ) {
     init {
         require(widthFraction in 0f..1f) { "widthFraction must be within [0, 1]" }
         require(heightFraction in 0f..1f) { "heightFraction must be within [0, 1]" }
+        require(maxHeightPixels == null || maxHeightPixels > 0) {
+            "maxHeightPixels must be positive when set"
+        }
     }
 }
 
@@ -38,17 +44,20 @@ internal fun centeredBarcodeRoi(
     val roiWidth = (imageWidth * guideSpec.widthFraction)
         .roundToInt()
         .coerceIn(1, imageWidth)
-    val roiHeight = (imageHeight * guideSpec.heightFraction)
-        .roundToInt()
+    val proportionalHeight = (imageHeight * guideSpec.heightFraction).roundToInt()
+    val roiHeight = guideSpec.maxHeightPixels
+        ?.let { min(proportionalHeight, it) }
+        ?: proportionalHeight
+    val clampedRoiHeight = roiHeight
         .coerceIn(1, imageHeight)
     val x = ((imageWidth - roiWidth) / 2).coerceAtLeast(0)
-    val y = ((imageHeight - roiHeight) / 2).coerceAtLeast(0)
+    val y = ((imageHeight - clampedRoiHeight) / 2).coerceAtLeast(0)
 
     return BarcodeRoi(
         x = x,
         y = y,
         width = roiWidth,
-        height = roiHeight,
+        height = clampedRoiHeight,
     )
 }
 
@@ -58,7 +67,10 @@ internal fun centeredGuideRectBounds(
     guideSpec: CameraScanGuideSpec,
 ): GuideRectBounds {
     val width = containerWidth * guideSpec.widthFraction
-    val height = containerHeight * guideSpec.heightFraction
+    val proportionalHeight = containerHeight * guideSpec.heightFraction
+    val height = guideSpec.maxHeightPixels
+        ?.let { min(proportionalHeight, it.toFloat()) }
+        ?: proportionalHeight
     return GuideRectBounds(
         left = (containerWidth - width) / 2f,
         top = (containerHeight - height) / 2f,

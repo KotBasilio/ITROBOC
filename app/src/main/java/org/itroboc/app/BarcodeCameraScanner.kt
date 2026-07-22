@@ -78,7 +78,11 @@ internal fun BarcodeCameraScanner(
                         reusableRoiPixels = ByteArray(requiredSize)
                     }
 
-                    val scanOutcome = frameDecoder.decode(imageProxy, reusableRoiPixels)
+                    val scanOutcome = frameDecoder.decode(
+                        imageProxy = imageProxy,
+                        roi = roi,
+                        reusablePixels = reusableRoiPixels,
+                    )
                     mainExecutor.execute {
                         currentOnScanProcessed(scanOutcome)
                     }
