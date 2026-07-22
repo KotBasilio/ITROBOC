@@ -9,142 +9,159 @@ import kotlin.test.assertNull
 
 class BeetleMindTest {
     @Test
-    fun `known signature reaches typed acceptance at configured consensus`() {
-        val mind = BeetleMind()
+    fun `known evidence reaches typed card scan at configured consensus`() {
+        val time = FakeTime(100L)
+        val mind = BeetleMind(nowMillis = time::now)
 
-        val first = mind.process(knownAceOfSpades(), nowMillis = 100L)
-        val second = mind.process(knownAceOfSpades(), nowMillis = 150L)
+        val first = mind.observe(knownAceOfSpades())
+        time.current = 150L
+        val second = mind.observe(knownAceOfSpades())
 
         assertEquals("♠A?", first.thought.presentation)
-        assertNull(first.acceptedSignature)
+        assertNull(first.acceptedCardScan)
         assertEquals("♠A.", second.thought.presentation)
         assertEquals(
-            AcceptedSignature(
+            AcceptedCardScan(
                 rawSignature = "bfm1549",
                 cardId = CardId.parse("SA"),
+                confidence = 0.95,
             ),
-            second.acceptedSignature,
+            second.acceptedCardScan,
         )
     }
 
     @Test
     fun `changed signature starts a fresh consensus`() {
-        val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 3))
+        val mind = BeetleMind(
+            nowMillis = { 200L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 3),
+        )
 
-        mind.process(knownAceOfSpades(), nowMillis = 100L)
-        mind.process(knownAceOfSpades(), nowMillis = 150L)
-        val changed = mind.process(
-            BeetleMindInput.KnownSignature(
+        mind.observe(knownAceOfSpades())
+        mind.observe(knownAceOfSpades())
+        val changed = mind.observe(
+            BeetleEvidence.Known(
                 rawSignature = "bfm1550",
                 cardId = CardId.parse("HK"),
+                confidence = 0.90,
             ),
-            nowMillis = 200L,
         )
 
         assertEquals("♥K?", changed.thought.presentation)
-        assertNull(changed.acceptedSignature)
+        assertNull(changed.acceptedCardScan)
     }
 
     @Test
     fun `current threshold is applied to accumulated evidence`() {
-        val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 4))
+        val mind = BeetleMind(
+            nowMillis = { 150L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 4),
+        )
 
-        mind.process(knownAceOfSpades(), nowMillis = 100L)
-        val accepted = mind.process(
-            input = knownAceOfSpades(),
-            nowMillis = 150L,
+        mind.observe(knownAceOfSpades())
+        val accepted = mind.observe(
+            evidence = knownAceOfSpades(),
             requiredConsensusFrames = 2,
         )
 
         assertEquals("♠A.", accepted.thought.presentation)
-        assertEquals("bfm1549", accepted.acceptedSignature?.rawSignature)
+        assertEquals("bfm1549", accepted.acceptedCardScan?.rawSignature)
     }
 
     @Test
     fun `long consensus caps visible hesitation at three question marks`() {
-        val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 6))
+        val mind = BeetleMind(
+            nowMillis = { 0L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 6),
+        )
 
-        val thoughts = (1..5).map { count ->
-            mind.process(knownAceOfSpades(), nowMillis = count * 50L).thought.presentation
+        val thoughts = (1..5).map {
+            mind.observe(knownAceOfSpades()).thought.presentation
         }
 
         assertEquals(listOf("♠A?", "♠A??", "♠A???", "♠A???", "♠A???"), thoughts)
     }
 
     @Test
-    fun `unknown signatures remain visible but never become accepted`() {
-        val mind = BeetleMind()
+    fun `unknown evidence remains visible but never becomes accepted`() {
+        val mind = BeetleMind(nowMillis = { 0L })
 
-        repeat(8) { index ->
-            val output = mind.process(
-                BeetleMindInput.UnknownSignature("bfm-unknown"),
-                nowMillis = index * 50L,
+        repeat(8) {
+            val output = mind.observe(
+                BeetleEvidence.Unknown(
+                    rawSignature = "bfm-unknown",
+                    confidence = 0.40,
+                ),
             )
 
             assertEquals("bfm-unknown?", output.thought.presentation)
-            assertNull(output.acceptedSignature)
+            assertNull(output.acceptedCardScan)
         }
     }
 
     @Test
-    fun `ambiguous evidence shows candidate and resets consensus`() {
-        val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 3))
-        mind.process(knownAceOfSpades(), nowMillis = 100L)
-        mind.process(knownAceOfSpades(), nowMillis = 150L)
-
-        val ambiguous = mind.process(
-            BeetleMindInput.Ambiguous(candidateSignature = "bfm1550"),
-            nowMillis = 200L,
+    fun `ambiguous evidence shows first candidate and resets consensus`() {
+        val mind = BeetleMind(
+            nowMillis = { 0L },
+            settings = BeetleMindSettings(requiredConsensusFrames = 3),
         )
-        val restarted = mind.process(knownAceOfSpades(), nowMillis = 250L)
+        mind.observe(knownAceOfSpades())
+        mind.observe(knownAceOfSpades())
+        val candidates = listOf(
+            BeetleSignatureCandidate(rawSignature = "bfm1550", confidence = 0.60),
+            BeetleSignatureCandidate(rawSignature = "bfm1551", confidence = 0.58),
+        )
+
+        val ambiguous = mind.observe(BeetleEvidence.Ambiguous(candidates))
+        val restarted = mind.observe(knownAceOfSpades())
 
         assertIs<BeetleThought.Uncertain>(ambiguous.thought)
         assertEquals("bfm1550~", ambiguous.thought.presentation)
         assertEquals("♠A?", restarted.thought.presentation)
-        assertNull(restarted.acceptedSignature)
+        assertNull(restarted.acceptedCardScan)
     }
 
     @Test
-    fun `ambiguous evidence without candidate blanks thought`() {
-        val output = BeetleMind().process(
-            BeetleMindInput.Ambiguous(candidateSignature = null),
-            nowMillis = 100L,
-        )
+    fun `ambiguous evidence without candidates blanks thought`() {
+        val output = BeetleMind(nowMillis = { 0L })
+            .observe(BeetleEvidence.Ambiguous(candidates = emptyList()))
 
         assertEquals(BeetleThought.Blank, output.thought)
     }
 
     @Test
     fun `not found conversion failure and reset blank thought and consensus`() {
-        val resetInputs = listOf(
-            BeetleMindInput.NotFound,
-            BeetleMindInput.ConversionFailed,
-            BeetleMindInput.Reset,
+        val evidenceResets = listOf<BeetleEvidence>(
+            BeetleEvidence.NotFound(reason = "No barcode pattern"),
+            BeetleEvidence.ConversionFailure(reason = "Luma plane unavailable"),
         )
 
-        resetInputs.forEach { resetInput ->
-            val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 3))
-            mind.process(knownAceOfSpades(), nowMillis = 100L)
-            mind.process(knownAceOfSpades(), nowMillis = 150L)
+        evidenceResets.forEach { evidence ->
+            val mind = mindAwaitingThirdFrame()
 
-            val reset = mind.process(resetInput, nowMillis = 200L)
-            val restarted = mind.process(knownAceOfSpades(), nowMillis = 250L)
+            val reset = mind.observe(evidence)
+            val restarted = mind.observe(knownAceOfSpades())
 
             assertEquals(BeetleThought.Blank, reset.thought)
             assertEquals("♠A?", restarted.thought.presentation)
-            assertNull(restarted.acceptedSignature)
+            assertNull(restarted.acceptedCardScan)
         }
+
+        val mind = mindAwaitingThirdFrame()
+        val reset = mind.reset()
+        val restarted = mind.observe(knownAceOfSpades())
+
+        assertEquals(BeetleThought.Blank, reset.thought)
+        assertEquals("♠A?", restarted.thought.presentation)
     }
 
     @Test
     fun `dream topics are typed and reset pondering`() {
         BeetleDream.entries.forEach { topic ->
-            val mind = BeetleMind(BeetleMindSettings(requiredConsensusFrames = 3))
-            mind.process(knownAceOfSpades(), nowMillis = 100L)
-            mind.process(knownAceOfSpades(), nowMillis = 150L)
+            val mind = mindAwaitingThirdFrame()
 
-            val dream = mind.process(BeetleMindInput.Dream(topic), nowMillis = 200L)
-            val restarted = mind.process(knownAceOfSpades(), nowMillis = 250L)
+            val dream = mind.dream(topic)
+            val restarted = mind.observe(knownAceOfSpades())
 
             assertEquals(BeetleThought.Dreaming(topic), dream.thought)
             assertEquals(topic.presentation, dream.thought.presentation)
@@ -153,31 +170,40 @@ class BeetleMindTest {
     }
 
     @Test
-    fun `accepted signature is debounced until the window expires`() {
-        val mind = BeetleMind()
+    fun `accepted card scan is debounced against injected time`() {
+        val time = FakeTime(0L)
+        val mind = BeetleMind(nowMillis = time::now)
 
-        mind.process(knownAceOfSpades(), nowMillis = 0L)
-        val accepted = mind.process(knownAceOfSpades(), nowMillis = 100L)
-        val debounced = mind.process(knownAceOfSpades(), nowMillis = 1_099L)
-        val acceptedAtBoundary = mind.process(knownAceOfSpades(), nowMillis = 1_100L)
+        mind.observe(knownAceOfSpades())
+        time.current = 100L
+        val accepted = mind.observe(knownAceOfSpades())
+        time.current = 1_099L
+        val debounced = mind.observe(knownAceOfSpades())
+        time.current = 1_100L
+        val acceptedAtBoundary = mind.observe(knownAceOfSpades())
 
-        assertEquals("bfm1549", accepted.acceptedSignature?.rawSignature)
-        assertNull(debounced.acceptedSignature)
+        assertEquals("bfm1549", accepted.acceptedCardScan?.rawSignature)
+        assertNull(debounced.acceptedCardScan)
         assertEquals("♠A.", debounced.thought.presentation)
-        assertEquals("bfm1549", acceptedAtBoundary.acceptedSignature?.rawSignature)
+        assertEquals("bfm1549", acceptedAtBoundary.acceptedCardScan?.rawSignature)
     }
 
     @Test
-    fun `dream does not erase accepted signature debounce`() {
-        val mind = BeetleMind()
-        mind.process(knownAceOfSpades(), nowMillis = 0L)
-        mind.process(knownAceOfSpades(), nowMillis = 100L)
-        mind.process(BeetleMindInput.Dream(BeetleDream.EYES), nowMillis = 150L)
+    fun `dream does not erase accepted card scan debounce`() {
+        val time = FakeTime(0L)
+        val mind = BeetleMind(nowMillis = time::now)
+        mind.observe(knownAceOfSpades())
+        time.current = 100L
+        mind.observe(knownAceOfSpades())
+        time.current = 150L
+        mind.dream(BeetleDream.EYES)
 
-        mind.process(knownAceOfSpades(), nowMillis = 200L)
-        val repeated = mind.process(knownAceOfSpades(), nowMillis = 250L)
+        time.current = 200L
+        mind.observe(knownAceOfSpades())
+        time.current = 250L
+        val repeated = mind.observe(knownAceOfSpades())
 
-        assertNull(repeated.acceptedSignature)
+        assertNull(repeated.acceptedCardScan)
         assertEquals("♠A.", repeated.thought.presentation)
     }
 
@@ -193,17 +219,29 @@ class BeetleMindTest {
             BeetleMindSettings(debounceWindowMillis = -1L)
         }
         assertFailsWith<IllegalArgumentException> {
-            BeetleMind().process(
-                input = knownAceOfSpades(),
-                nowMillis = 100L,
+            BeetleMind(nowMillis = { 0L }).observe(
+                evidence = knownAceOfSpades(),
                 requiredConsensusFrames = 7,
             )
         }
     }
 
-    private fun knownAceOfSpades(): BeetleMindInput.KnownSignature =
-        BeetleMindInput.KnownSignature(
+    private fun mindAwaitingThirdFrame(): BeetleMind = BeetleMind(
+        nowMillis = { 0L },
+        settings = BeetleMindSettings(requiredConsensusFrames = 3),
+    ).also { mind ->
+        mind.observe(knownAceOfSpades())
+        mind.observe(knownAceOfSpades())
+    }
+
+    private fun knownAceOfSpades(): BeetleEvidence.Known =
+        BeetleEvidence.Known(
             rawSignature = "bfm1549",
             cardId = CardId.parse("SA"),
+            confidence = 0.95,
         )
+
+    private class FakeTime(var current: Long) {
+        fun now(): Long = current
+    }
 }

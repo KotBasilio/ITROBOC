@@ -31,29 +31,34 @@ internal enum class BeetleDream(
     JOKER("Joker"),
 }
 
-internal sealed interface BeetleMindInput {
-    data class KnownSignature(
+internal data class BeetleSignatureCandidate(
+    val rawSignature: String,
+    val confidence: Double,
+)
+
+internal sealed interface BeetleEvidence {
+    data class Known(
         val rawSignature: String,
         val cardId: CardId,
-    ) : BeetleMindInput
+        val confidence: Double,
+    ) : BeetleEvidence
 
-    data class UnknownSignature(
+    data class Unknown(
         val rawSignature: String,
-    ) : BeetleMindInput
+        val confidence: Double,
+    ) : BeetleEvidence
 
     data class Ambiguous(
-        val candidateSignature: String?,
-    ) : BeetleMindInput
+        val candidates: List<BeetleSignatureCandidate>,
+    ) : BeetleEvidence
 
-    data object NotFound : BeetleMindInput
+    data class NotFound(
+        val reason: String,
+    ) : BeetleEvidence
 
-    data object ConversionFailed : BeetleMindInput
-
-    data class Dream(
-        val topic: BeetleDream,
-    ) : BeetleMindInput
-
-    data object Reset : BeetleMindInput
+    data class ConversionFailure(
+        val reason: String,
+    ) : BeetleEvidence
 }
 
 internal sealed interface BeetleThought {
@@ -97,18 +102,20 @@ internal sealed interface BeetleThought {
     }
 }
 
-internal data class AcceptedSignature(
+internal data class AcceptedCardScan(
     val rawSignature: String,
     val cardId: CardId,
+    val confidence: Double,
 )
 
 internal data class BeetleMindOutput(
     val thought: BeetleThought,
-    val acceptedSignature: AcceptedSignature? = null,
+    val acceptedCardScan: AcceptedCardScan? = null,
 )
 
 /** Pure Kotlin evidence-trust state machine. It does not own camera or board behavior. */
 internal class BeetleMind(
+    private val nowMillis: () -> Long,
     private val settings: BeetleMindSettings = BeetleMindSettings(),
 ) {
     var thought: BeetleThought = BeetleThought.Blank
@@ -119,95 +126,97 @@ internal class BeetleMind(
     private var lastAcceptedRawSignature: String? = null
     private var lastAcceptedAtMillis: Long = 0L
 
-    fun process(
-        input: BeetleMindInput,
-        nowMillis: Long,
+    fun observe(
+        evidence: BeetleEvidence,
         requiredConsensusFrames: Int = settings.requiredConsensusFrames,
     ): BeetleMindOutput {
         require(requiredConsensusFrames in BeetleMindSettings.ALLOWED_CONSENSUS_FRAMES) {
             "requiredConsensusFrames must be within ${BeetleMindSettings.ALLOWED_CONSENSUS_FRAMES}"
         }
 
-        return when (input) {
-            is BeetleMindInput.KnownSignature -> processKnownSignature(
-                input = input,
-                nowMillis = nowMillis,
+        return when (evidence) {
+            is BeetleEvidence.Known -> observeKnown(
+                evidence = evidence,
                 requiredConsensusFrames = requiredConsensusFrames,
             )
-            is BeetleMindInput.UnknownSignature -> {
-                resetPondering()
-                publish(BeetleThought.Pondering(input.rawSignature, evidenceCount = 1))
+            is BeetleEvidence.Unknown -> {
+                clearPondering()
+                publish(BeetleThought.Pondering(evidence.rawSignature, evidenceCount = 1))
             }
-            is BeetleMindInput.Ambiguous -> {
-                resetPondering()
-                val nextThought = input.candidateSignature
+            is BeetleEvidence.Ambiguous -> {
+                clearPondering()
+                val nextThought = evidence.candidates.firstOrNull()
+                    ?.rawSignature
                     ?.let(BeetleThought::Uncertain)
                     ?: BeetleThought.Blank
                 publish(nextThought)
             }
-            BeetleMindInput.NotFound,
-            BeetleMindInput.ConversionFailed,
-            BeetleMindInput.Reset,
-            -> {
-                resetPondering()
-                publish(BeetleThought.Blank)
-            }
-            is BeetleMindInput.Dream -> {
-                resetPondering()
-                publish(BeetleThought.Dreaming(input.topic))
-            }
+            is BeetleEvidence.NotFound,
+            is BeetleEvidence.ConversionFailure,
+            -> reset()
         }
     }
 
-    private fun processKnownSignature(
-        input: BeetleMindInput.KnownSignature,
-        nowMillis: Long,
+    fun dream(topic: BeetleDream): BeetleMindOutput {
+        clearPondering()
+        return publish(BeetleThought.Dreaming(topic))
+    }
+
+    fun reset(): BeetleMindOutput {
+        clearPondering()
+        return publish(BeetleThought.Blank)
+    }
+
+    private fun observeKnown(
+        evidence: BeetleEvidence.Known,
         requiredConsensusFrames: Int,
     ): BeetleMindOutput {
-        if (input.rawSignature == ponderingSignature) {
+        if (evidence.rawSignature == ponderingSignature) {
             ponderingCount++
         } else {
-            ponderingSignature = input.rawSignature
+            ponderingSignature = evidence.rawSignature
             ponderingCount = 1
         }
 
-        val cardName = "${input.cardId.suit.prettySymbol}${input.cardId.rank.symbol}"
+        val cardName = "${evidence.cardId.suit.prettySymbol}${evidence.cardId.rank.symbol}"
         if (ponderingCount < requiredConsensusFrames) {
             return publish(BeetleThought.Pondering(cardName, ponderingCount))
         }
 
-        val acceptedSignature = if (
-            input.rawSignature == lastAcceptedRawSignature &&
-            nowMillis - lastAcceptedAtMillis < settings.debounceWindowMillis
+        val currentTimeMillis = nowMillis()
+        val acceptedCardScan = if (
+            evidence.rawSignature == lastAcceptedRawSignature &&
+            currentTimeMillis - lastAcceptedAtMillis < settings.debounceWindowMillis
         ) {
             null
         } else {
-            lastAcceptedRawSignature = input.rawSignature
-            lastAcceptedAtMillis = nowMillis
-            AcceptedSignature(
-                rawSignature = input.rawSignature,
-                cardId = input.cardId,
+            lastAcceptedRawSignature = evidence.rawSignature
+            lastAcceptedAtMillis = currentTimeMillis
+            AcceptedCardScan(
+                rawSignature = evidence.rawSignature,
+                cardId = evidence.cardId,
+                confidence = evidence.confidence,
             )
         }
         return publish(
             nextThought = BeetleThought.Certain(cardName),
-            acceptedSignature = acceptedSignature,
+            acceptedCardScan = acceptedCardScan,
         )
     }
 
-    private fun resetPondering() {
+    private fun clearPondering() {
         ponderingSignature = null
         ponderingCount = 0
     }
 
     private fun publish(
         nextThought: BeetleThought,
-        acceptedSignature: AcceptedSignature? = null,
+        acceptedCardScan: AcceptedCardScan? = null,
     ): BeetleMindOutput {
         thought = nextThought
         return BeetleMindOutput(
             thought = nextThought,
-            acceptedSignature = acceptedSignature,
+            acceptedCardScan = acceptedCardScan,
         )
     }
 }
