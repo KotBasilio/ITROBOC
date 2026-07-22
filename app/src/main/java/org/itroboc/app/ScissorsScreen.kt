@@ -137,8 +137,8 @@ private fun ScissorsHandPane(
                 fontWeight = FontWeight.Bold,
             )
             OwnershipLegendChip("Here", Color(0xFF81C784))
-            OwnershipLegendChip("There", Color(0xFFFFCC80))
-            OwnershipLegendChip("Free", Color(0xFFE0E0E0))
+            OwnershipLegendChip("There", Color(0xFFE0E0E0))
+            OwnershipLegendChip("Free", Color(0xFFFFCC80))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -377,8 +377,8 @@ private fun ManualEntryCardButton(
 ) {
     val backgroundColor = when (state) {
         ManualEntryCardState.IN_SELECTED_HAND -> Color(0xFF81C784)
-        ManualEntryCardState.IN_OTHER_HAND -> Color(0xFFFFCC80)
-        ManualEntryCardState.UNASSIGNED -> Color(0xFFE0E0E0)
+        ManualEntryCardState.IN_OTHER_HAND -> Color(0xFFE0E0E0)
+        ManualEntryCardState.UNASSIGNED -> Color(0xFFFFCC80)
     }
     val enabled = state != ManualEntryCardState.IN_SELECTED_HAND
 
@@ -407,7 +407,7 @@ private fun ManualEntryCardButton(
 private fun SeatBorderLegendChip(ownerSeat: Seat?, seat: Seat, onClick: () -> Unit) {
     val backgroundColor =
         if (seat == ownerSeat) { Color(0xFF81C784) }
-        else { Color(0xFFFFCC80) }
+        else { Color(0xFFE0E0E0) }
 
     Box(
         modifier = Modifier
