@@ -49,6 +49,7 @@ Relevant code:
 :app
   EditBoardScreen.kt
   EditBoardController.kt
+  BeetleMind.kt
   ScissorsScreen.kt
   TdSessionState.kt
   TdSessionExchange.kt
@@ -72,7 +73,13 @@ Relevant code:
 
 `ScissorsScreen` owns the full-screen selected-hand repair cockpit.
 
-`EditBoardController` bridges camera scan outcomes, stabilization/thought state, profile lookup, reducer calls, status messages, and scan-rate metrics.
+`BeetleMind` is the pure Kotlin evidence-trust state machine. It owns typed
+evidence, consensus, thought/dream state, unknown hesitation, and accepted-card
+debounce.
+
+`EditBoardController` bridges camera outcomes into typed mind evidence, resolves
+profiles, publishes mind thoughts, routes accepted card scans into reducer
+calls, and owns status messages and scan-rate metrics.
 
 `EditBoardReducer` owns pure board mutation logic.
 
@@ -125,7 +132,7 @@ Displays:
 
 - total card count: `Cards: n/52`;
 - SPS/IDLE telemetry;
-- `Thoughts` status from controller stabilization/mind state;
+- `Thoughts` status published by the controller from typed `BeetleThought` state;
 - last result message.
 
 Current message source is string-based from `EditBoardController` / `EditBoardReducer`.
@@ -217,19 +224,22 @@ It confirms a duplicate override: the TD says the old occurrence was a false pos
 - scan deltas / SPS / IDLE telemetry;
 - last result message;
 - last scanned card;
-- thought/stabilization state;
-- debounce and unknown-signature throttling.
+- the Compose-facing presentation string mirrored from `BeetleThought`.
+
+`BeetleMind` owns the actual pondering signature/count, thought/dream state,
+consensus, and accepted-card debounce. The controller no longer carries a
+parallel copy of that evidence-trust state.
 
 Camera scan flow:
 
 ```text
 CameraScanOutcome
--> BarcodeDecodeResult.Found
--> viewedAs(orientationMode)
--> processPondering(signature)
--> consensus across repeated matching founds
--> handleScan(signature)
--> DeckProfile.lookup(signature)
+-> controller applies viewedAs(orientationMode)
+-> controller resolves DeckProfile lookup
+-> typed BeetleEvidence
+-> BeetleMind.observe(...)
+-> BeetleThought + optional AcceptedCardScan
+-> controller checks board completion
 -> EditBoardReducer.applyScannedCard(...)
 -> onBoardEditStateChange(update.state)
 -> lastResultMessage / lastScannedCard
@@ -247,14 +257,14 @@ Current stabilization rule:
 Current eye/mind note:
 
 - `Scissors`/`Swap` replace the camera surface with a modal placeholder, so the beetle eye is effectively closed while the full-screen repair/seat chooser is open;
-- `onManualAddCard(...)` calls `blankMind()` before manual repair;
+- `onManualAddCard(...)` calls `BeetleMind.reset()` before manual repair;
 - other manual operations currently do not blank the mind by design: eye is eye, pocket is pocket.
 
 Current unknown rule:
 
 - unknown signatures may appear in `thoughts`;
 - unknown signatures intentionally never stabilize;
-- they do not reach `handleScan(...)`;
+- they never produce an `AcceptedCardScan`;
 - they do not emit operational unknown-pocket messages in TD status.
 
 SPS state reset belongs in controller/effect-side logic, not inside a composable render branch.
