@@ -1,6 +1,6 @@
 # ITROBOC Product Context
 
-Last aligned with source snapshot: `fd6860e`.
+Last aligned with source snapshot: `3f4029a`.
 
 ITROBOC means **Independent Tool for Reading Observed Barcodes On Cards**.
 
@@ -86,7 +86,7 @@ Current TD surfaces:
 
 - TD overview with dynamic board grid, Import, Export, Save, Settings;
 - TD::EditBoard cockpit with four hands, camera area, orientation control, status, last scanned card, and recovery controls.
-- TD::EditBoard also includes a stabilization/thought layer before accepted scans mutate board state.
+- TD::EditBoard uses a typed `BeetleMind` stabilization/thought layer before accepted scans mutate board state.
 - Scissors selected-hand repair screen for late correction, manual add of scratched/no-barcode cards, and moving cards from another hand when the previous placement was wrong.
 
 Current TD recovery controls:
@@ -123,7 +123,7 @@ Grounded current state:
 - TD overview supports flexible board grid sizes 15..39 in 3-board increments;
 - TD import expands grid and rejects unsupported board numbers;
 - TD::EditBoard is live, with recovery controls for common field errors and physical-card failures;
-- TD::EditBoard stabilizes repeated found verdicts before mutation and keeps unknowns in thought only;
+- TD::EditBoard translates resolved camera evidence into pure `BeetleMind` input, routes only typed accepted card scans to board mutation, and keeps unknowns in thought only;
 - board completion shows central PBN preview;
 - cumulative PBN export/share works from TD overview.
 

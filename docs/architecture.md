@@ -1,6 +1,6 @@
 # ITROBOC Architecture
 
-Last aligned with source snapshot: `fd6860e`.
+Last aligned with source snapshot: `3f4029a`.
 
 Status: post-MVP. ITROBOC has survived first real tournament use, produced usable PBN from physical club cards, and now has TD-side recovery controls plus a lightweight Beetle Mind stabilization layer for common scan/human errors. PBN exports now include professional file-level headers and preserve double-dummy solver (DDS) metadata during import/export cycles.
 
@@ -109,6 +109,7 @@ Owns:
 
 - screens: Main, TD overview, TD edit board, Scissors selected-hand repair, Admin actions/edit/read-only
 - `CameraFrameDecoder`, `CameraFrameSupport`, `BarcodeCameraScanner`, Admin camera support, and CameraX adapters
+- `BeetleMind` and its typed evidence/thought/accepted-scan models
 - `EditBoardController`
 - `EditBoardScreen`
 - `ScissorsScreen`
@@ -230,18 +231,21 @@ Do not replace this with min/max canonicalization or blind bit reversal.
 
 ## 6.5 TD stabilization layer
 
-Between TD verdict decode and board mutation, the app now has a lightweight stabilization layer in `EditBoardController`.
+Between TD verdict decode and board mutation, the app has a pure Kotlin
+`BeetleMind` evidence-trust state machine. It owns consensus, hesitation,
+thought/dream state, and accepted-card debounce without knowing CameraX,
+Compose, boards, reducers, or scan legality.
 
 Current flow:
 
 ```text
-CameraScanOutcome.Decoded
--> BarcodeDecodeResult.Found
--> viewedAs(orientationMode)
--> processPondering(signature)
--> repeated matching founds build consensus
--> only after consensus: handleScan(...)
--> DeckProfile.lookup(signature)
+CameraScanOutcome
+-> EditBoardController applies orientation
+-> EditBoardController resolves signature through DeckProfile
+-> BeetleEvidence.Known / Unknown / Ambiguous / NotFound / ConversionFailure
+-> BeetleMind observes evidence and publishes a typed BeetleThought
+-> consensus may produce AcceptedCardScan(raw signature + CardId + confidence)
+-> EditBoardController checks board completion and routes the accepted card
 -> EditBoardReducer.applyScannedCard(...)
 ```
 
@@ -251,7 +255,7 @@ Current unknown-signature rule:
 
 ```text
 unknowns may be seen in thoughts,
-but they do not enter handleScan()
+but they never produce AcceptedCardScan
 and do not produce an operational TD status result.
 ```
 
@@ -615,6 +619,7 @@ Important test anchors:
 - `TdSessionExchangeTest`
 - `TdSessionShareManagerTest`
 - `EditBoardControllerTest`
+- `BeetleMindTest`
 - `CameraFrameSupportTest`
 - `AdminEditCameraSupportTest`
 - `Grid13*Test`
