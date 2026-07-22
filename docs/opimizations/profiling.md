@@ -1,145 +1,77 @@
-🧭 The beetle hot-path is not one straight tunnel. It is a small relay across a few lanes.
+# TD scan hot-path profiling: remaining work
 
-**1. Effects touching the 🪲 hot-path**
+Last audited against source snapshot: `ff06fbe`.
 
-In [EditBoardScreen.kt](/home/miron/proj/ITROBOC/app/src/main/java/org/itroboc/app/EditBoardScreen.kt):
+This file is only a remaining-work list. Remove an item when it lands. Do not
+optimize from the old hot-path sketch alone: measure the real TD stream on a
+target Android device first.
 
-- `LaunchedEffect(Unit)` near the top of `EditBoardScreen`
-  - Purpose: request camera permission once if missing.
-  - Relation to hot-path: indirect only. It opens the gate for camera work, but is not per-frame.
+## 1. Capture a repeatable on-device baseline
 
-- `LaunchedEffect(dreamTopic)` in `CentralArea`
-  - Purpose: set beetle dream topic like `Eyes`, `Hands`, `Wind`, `Joker`.
-  - Relation to hot-path: UI-state reaction, not frame-by-frame decoding.
+There is no retained device baseline yet for the live TD scan path.
 
-- `DisposableEffect(lifecycleOwner, cameraProviderFuture, analysisExecutor)` in `CameraPreview`
-  - Purpose: bind camera preview + analyzer when the composable enters, unbind and shut down when it leaves.
-  - Relation to hot-path: this is the big structural bridge. It installs the live analyzer.
+Capture a release-like stream session and record at least:
 
-- `LaunchedEffect(controller)` in `rememberEditBoardController`
-  - Purpose: run `controller.runMetricsLoop()`.
-  - Relation to hot-path: yes, adjacent. It updates `scansPerSecond` and `scansIdleCount` every 500 ms based on scan deltas.
+- device model and Android version;
+- camera frame and ROI dimensions;
+- configured consensus-frame count;
+- delivered scans per second;
+- analyzer ROI-copy, decoder, and total-analyze timings;
+- enough samples to report median and a tail value such as p95;
+- whether the session showed visible stutter, backlog, or delayed thoughts.
 
-Also important, though not an effect:
-- `rememberUpdatedState(consumeScanRequest)` and `rememberUpdatedState(onScanProcessed)` inside `CameraPreview`
-  - These keep the analyzer using the latest lambdas without rebuilding the whole camera pipeline.
-  - This is very much hot-path hygiene.
+The existing opt-in `AnalyzerTiming` log in
+[`AdminEditCameraSupport.kt`](../../app/src/main/java/org/itroboc/app/AdminEditCameraSupport.kt)
+can supply the analyzer-stage timings. Keep profiling disabled during ordinary
+TD use.
 
-**2. The actual hot-path execution lanes**
+Done means a checked-in or attached result identifies the tested scenario and
+gives evidence about which lane, if any, is the bottleneck.
 
-There are basically `3` relevant lanes.
+## 2. Measure the analyzer-to-Main gap
 
-1. `UI / Main thread`
-2. `Camera analysis thread`
-3. `Compose effect coroutines` which usually also run on Main unless switched
+Current timing ends when decoding ends. It does not measure:
 
-**3. The live frame path**
+- time queued in `mainExecutor`;
+- time spent in `EditBoardController.handleCameraScan(...)`;
+- delay from analyzer completion to the resulting visible UI state.
 
-The hottest path is:
+Add opt-in trace sections or monotonic timing around those boundaries, then
+profile them on-device. Avoid permanent per-frame logging or additional
+Compose state just to collect the measurements.
 
-1. CameraX produces a frame.
-2. `ImageAnalysis.setAnalyzer(analysisExecutor) { imageProxy -> ... }` runs on the single-thread executor in [EditBoardScreen.kt:645](/home/miron/proj/ITROBOC/app/src/main/java/org/itroboc/app/EditBoardScreen.kt:645).
-3. Analyzer checks `currentConsumeScanRequest()`.
-4. Analyzer computes ROI and reuses/resizes `reusableRoiPixels`.
-5. Analyzer calls `frameDecoder.decode(imageProxy, reusableRoiPixels)`.
-6. `AdminEditCameraFrameDecoder.decode(...)` in [AdminEditCameraSupport.kt](/home/miron/proj/ITROBOC/app/src/main/java/org/itroboc/app/AdminEditCameraSupport.kt:58) copies ROI pixels and runs the barcode decoder.
-7. Analyzer posts result back to Main:
-   - `mainExecutor.execute { currentOnScanProcessed(scanOutcome) }`
-8. On Main, `controller.handleCameraScan(scanOutcome)` runs in [EditBoardController.kt](/home/miron/proj/ITROBOC/app/src/main/java/org/itroboc/app/EditBoardController.kt:58).
-9. Controller updates:
-   - `scanDeltas`
-   - `thoughts`
-   - consensus state
-   - maybe `lastResultMessage`
-   - maybe board state via reducer
-10. State changes trigger recomposition of the UI.
+The relevant handoff remains in
+[`EditBoardScreen.kt`](../../app/src/main/java/org/itroboc/app/EditBoardScreen.kt),
+and controller processing remains in
+[`EditBoardController.kt`](../../app/src/main/java/org/itroboc/app/EditBoardController.kt).
 
-So the per-frame decode work is not on the UI thread. The controller handling currently is.
+Done means the analyzer, queue, and controller costs can be compared using the
+same capture instead of inferred from scans-per-second telemetry.
 
-**4. What runs on which lane**
+## 3. Remove controller hot-path churn if measurement justifies it
 
-`Camera analysis thread`:
-- `setAnalyzer(...)`
-- ROI calculation
-- ROI luma copy
-- verdict decoder / slow decoder work
-- `reusableRoiPixels` reuse
+`EditBoardController` still performs avoidable collection work:
 
-`Main/UI thread`:
-- Compose recomposition
-- `handleCameraScan(...)`
-- reducer calls from accepted scans
-- button clicks like clear / undo / scissors / seat click
-- `mainExecutor` callback delivery from analyzer
-- permission launcher callback
+- every processed frame uses `scanDeltas = scanDeltas + delta`, allocating a
+  new list;
+- every 500 ms, `updateMetrics()` builds and reverses a pruned list;
+- every analyzed outcome crosses to Main, where telemetry and thought state
+  are considered for publication to Compose.
 
-`Compose effect phase`:
-- `LaunchedEffect(Unit)` permission request
-- `LaunchedEffect(dreamTopic)` dream updates
-- `LaunchedEffect(controller)` metrics loop startup
-- `DisposableEffect(...)` camera bind/unbind lifecycle
+If profiling shows meaningful allocation, GC, queue, or recomposition pressure:
 
-Again: effect phase is about timing/permission to do side effects, not automatically about another thread.
+1. replace the delta-list copies with a bounded queue/ring or equivalent
+   rolling metric;
+2. keep telemetry storage out of Compose-observed state when the UI only needs
+   the derived SPS value;
+3. coalesce UI publication only where it preserves consensus, debounce,
+   unknown-signature, and board-mutation behavior;
+4. keep accepted board mutation on its current safe UI/controller boundary
+   unless a separately designed state-ownership change proves necessary.
 
-**5. So is there one hot-path or several?**
+Preserve the existing controller tests for SPS window semantics, idle display,
+consensus, debounce, and accepted-scan outcomes. Add focused tests for any new
+rolling metric or publication policy.
 
-🧩 Several, but one of them is the true heat core.
-
-The true performance-critical core is:
-- analyzer executor
-- ROI extraction
-- decoder logic
-- hop back to main
-
-Then there is a secondary adjacent path:
-- controller processing on Main
-- consensus / debounce / unknown handling
-- metrics bookkeeping
-
-Then there is a tertiary UI-reactive layer:
-- recomposition
-- dream effects
-- status painting
-
-So the beetle is really a relay creature:
-- `eye` on analyzer thread
-- `mind` mostly on Main
-- `face` in Compose
-
-**6. Which effect matters most to performance?**
-
-For raw SPS:
-- `DisposableEffect` itself is not the expensive part, but it installs the expensive machinery.
-- `LaunchedEffect(controller)` metrics loop is cheap but continuously active.
-- `LaunchedEffect(dreamTopic)` is tiny.
-- the real cost is not the effect API; it is the analyzer callback body and decode path.
-
-**7. A practical simplified map**
-
-- `LaunchedEffect(Unit)`:
-  - “ask for camera once”
-
-- `DisposableEffect(...)`:
-  - “mount the camera machinery”
-
-- analyzer executor:
-  - “see frame, crop ROI, decode”
-
-- `mainExecutor.execute { ... }`:
-  - “hand result back to UI world”
-
-- `handleCameraScan(...)`:
-  - “ponder / accept / reject / mutate state”
-
-- recomposition:
-  - “redraw cockpit”
-
-- `LaunchedEffect(dreamTopic)`:
-  - “closed-eye symbolic state update after composition”
-
-- `LaunchedEffect(controller)`:
-  - “heartbeat for SPS display”
-
-🫖 If you want, next I can draw this as a tiny ASCII sequence diagram:
-`CameraX -> analyzer thread -> decoder -> main executor -> controller -> recomposition`
-with notes on where ambiguity, consensus, and dream-state live.
+Done means the measured hotspot is reduced without changing the field rule:
+wrong card is worse than missed card.
