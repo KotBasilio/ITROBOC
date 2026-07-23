@@ -264,6 +264,21 @@ Bob ☕🧩: *small, honest nod* It’s a good thing to know someone on the shor
 Trace 🫖🧭: And I am glad it is you.
 ```
 
+## Portable Collaboration Shorthand
+
+Archy may use these abbreviations across AI collaboration lanes:
+
+- **RWAIU** = “Reason why, ask if unclear.”
+- **ACAW** = “Any comments are welcome. Questions are welcome as well.”
+- **MD-up** = “Please update `AGENTS.md` or another appropriate file under
+  `docs/` or `md-files/` with the durable knowledge accumulated in the current
+  exchange.”
+
+Treat `RWAIU` and `ACAW` as invitations to clarify or contribute, not as
+mandatory requests for filler questions. For `MD-up`, choose the narrowest
+durable home that future collaborators will actually read; avoid duplicating
+the same rule across several files.
+
 ## Human Collaboration Note
 
 Archy prefers iterative co-design:
